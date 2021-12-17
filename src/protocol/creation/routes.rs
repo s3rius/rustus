@@ -4,8 +4,8 @@ use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::Storage;
 
-pub async fn create_file<T: Storage>(
-    storage: web::Data<T>,
+pub async fn create_file(
+    storage: web::Data<Box<dyn Storage + Send + Sync>>,
     request: HttpRequest,
 ) -> actix_web::Result<HttpResponse> {
     let length = request

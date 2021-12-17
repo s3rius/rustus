@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use actix_files::NamedFile;
-use async_std::fs::{DirBuilder, OpenOptions, read_to_string, remove_file};
+use async_std::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
@@ -23,20 +23,23 @@ impl FileStorage {
     }
 
     pub fn info_file_path(&self, file_id: &str) -> PathBuf {
-        self.app_conf.data.join(format!("{}.info", file_id))
+        self.app_conf
+            .storage_opts
+            .data
+            .join(format!("{}.info", file_id))
     }
 
     pub fn data_file_path(&self, file_id: &str) -> PathBuf {
-        self.app_conf.data.join(file_id.to_string())
+        self.app_conf.storage_opts.data.join(file_id.to_string())
     }
 }
 
 #[async_trait]
 impl Storage for FileStorage {
-    async fn prepare(&self) -> TuserResult<()> {
-        if !self.app_conf.data.exists() {
+    async fn prepare(&mut self) -> TuserResult<()> {
+        if !self.app_conf.storage_opts.data.exists() {
             DirBuilder::new()
-                .create(self.app_conf.data.as_path())
+                .create(self.app_conf.storage_opts.data.as_path())
                 .await
                 .map_err(|err| TuserError::UnableToPrepareStorage(err.to_string()))?;
         }

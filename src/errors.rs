@@ -3,11 +3,10 @@ use std::io::{Error, ErrorKind};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, ResponseError};
-use thiserror::Error;
 
 pub type TuserResult<T> = Result<T, TuserError>;
 
-#[derive(Error, Debug)]
+#[derive(thiserror::Error, Debug)]
 pub enum TuserError {
     #[error("File with id {0} was not found")]
     FileNotFound(String),
@@ -19,6 +18,8 @@ pub enum TuserError {
     Unknown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] sqlx::Error),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]

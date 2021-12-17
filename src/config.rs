@@ -5,44 +5,73 @@ use structopt::StructOpt;
 use crate::errors::TuserError;
 use crate::storages::AvailableStores;
 
+#[derive(StructOpt, Debug, Clone)]
+pub struct StorageOptions {
+    /// Tuser storage type.
+    #[structopt(long, short, default_value = "file_storage", env = "TUSER_STORAGE")]
+    pub storage: AvailableStores,
+
+    /// Tuser data directory
+    ///
+    /// This directory is used to store files
+    /// for all *file_storage storages.
+    #[structopt(
+    long,
+    default_value = "./data",
+    required_if("storage", "file_storage"),
+    required_if("storage", "sqlite_file_storage")
+    )]
+    pub data: PathBuf,
+
+    /// Path to SQLite file.
+    ///
+    /// This file is used to
+    /// store information about uploaded files.
+    #[structopt(
+    long,
+    default_value = "data/info.sqlite3",
+    required_if("storage", "sqlite_file_storage")
+    )]
+    pub sqlite_dsn: PathBuf,
+}
+
 #[derive(Debug, StructOpt, Clone)]
 #[structopt(name = "tuser", about = "Tus server implementation in Rust.")]
 pub struct TuserConf {
     /// Tuser host
-    #[structopt(short, long, default_value = "0.0.0.0")]
+    #[structopt(short, long, default_value = "0.0.0.0", env = "TUSER_HOST")]
     pub host: String,
 
     /// Tuser server port
-    #[structopt(short, long, default_value = "1081")]
+    #[structopt(short, long, default_value = "1081", env = "TUSER_PORT")]
     pub port: u16,
 
     /// Tuser base API url
-    #[structopt(long, default_value = "/files")]
+    #[structopt(long, default_value = "/files", env = "TUSER_URL")]
     pub url: String,
 
-    /// Tuser data directory
-    #[structopt(long, default_value = "./data")]
-    pub data: PathBuf,
-
     /// Enabled hooks for http events
-    #[structopt(long, default_value = "pre-create,post-finish")]
+    #[structopt(long, default_value = "pre-create,post-finish", env = "TUSER_HOOKS")]
     pub enabled_hooks: String,
 
     /// Tuser maximum log level
-    #[structopt(long, default_value = "INFO")]
+    #[structopt(long, default_value = "INFO", env = "TUSER_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
-    /// Storage type
-    #[structopt(long, short, default_value = "file_storage")]
-    pub storage: AvailableStores,
-
     /// Number of actix workers default value = number of cpu cores.
-    #[structopt(long, short)]
+    #[structopt(long, short, env = "TUSER_WORKERS")]
     pub workers: Option<usize>,
 
     /// Enabled extensions for TUS protocol.
-    #[structopt(long, default_value = "creation,creation-with-upload")]
+    #[structopt(
+    long,
+    default_value = "creation,creation-with-upload",
+    env = "TUSER_EXTENSIONS"
+    )]
     pub extensions: String,
+
+    #[structopt(flatten)]
+    pub storage_opts: StorageOptions,
 }
 
 /// Enum of available Protocol Extensions

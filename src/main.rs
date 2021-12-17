@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
 use actix_web::http::Method;
 use actix_web::{
@@ -30,19 +31,21 @@ mod storages;
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
-pub fn create_server<S: Storage + 'static + Send>(
-    storage: S,
+pub fn create_server(
+    storage: Box<dyn Storage + Send + Sync>,
     app_conf: TuserConf,
 ) -> Result<Server, std::io::Error> {
     let host = app_conf.host.clone();
     let port = app_conf.port;
     let workers = app_conf.workers;
+    let storage_data: web::Data<Box<dyn Storage + Send + Sync>> =
+        web::Data::from(Arc::new(storage));
     let mut server = HttpServer::new(move || {
         App::new()
             .data(app_conf.clone())
-            .data(storage.clone())
+            .app_data(storage_data.clone())
             // Adds all routes.
-            .configure(protocol::setup::<S>(app_conf.clone()))
+            .configure(protocol::setup(app_conf.clone()))
             // Main middleware that appends TUS headers.
             .wrap(
                 middleware::DefaultHeaders::new()
@@ -81,7 +84,7 @@ async fn main() -> std::io::Result<()> {
     let app_conf = TuserConf::from_args();
     simple_logging::log_to_stderr(app_conf.log_level);
 
-    let storage = app_conf.storage.get_storage(&app_conf);
+    let mut storage = app_conf.storage_opts.storage.get(&app_conf);
     if let Err(err) = storage.prepare().await {
         error!("{}", err);
         return Err(err.into());

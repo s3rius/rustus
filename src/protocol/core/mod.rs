@@ -1,6 +1,6 @@
 use actix_web::{guard, middleware, web};
 
-use crate::{Storage, TuserConf};
+use crate::TuserConf;
 
 mod routes;
 
@@ -12,10 +12,7 @@ mod routes;
 /// OPTIONS /api    - to get info about the app.
 /// HEAD /api/file  - to get info about the file.
 /// PATCH /api/file - to add bytes to file.
-pub fn add_extension<S: Storage + 'static + Send>(
-    web_app: &mut web::ServiceConfig,
-    app_conf: &TuserConf,
-) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
     web_app
         .service(
             // PATCH /base/{file_id}
@@ -31,7 +28,7 @@ pub fn add_extension<S: Storage + 'static + Send>(
             web::resource(app_conf.file_url().as_str())
                 .name("core:write_bytes")
                 .guard(guard::Patch())
-                .to(routes::write_bytes::<S>),
+                .to(routes::write_bytes),
         )
         .service(
             // HEAD /base/{file_id}
@@ -41,6 +38,6 @@ pub fn add_extension<S: Storage + 'static + Send>(
                 .guard(guard::Head())
                 // Header to prevent the client and/or proxies from caching the response.
                 .wrap(middleware::DefaultHeaders::new().header("Cache-Control", "no-store"))
-                .to(routes::get_file_info::<S>),
+                .to(routes::get_file_info),
         );
 }

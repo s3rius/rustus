@@ -8,11 +8,11 @@ use crate::Storage;
 /// Creates files with initial bytes.
 ///
 /// This function is similar to
-/// creation:create_file,
+/// `creation:create_file`,
 /// except that it can write bytes
 /// right after it created a data file.
-pub async fn create_file<T: Storage>(
-    storage: web::Data<T>,
+pub async fn create_file(
+    storage: web::Data<Box<dyn Storage + Send + Sync>>,
     request: HttpRequest,
     bytes: Bytes,
 ) -> actix_web::Result<HttpResponse> {

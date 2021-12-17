@@ -1,6 +1,6 @@
 use actix_web::{guard, web};
 
-use crate::{Storage, TuserConf};
+use crate::TuserConf;
 
 mod routes;
 
@@ -8,15 +8,12 @@ mod routes;
 ///
 /// This extension allows you
 /// to terminate file upload.
-pub fn add_extension<S: Storage + 'static + Send>(
-    web_app: &mut web::ServiceConfig,
-    app_conf: &TuserConf,
-) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
     web_app.service(
         // DELETE /base/file
         web::resource(app_conf.file_url().as_str())
             .name("termination:terminate")
             .guard(guard::Delete())
-            .to(routes::terminate::<S>),
+            .to(routes::terminate),
     );
 }

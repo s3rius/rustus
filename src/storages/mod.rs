@@ -3,21 +3,25 @@ use std::str::FromStr;
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
-use chrono::serde::ts_seconds;
 use chrono::{DateTime, Utc};
+use chrono::serde::ts_seconds;
 use derive_more::{Display, From};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 use crate::errors::TuserResult;
 use crate::TuserConf;
 
 pub mod file_storage;
+pub mod sqlite_file_storage;
 
 /// Enum of available Storage implementations.
 #[derive(PartialEq, From, Display, Clone, Debug)]
 pub enum AvailableStores {
     #[display(fmt = "FileStorage")]
     FileStorage,
+    #[display(fmt = "SqliteFileStorage")]
+    SqliteFileStorage,
 }
 
 impl FromStr for AvailableStores {
@@ -31,6 +35,7 @@ impl FromStr for AvailableStores {
     fn from_str(input: &str) -> Result<AvailableStores, Self::Err> {
         match input {
             "file_storage" => Ok(AvailableStores::FileStorage),
+            "sqlite_file_storage" => Ok(AvailableStores::SqliteFileStorage),
             _ => Err(String::from("Unknown storage type")),
         }
     }
@@ -42,15 +47,19 @@ impl AvailableStores {
     /// # Params
     /// `config` - Tuser configuration.
     ///
-    #[allow(clippy::unused_self)]
-    pub fn get_storage(&self, config: &TuserConf) -> impl Storage {
-        file_storage::FileStorage::new(config.clone())
+    pub fn get(&self, config: &TuserConf) -> Box<dyn Storage + Send + Sync> {
+        match self {
+            Self::FileStorage => Box::new(file_storage::FileStorage::new(config.clone())),
+            Self::SqliteFileStorage => {
+                Box::new(sqlite_file_storage::SQLiteFileStorage::new(config.clone()))
+            }
+        }
     }
 }
 
 /// Information about file.
 /// It has everything about stored file.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, FromRow)]
 pub struct FileInfo {
     pub id: String,
     pub offset: usize,
@@ -103,13 +112,13 @@ impl FileInfo {
 }
 
 #[async_trait]
-pub trait Storage: Clone {
+pub trait Storage {
     /// Prepare storage before starting up server.
     ///
     /// Function to check if configuration is correct
     /// and prepare storage E.G. create connection pool,
     /// or directory for files.
-    async fn prepare(&self) -> TuserResult<()>;
+    async fn prepare(&mut self) -> TuserResult<()>;
 
     /// Get file information.
     ///

@@ -21,8 +21,8 @@ pub fn server_info(app_conf: web::Data<TuserConf>) -> HttpResponse {
         .body("")
 }
 
-pub async fn get_file_info<T: Storage>(
-    storage: web::Data<T>,
+pub async fn get_file_info(
+    storage: web::Data<Box<dyn Storage + Send + Sync>>,
     request: HttpRequest,
 ) -> actix_web::Result<HttpResponse> {
     let resp = if let Some(file_id) = request.match_info().get("file_id") {
@@ -37,10 +37,10 @@ pub async fn get_file_info<T: Storage>(
     Ok(resp)
 }
 
-pub async fn write_bytes<T: Storage>(
+pub async fn write_bytes(
     request: HttpRequest,
     bytes: Bytes,
-    storage: web::Data<T>,
+    storage: web::Data<Box<dyn Storage + Send + Sync>>,
 ) -> actix_web::Result<HttpResponse> {
     let content_type =
         request

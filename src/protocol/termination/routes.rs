@@ -9,8 +9,8 @@ use crate::Storage;
 ///
 /// This method will remove all
 /// files by id.
-pub async fn terminate<S: Storage>(
-    storage: web::Data<S>,
+pub async fn terminate(
+    storage: web::Data<Box<dyn Storage + Send + Sync>>,
     request: HttpRequest,
 ) -> TuserResult<HttpResponse> {
     let file_id_opt = request.match_info().get("file_id").map(String::from);
