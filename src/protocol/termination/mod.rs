@@ -1,6 +1,6 @@
 use actix_web::{guard, web};
 
-use crate::TuserConf;
+use crate::RustusConf;
 
 mod routes;
 
@@ -8,7 +8,7 @@ mod routes;
 ///
 /// This extension allows you
 /// to terminate file upload.
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
     web_app.service(
         // DELETE /base/file
         web::resource(app_conf.file_url().as_str())

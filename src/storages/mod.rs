@@ -9,8 +9,8 @@ use derive_more::{Display, From};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
-use crate::errors::TuserResult;
-use crate::TuserConf;
+use crate::errors::RustusResult;
+use crate::RustusConf;
 
 pub mod file_storage;
 pub mod sqlite_file_storage;
@@ -45,9 +45,9 @@ impl AvailableStores {
     /// Convert `AvailableStores` to the Storage.
     ///
     /// # Params
-    /// `config` - Tuser configuration.
+    /// `config` - Rustus configuration.
     ///
-    pub fn get(&self, config: &TuserConf) -> Box<dyn Storage + Send + Sync> {
+    pub fn get(&self, config: &RustusConf) -> Box<dyn Storage + Send + Sync> {
         match self {
             Self::FileStorage => Box::new(file_storage::FileStorage::new(config.clone())),
             Self::SqliteFileStorage => {
@@ -118,7 +118,7 @@ pub trait Storage {
     /// Function to check if configuration is correct
     /// and prepare storage E.G. create connection pool,
     /// or directory for files.
-    async fn prepare(&mut self) -> TuserResult<()>;
+    async fn prepare(&mut self) -> RustusResult<()>;
 
     /// Get file information.
     ///
@@ -126,7 +126,7 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_id` - unique file identifier.
-    async fn get_file_info(&self, file_id: &str) -> TuserResult<FileInfo>;
+    async fn get_file_info(&self, file_id: &str) -> RustusResult<FileInfo>;
 
     /// Set file info
     ///
@@ -134,7 +134,7 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_info` - information about current upload.
-    async fn set_file_info(&self, file_info: &FileInfo) -> TuserResult<()>;
+    async fn set_file_info(&self, file_info: &FileInfo) -> RustusResult<()>;
 
     /// Get contents of a file.
     ///
@@ -143,7 +143,7 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_id` - unique file identifier.
-    async fn get_contents(&self, file_id: &str) -> TuserResult<NamedFile>;
+    async fn get_contents(&self, file_id: &str) -> RustusResult<NamedFile>;
 
     /// Add bytes to the file.
     ///
@@ -159,7 +159,7 @@ pub trait Storage {
         file_id: &str,
         request_offset: usize,
         bytes: &[u8],
-    ) -> TuserResult<usize>;
+    ) -> RustusResult<usize>;
 
     /// Create file in storage.
     ///
@@ -172,7 +172,7 @@ pub trait Storage {
         &self,
         file_size: Option<usize>,
         metadata: Option<HashMap<String, String>>,
-    ) -> TuserResult<String>;
+    ) -> RustusResult<String>;
 
     /// Remove file from storage
     ///
@@ -181,5 +181,5 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_id` - unique file identifier;
-    async fn remove_file(&self, file_id: &str) -> TuserResult<()>;
+    async fn remove_file(&self, file_id: &str) -> RustusResult<()>;
 }

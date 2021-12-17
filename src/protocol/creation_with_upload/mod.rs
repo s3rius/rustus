@@ -1,10 +1,10 @@
 use actix_web::{guard, web};
 
-use crate::TuserConf;
+use crate::RustusConf;
 
 mod routes;
 
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
     web_app.service(
         // Post /base
         // URL for creating files.

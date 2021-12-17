@@ -1,6 +1,6 @@
 use actix_web::{guard, middleware, web};
 
-use crate::TuserConf;
+use crate::RustusConf;
 
 mod routes;
 
@@ -12,7 +12,7 @@ mod routes;
 /// OPTIONS /api    - to get info about the app.
 /// HEAD /api/file  - to get info about the file.
 /// PATCH /api/file - to add bytes to file.
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
     web_app
         .service(
             // PATCH /base/{file_id}

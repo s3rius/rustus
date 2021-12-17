@@ -6,10 +6,10 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 
-use crate::{Storage, TuserConf};
+use crate::{RustusConf, Storage};
 
 #[allow(clippy::needless_pass_by_value)]
-pub fn server_info(app_conf: web::Data<TuserConf>) -> HttpResponse {
+pub fn server_info(app_conf: web::Data<RustusConf>) -> HttpResponse {
     let ext_str = app_conf
         .extensions_vec()
         .into_iter()

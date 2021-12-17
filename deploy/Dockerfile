@@ -11,9 +11,9 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
-RUN cargo build --release --bin tuser
+RUN cargo build --release --bin rustus
 
 FROM debian:buster-20211201-slim AS runtime
 WORKDIR app
-COPY --from=builder /app/target/release/tuser /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/tuser"]
+COPY --from=builder /app/target/release/rustus /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/rustus"]

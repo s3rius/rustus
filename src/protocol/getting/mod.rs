@@ -1,6 +1,6 @@
 use actix_web::{guard, web};
 
-use crate::TuserConf;
+use crate::RustusConf;
 
 mod routes;
 
@@ -10,7 +10,7 @@ mod routes;
 /// to get uploaded file.
 ///
 /// This is unofficial extension.
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &TuserConf) {
+pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
     web_app.service(
         // GET /base/file
         web::resource(app_conf.file_url().as_str())

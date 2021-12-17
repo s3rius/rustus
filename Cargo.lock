@@ -1906,6 +1906,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustus"
+version = "0.1.0"
+dependencies = [
+ "actix-files",
+ "actix-web",
+ "async-std",
+ "async-trait",
+ "chrono",
+ "derive_more",
+ "log",
+ "serde",
+ "serde_json",
+ "simple-logging",
+ "sqlx",
+ "structopt",
+ "thiserror",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "ryu"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2539,27 +2560,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "trust-dns-proto",
-]
-
-[[package]]
-name = "tuser"
-version = "0.1.0"
-dependencies = [
- "actix-files",
- "actix-web",
- "async-std",
- "async-trait",
- "chrono",
- "derive_more",
- "log",
- "serde",
- "serde_json",
- "simple-logging",
- "sqlx",
- "structopt",
- "thiserror",
- "url",
- "uuid",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
-use actix_web::{HttpRequest, Responder, web};
+use actix_web::{web, HttpRequest, Responder};
 
-use crate::errors::TuserError;
+use crate::errors::RustusError;
 use crate::Storage;
 
 pub async fn get_file(
@@ -11,6 +11,6 @@ pub async fn get_file(
     if let Some(file_id) = file_id_opt {
         storage.get_contents(file_id.as_str()).await
     } else {
-        Err(TuserError::FileNotFound)
+        Err(RustusError::FileNotFound)
     }
 }

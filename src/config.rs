@@ -2,16 +2,16 @@ use std::path::PathBuf;
 
 use structopt::StructOpt;
 
-use crate::errors::TuserError;
+use crate::errors::RustusError;
 use crate::storages::AvailableStores;
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct StorageOptions {
-    /// Tuser storage type.
-    #[structopt(long, short, default_value = "file_storage", env = "TUSER_STORAGE")]
+    /// Rustus storage type.
+    #[structopt(long, short, default_value = "file_storage", env = "RUSTUS_STORAGE")]
     pub storage: AvailableStores,
 
-    /// Tuser data directory
+    /// Rustus data directory
     ///
     /// This directory is used to store files
     /// for all *file_storage storages.
@@ -36,37 +36,44 @@ pub struct StorageOptions {
 }
 
 #[derive(Debug, StructOpt, Clone)]
-#[structopt(name = "tuser", about = "Tus server implementation in Rust.")]
-pub struct TuserConf {
-    /// Tuser host
-    #[structopt(short, long, default_value = "0.0.0.0", env = "TUSER_HOST")]
+#[structopt(name = "rustus")]
+/// Tus protocol implementation.
+///
+/// This program is a web-server that
+/// implements protocol for resumable uploads.
+///
+/// You can read more about protocol
+/// [here](https://tus.io/).
+pub struct RustusConf {
+    /// Rustus host
+    #[structopt(short, long, default_value = "0.0.0.0", env = "RUSTUS_HOST")]
     pub host: String,
 
-    /// Tuser server port
-    #[structopt(short, long, default_value = "1081", env = "TUSER_PORT")]
+    /// Rustus server port
+    #[structopt(short, long, default_value = "1081", env = "RUSTUS_PORT")]
     pub port: u16,
 
-    /// Tuser base API url
-    #[structopt(long, default_value = "/files", env = "TUSER_URL")]
+    /// Rustus base API url
+    #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,
 
     /// Enabled hooks for http events
-    #[structopt(long, default_value = "pre-create,post-finish", env = "TUSER_HOOKS")]
+    #[structopt(long, default_value = "pre-create,post-finish", env = "RUSTUS_HOOKS")]
     pub enabled_hooks: String,
 
-    /// Tuser maximum log level
-    #[structopt(long, default_value = "INFO", env = "TUSER_LOG_LEVEL")]
+    /// Rustus maximum log level
+    #[structopt(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
     /// Number of actix workers default value = number of cpu cores.
-    #[structopt(long, short, env = "TUSER_WORKERS")]
+    #[structopt(long, short, env = "RUSTUS_WORKERS")]
     pub workers: Option<usize>,
 
     /// Enabled extensions for TUS protocol.
     #[structopt(
         long,
         default_value = "creation,creation-with-upload,getting",
-        env = "TUSER_EXTENSIONS"
+        env = "RUSTUS_EXTENSIONS"
     )]
     pub extensions: String,
 
@@ -84,7 +91,7 @@ pub enum ProtocolExtensions {
 }
 
 impl TryFrom<String> for ProtocolExtensions {
-    type Error = TuserError;
+    type Error = RustusError;
 
     /// Parse string to protocol extension.
     ///
@@ -95,7 +102,7 @@ impl TryFrom<String> for ProtocolExtensions {
             "creation-with-upload" => Ok(ProtocolExtensions::CreationWithUpload),
             "termination" => Ok(ProtocolExtensions::Termination),
             "getting" => Ok(ProtocolExtensions::Getting),
-            _ => Err(TuserError::UnknownExtension(value.clone())),
+            _ => Err(RustusError::UnknownExtension(value.clone())),
         }
     }
 }
@@ -113,13 +120,13 @@ impl From<ProtocolExtensions> for String {
     }
 }
 
-impl TuserConf {
+impl RustusConf {
     /// Function to parse CLI parametes.
     ///
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
-    pub fn from_args() -> TuserConf {
-        <TuserConf as StructOpt>::from_args()
+    pub fn from_args() -> RustusConf {
+        <RustusConf as StructOpt>::from_args()
     }
 
     /// Base API url.

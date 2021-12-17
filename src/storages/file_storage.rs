@@ -8,17 +8,17 @@ use async_trait::async_trait;
 use log::error;
 use uuid::Uuid;
 
-use crate::errors::{TuserError, TuserResult};
+use crate::errors::{RustusError, RustusResult};
 use crate::storages::{FileInfo, Storage};
-use crate::TuserConf;
+use crate::RustusConf;
 
 #[derive(Clone)]
 pub struct FileStorage {
-    app_conf: TuserConf,
+    app_conf: RustusConf,
 }
 
 impl FileStorage {
-    pub fn new(app_conf: TuserConf) -> FileStorage {
+    pub fn new(app_conf: RustusConf) -> FileStorage {
         FileStorage { app_conf }
     }
 
@@ -36,29 +36,29 @@ impl FileStorage {
 
 #[async_trait]
 impl Storage for FileStorage {
-    async fn prepare(&mut self) -> TuserResult<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         if !self.app_conf.storage_opts.data.exists() {
             DirBuilder::new()
                 .create(self.app_conf.storage_opts.data.as_path())
                 .await
-                .map_err(|err| TuserError::UnableToPrepareStorage(err.to_string()))?;
+                .map_err(|err| RustusError::UnableToPrepareStorage(err.to_string()))?;
         }
         Ok(())
     }
 
-    async fn get_file_info(&self, file_id: &str) -> TuserResult<FileInfo> {
+    async fn get_file_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
         if !info_path.exists() {
-            return Err(TuserError::FileNotFound);
+            return Err(RustusError::FileNotFound);
         }
         let contents = read_to_string(info_path).await.map_err(|err| {
             error!("{:?}", err);
-            TuserError::UnableToReadInfo
+            RustusError::UnableToReadInfo
         })?;
-        serde_json::from_str::<FileInfo>(contents.as_str()).map_err(TuserError::from)
+        serde_json::from_str::<FileInfo>(contents.as_str()).map_err(RustusError::from)
     }
 
-    async fn set_file_info(&self, file_info: &FileInfo) -> TuserResult<()> {
+    async fn set_file_info(&self, file_info: &FileInfo) -> RustusResult<()> {
         let mut file = OpenOptions::new()
             .write(true)
             .create(true)
@@ -66,13 +66,13 @@ impl Storage for FileStorage {
             .await
             .map_err(|err| {
                 error!("{:?}", err);
-                TuserError::UnableToWrite(err.to_string())
+                RustusError::UnableToWrite(err.to_string())
             })?;
         file.write_all(serde_json::to_string(&file_info)?.as_bytes())
             .await
             .map_err(|err| {
                 error!("{:?}", err);
-                TuserError::UnableToWrite(
+                RustusError::UnableToWrite(
                     self.info_file_path(file_info.id.as_str())
                         .as_path()
                         .display()
@@ -82,10 +82,10 @@ impl Storage for FileStorage {
         Ok(())
     }
 
-    async fn get_contents(&self, file_id: &str) -> TuserResult<NamedFile> {
+    async fn get_contents(&self, file_id: &str) -> RustusResult<NamedFile> {
         NamedFile::open(self.data_file_path(file_id)).map_err(|err| {
             error!("{:?}", err);
-            TuserError::FileNotFound
+            RustusError::FileNotFound
         })
     }
 
@@ -94,10 +94,10 @@ impl Storage for FileStorage {
         file_id: &str,
         request_offset: usize,
         bytes: &[u8],
-    ) -> TuserResult<usize> {
+    ) -> RustusResult<usize> {
         let mut info = self.get_file_info(file_id).await?;
         if info.offset != request_offset {
-            return Err(TuserError::WrongOffset);
+            return Err(RustusError::WrongOffset);
         }
         let mut file = OpenOptions::new()
             .write(true)
@@ -107,11 +107,11 @@ impl Storage for FileStorage {
             .await
             .map_err(|err| {
                 error!("{:?}", err);
-                TuserError::UnableToWrite(err.to_string())
+                RustusError::UnableToWrite(err.to_string())
             })?;
         file.write_all(bytes).await.map_err(|err| {
             error!("{:?}", err);
-            TuserError::UnableToWrite(self.data_file_path(file_id).as_path().display().to_string())
+            RustusError::UnableToWrite(self.data_file_path(file_id).as_path().display().to_string())
         })?;
         info.offset += bytes.len();
         self.set_file_info(&info).await?;
@@ -122,7 +122,7 @@ impl Storage for FileStorage {
         &self,
         file_size: Option<usize>,
         metadata: Option<HashMap<String, String>>,
-    ) -> TuserResult<String> {
+    ) -> RustusResult<String> {
         let file_id = Uuid::new_v4().simple().to_string();
 
         let mut file = OpenOptions::new()
@@ -133,13 +133,13 @@ impl Storage for FileStorage {
             .await
             .map_err(|err| {
                 error!("{:?}", err);
-                TuserError::FileAlreadyExists(file_id.clone())
+                RustusError::FileAlreadyExists(file_id.clone())
             })?;
 
         // We write empty file here.
         file.write_all(b"").await.map_err(|err| {
             error!("{:?}", err);
-            TuserError::UnableToWrite(
+            RustusError::UnableToWrite(
                 self.data_file_path(file_id.as_str())
                     .as_path()
                     .display()
@@ -162,22 +162,22 @@ impl Storage for FileStorage {
         Ok(file_id)
     }
 
-    async fn remove_file(&self, file_id: &str) -> TuserResult<()> {
+    async fn remove_file(&self, file_id: &str) -> RustusResult<()> {
         let info_path = self.info_file_path(file_id);
         if !info_path.exists() {
-            return Err(TuserError::FileNotFound);
+            return Err(RustusError::FileNotFound);
         }
         let data_path = self.data_file_path(file_id);
         if !data_path.exists() {
-            return Err(TuserError::FileNotFound);
+            return Err(RustusError::FileNotFound);
         }
         remove_file(info_path).await.map_err(|err| {
             error!("{:?}", err);
-            TuserError::UnableToRemove(String::from(file_id))
+            RustusError::UnableToRemove(String::from(file_id))
         })?;
         remove_file(data_path).await.map_err(|err| {
             error!("{:?}", err);
-            TuserError::UnableToRemove(String::from(file_id))
+            RustusError::UnableToRemove(String::from(file_id))
         })?;
         Ok(())
     }

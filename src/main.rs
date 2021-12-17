@@ -8,7 +8,7 @@ use actix_web::{
 };
 use log::error;
 
-use config::TuserConf;
+use config::RustusConf;
 
 use crate::storages::Storage;
 
@@ -33,7 +33,7 @@ mod storages;
 /// given address.
 pub fn create_server(
     storage: Box<dyn Storage + Send + Sync>,
-    app_conf: TuserConf,
+    app_conf: RustusConf,
 ) -> Result<Server, std::io::Error> {
     let host = app_conf.host.clone();
     let port = app_conf.port;
@@ -81,7 +81,7 @@ pub fn create_server(
 /// Main program entrypoint.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let app_conf = TuserConf::from_args();
+    let app_conf = RustusConf::from_args();
     simple_logging::log_to_stderr(app_conf.log_level);
 
     let mut storage = app_conf.storage_opts.storage.get(&app_conf);
