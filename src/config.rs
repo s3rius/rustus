@@ -16,10 +16,10 @@ pub struct StorageOptions {
     /// This directory is used to store files
     /// for all *file_storage storages.
     #[structopt(
-    long,
-    default_value = "./data",
-    required_if("storage", "file_storage"),
-    required_if("storage", "sqlite_file_storage")
+        long,
+        default_value = "./data",
+        required_if("storage", "file_storage"),
+        required_if("storage", "sqlite_file_storage")
     )]
     pub data: PathBuf,
 
@@ -28,9 +28,9 @@ pub struct StorageOptions {
     /// This file is used to
     /// store information about uploaded files.
     #[structopt(
-    long,
-    default_value = "data/info.sqlite3",
-    required_if("storage", "sqlite_file_storage")
+        long,
+        default_value = "data/info.sqlite3",
+        required_if("storage", "sqlite_file_storage")
     )]
     pub sqlite_dsn: PathBuf,
 }
@@ -64,9 +64,9 @@ pub struct TuserConf {
 
     /// Enabled extensions for TUS protocol.
     #[structopt(
-    long,
-    default_value = "creation,creation-with-upload",
-    env = "TUSER_EXTENSIONS"
+        long,
+        default_value = "creation,creation-with-upload,getting",
+        env = "TUSER_EXTENSIONS"
     )]
     pub extensions: String,
 
@@ -80,6 +80,7 @@ pub enum ProtocolExtensions {
     CreationWithUpload,
     Creation,
     Termination,
+    Getting,
 }
 
 impl TryFrom<String> for ProtocolExtensions {
@@ -93,6 +94,7 @@ impl TryFrom<String> for ProtocolExtensions {
             "creation" => Ok(ProtocolExtensions::Creation),
             "creation-with-upload" => Ok(ProtocolExtensions::CreationWithUpload),
             "termination" => Ok(ProtocolExtensions::Termination),
+            "getting" => Ok(ProtocolExtensions::Getting),
             _ => Err(TuserError::UnknownExtension(value.clone())),
         }
     }
@@ -103,9 +105,10 @@ impl From<ProtocolExtensions> for String {
     /// original names.
     fn from(ext: ProtocolExtensions) -> Self {
         match ext {
-            ProtocolExtensions::Creation => Self::from("creation"),
-            ProtocolExtensions::CreationWithUpload => Self::from("creation-with-upload"),
-            ProtocolExtensions::Termination => Self::from("termination"),
+            ProtocolExtensions::Creation => "creation".into(),
+            ProtocolExtensions::CreationWithUpload => "creation-with-upload".into(),
+            ProtocolExtensions::Termination => "termination".into(),
+            ProtocolExtensions::Getting => "getting".into(),
         }
     }
 }

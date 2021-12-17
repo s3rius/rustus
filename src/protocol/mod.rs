@@ -6,6 +6,7 @@ use crate::TuserConf;
 mod core;
 mod creation;
 mod creation_with_upload;
+mod getting;
 mod termination;
 
 /// Configure TUS web application.
@@ -22,6 +23,9 @@ pub fn setup(app_conf: TuserConf) -> Box<dyn Fn(&mut web::ServiceConfig)> {
                 }
                 ProtocolExtensions::Termination => {
                     termination::add_extension(web_app, &app_conf);
+                }
+                ProtocolExtensions::Getting => {
+                    getting::add_extension(web_app, &app_conf);
                 }
             }
         }

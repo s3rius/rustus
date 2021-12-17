@@ -47,13 +47,23 @@ impl Storage for SQLiteFileStorage {
                 .map_err(|err| TuserError::UnableToPrepareStorage(err.to_string()))?;
         }
         if !self.app_conf.storage_opts.sqlite_dsn.exists() {
-            File::create(self.app_conf.storage_opts.sqlite_dsn.clone()).await.map_err(|err| {
-                TuserError::UnableToPrepareStorage(err.to_string())
-            })?;
+            File::create(self.app_conf.storage_opts.sqlite_dsn.clone())
+                .await
+                .map_err(|err| TuserError::UnableToPrepareStorage(err.to_string()))?;
         }
         let pool = SqlitePoolOptions::new()
             .max_connections(10)
-            .connect(format!("sqlite://{}", self.app_conf.storage_opts.sqlite_dsn.as_display().to_string()).as_str())
+            .connect(
+                format!(
+                    "sqlite://{}",
+                    self.app_conf
+                        .storage_opts
+                        .sqlite_dsn
+                        .as_display()
+                        .to_string()
+                )
+                .as_str(),
+            )
             .await
             .map_err(TuserError::from)?;
         sqlx::query(
@@ -67,7 +77,9 @@ impl Storage for SQLiteFileStorage {
                     deferred_size BOOLEAN, \
                     metadata TEXT\
                );",
-        ).execute(&pool).await?;
+        )
+        .execute(&pool)
+        .await?;
         self.pool = Some(pool);
         Ok(())
     }

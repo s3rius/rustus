@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use chrono::serde::ts_seconds;
+use chrono::{DateTime, Utc};
 use derive_more::{Display, From};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

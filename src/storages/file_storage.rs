@@ -49,7 +49,7 @@ impl Storage for FileStorage {
     async fn get_file_info(&self, file_id: &str) -> TuserResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
         if !info_path.exists() {
-            return Err(TuserError::FileNotFound(String::from(file_id)));
+            return Err(TuserError::FileNotFound);
         }
         let contents = read_to_string(info_path).await.map_err(|err| {
             error!("{:?}", err);
@@ -83,7 +83,10 @@ impl Storage for FileStorage {
     }
 
     async fn get_contents(&self, file_id: &str) -> TuserResult<NamedFile> {
-        Err(TuserError::FileNotFound(String::from(file_id)))
+        NamedFile::open(self.data_file_path(file_id)).map_err(|err| {
+            error!("{:?}", err);
+            TuserError::FileNotFound
+        })
     }
 
     async fn add_bytes(
@@ -162,11 +165,11 @@ impl Storage for FileStorage {
     async fn remove_file(&self, file_id: &str) -> TuserResult<()> {
         let info_path = self.info_file_path(file_id);
         if !info_path.exists() {
-            return Err(TuserError::FileNotFound(String::from(file_id)));
+            return Err(TuserError::FileNotFound);
         }
         let data_path = self.data_file_path(file_id);
         if !data_path.exists() {
-            return Err(TuserError::FileNotFound(String::from(file_id)));
+            return Err(TuserError::FileNotFound);
         }
         remove_file(info_path).await.map_err(|err| {
             error!("{:?}", err);

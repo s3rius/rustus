@@ -30,6 +30,7 @@ pub async fn get_file_info(
         HttpResponseBuilder::new(StatusCode::OK)
             .set_header("Upload-Offset", file_info.offset.to_string())
             .set_header("Upload-Length", file_info.length.to_string())
+            .set_header("Content-Length", file_info.offset.to_string())
             .body("")
     } else {
         HttpResponseBuilder::new(StatusCode::NOT_FOUND).body("")

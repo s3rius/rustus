@@ -8,8 +8,8 @@ pub type TuserResult<T> = Result<T, TuserError>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum TuserError {
-    #[error("File with id {0} was not found")]
-    FileNotFound(String),
+    #[error("Not found")]
+    FileNotFound,
     #[error("File with id {0} already exists")]
     FileAlreadyExists(String),
     #[error("Given offset is incorrect.")]
@@ -40,12 +40,14 @@ impl From<TuserError> for Error {
 
 impl ResponseError for TuserError {
     fn error_response(&self) -> HttpResponse {
-        HttpResponseBuilder::new(self.status_code()).body(format!("{}", self))
+        HttpResponseBuilder::new(self.status_code())
+            .set_header("Content-Type", "text/html; charset=utf-8")
+            .body(format!("{}", self))
     }
 
     fn status_code(&self) -> StatusCode {
         match self {
-            TuserError::FileNotFound(_) => StatusCode::NOT_FOUND,
+            TuserError::FileNotFound => StatusCode::NOT_FOUND,
             TuserError::WrongOffset => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
