@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
-use actix_web::{HttpResponse, ResponseError};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::StatusCode;
+use actix_web::{HttpResponse, ResponseError};
 use thiserror::Error;
 
 pub type TuserResult<T> = Result<T, TuserError>;
@@ -23,8 +23,12 @@ pub enum TuserError {
     UnableToReadInfo,
     #[error("Unable to write file {0}")]
     UnableToWrite(String),
+    #[error("Unable to remove file {0}")]
+    UnableToRemove(String),
     #[error("Unable to prepare storage. Reason: {0}")]
     UnableToPrepareStorage(String),
+    #[error("Unknown extension: {0}")]
+    UnknownExtension(String),
 }
 
 impl From<TuserError> for Error {

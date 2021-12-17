@@ -3,8 +3,8 @@ use std::str::FromStr;
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use chrono::serde::ts_seconds;
+use chrono::{DateTime, Utc};
 use derive_more::{Display, From};
 use serde::{Deserialize, Serialize};
 
@@ -23,7 +23,7 @@ pub enum AvailableStores {
 impl FromStr for AvailableStores {
     type Err = String;
 
-    /// This function converts string to the AvailableStore item.
+    /// This function converts string to the `AvailableStore` item.
     /// This function is used by structopt to parse CLI parameters.
     ///
     /// # Params
@@ -37,13 +37,14 @@ impl FromStr for AvailableStores {
 }
 
 impl AvailableStores {
-    /// Convert AvailableStores to the Storage.
+    /// Convert `AvailableStores` to the Storage.
     ///
     /// # Params
     /// `config` - Tuser configuration.
     ///
-    pub fn get_storage(&self, config: TuserConf) -> impl Storage {
-        file_storage::FileStorage::new(config)
+    #[allow(clippy::unused_self)]
+    pub fn get_storage(&self, config: &TuserConf) -> impl Storage {
+        file_storage::FileStorage::new(config.clone())
     }
 }
 
@@ -62,7 +63,7 @@ pub struct FileInfo {
 }
 
 impl FileInfo {
-    /// Create new FileInfo
+    /// Creates new `FileInfo`.
     ///
     /// # Params
     ///
@@ -141,11 +142,15 @@ pub trait Storage: Clone {
     /// It returns new offset.
     ///
     /// # Params
-    ///
     /// `file_id` - unique file identifier;
     /// `request_offset` - offset from the client.
     /// `bytes` - bytes to append to the file.
-    async fn add_bytes(&self, file_id: &str, request_offset: usize, bytes: &[u8]) -> TuserResult<usize>;
+    async fn add_bytes(
+        &self,
+        file_id: &str,
+        request_offset: usize,
+        bytes: &[u8],
+    ) -> TuserResult<usize>;
 
     /// Create file in storage.
     ///
@@ -159,4 +164,13 @@ pub trait Storage: Clone {
         file_size: Option<usize>,
         metadata: Option<HashMap<String, String>>,
     ) -> TuserResult<String>;
+
+    /// Remove file from storage
+    ///
+    /// This method removes file and all associated
+    /// object if any.
+    ///
+    /// # Params
+    /// `file_id` - unique file identifier;
+    async fn remove_file(&self, file_id: &str) -> TuserResult<()>;
 }
