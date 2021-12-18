@@ -72,7 +72,7 @@ pub struct RustusConf {
     /// Enabled extensions for TUS protocol.
     #[structopt(
         long,
-        default_value = "creation,creation-with-upload,getting",
+        default_value = "getting,creation,creation-with-upload,creation-defer-length",
         env = "RUSTUS_EXTENSIONS"
     )]
     pub extensions: String,
@@ -84,6 +84,7 @@ pub struct RustusConf {
 /// Enum of available Protocol Extensions
 #[derive(PartialEq, PartialOrd, Ord, Eq)]
 pub enum ProtocolExtensions {
+    CreationDeferLength,
     CreationWithUpload,
     Creation,
     Termination,
@@ -100,6 +101,7 @@ impl TryFrom<String> for ProtocolExtensions {
         match value.as_str() {
             "creation" => Ok(ProtocolExtensions::Creation),
             "creation-with-upload" => Ok(ProtocolExtensions::CreationWithUpload),
+            "creation-defer-length" => Ok(ProtocolExtensions::CreationDeferLength),
             "termination" => Ok(ProtocolExtensions::Termination),
             "getting" => Ok(ProtocolExtensions::Getting),
             _ => Err(RustusError::UnknownExtension(value.clone())),
@@ -116,6 +118,7 @@ impl From<ProtocolExtensions> for String {
             ProtocolExtensions::CreationWithUpload => "creation-with-upload".into(),
             ProtocolExtensions::Termination => "termination".into(),
             ProtocolExtensions::Getting => "getting".into(),
+            ProtocolExtensions::CreationDeferLength => "creation-defer-length".into(),
         }
     }
 }
@@ -164,12 +167,23 @@ impl RustusConf {
             .split(',')
             .flat_map(|ext| ProtocolExtensions::try_from(String::from(ext)))
             .collect::<Vec<ProtocolExtensions>>();
-        // creation-with-upload
+
+        // If create-with-upload extension is enabled
+        // creation extension must be enabled too.
         if ext.contains(&ProtocolExtensions::CreationWithUpload)
             && !ext.contains(&ProtocolExtensions::Creation)
         {
             ext.push(ProtocolExtensions::Creation);
         }
+
+        // If create-defer-length extension is enabled
+        // creation extension must be enabled too.
+        if ext.contains(&ProtocolExtensions::CreationDeferLength)
+            && !ext.contains(&ProtocolExtensions::Creation)
+        {
+            ext.push(ProtocolExtensions::Creation);
+        }
+
         ext.sort();
         ext
     }

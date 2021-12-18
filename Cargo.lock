@@ -1913,6 +1913,7 @@ dependencies = [
  "actix-web",
  "async-std",
  "async-trait",
+ "base64",
  "chrono",
  "derive_more",
  "log",

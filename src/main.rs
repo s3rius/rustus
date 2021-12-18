@@ -6,7 +6,7 @@ use actix_web::{
     dev::{Server, Service},
     middleware, web, App, HttpServer,
 };
-use log::error;
+use log::{error, info};
 
 use config::RustusConf;
 
@@ -17,6 +17,19 @@ mod errors;
 mod protocol;
 mod routes;
 mod storages;
+mod utils;
+
+fn greeting(app_conf: &RustusConf) {
+    let extensions = app_conf
+        .extensions_vec()
+        .into_iter()
+        .map(String::from)
+        .collect::<Vec<String>>()
+        .join(",");
+    info!("Welcome to rustus!");
+    info!("Base URL: {}", app_conf.base_url());
+    info!("Available extensions {}", extensions);
+}
 
 /// Creates Actix server.
 ///
@@ -75,6 +88,7 @@ pub fn create_server(
     if let Some(workers_count) = workers {
         server = server.workers(workers_count);
     }
+    server = server.server_hostname("meme");
     Ok(server.run())
 }
 
@@ -89,6 +103,7 @@ async fn main() -> std::io::Result<()> {
         error!("{}", err);
         return Err(err.into());
     }
+    greeting(&app_conf);
     let server = create_server(storage, app_conf)?;
     server.await
 }

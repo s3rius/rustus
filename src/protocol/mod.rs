@@ -5,7 +5,6 @@ use crate::RustusConf;
 
 mod core;
 mod creation;
-mod creation_with_upload;
 mod getting;
 mod termination;
 
@@ -18,15 +17,13 @@ pub fn setup(app_conf: RustusConf) -> Box<dyn Fn(&mut web::ServiceConfig)> {
         for extension in app_conf.extensions_vec() {
             match extension {
                 ProtocolExtensions::Creation => creation::add_extension(web_app, &app_conf),
-                ProtocolExtensions::CreationWithUpload => {
-                    creation_with_upload::add_extension(web_app, &app_conf);
-                }
                 ProtocolExtensions::Termination => {
                     termination::add_extension(web_app, &app_conf);
                 }
                 ProtocolExtensions::Getting => {
                     getting::add_extension(web_app, &app_conf);
                 }
+                _ => {}
             }
         }
         core::add_extension(web_app, &app_conf);
