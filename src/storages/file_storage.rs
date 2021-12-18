@@ -2,44 +2,44 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use actix_files::NamedFile;
-use async_std::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
+use async_std::fs::{DirBuilder, OpenOptions, remove_file};
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
 use uuid::Uuid;
 
 use crate::errors::{RustusError, RustusResult};
-use crate::storages::{FileInfo, Storage};
+use crate::info_storages::{FileInfo, InfoStorage};
 use crate::RustusConf;
+use crate::storages::Storage;
 
-#[derive(Clone)]
 pub struct FileStorage {
     app_conf: RustusConf,
+    info_storage: Box<dyn InfoStorage + Send + Sync>,
 }
 
 impl FileStorage {
-    pub fn new(app_conf: RustusConf) -> FileStorage {
-        FileStorage { app_conf }
-    }
-
-    pub fn info_file_path(&self, file_id: &str) -> PathBuf {
-        self.app_conf
-            .storage_opts
-            .data
-            .join(format!("{}.info", file_id))
+    pub fn new(app_conf: RustusConf, info_storage: Box<dyn InfoStorage + Send + Sync>) -> FileStorage {
+        FileStorage {
+            app_conf,
+            info_storage,
+        }
     }
 
     pub fn data_file_path(&self, file_id: &str) -> PathBuf {
-        self.app_conf.storage_opts.data.join(file_id.to_string())
+        self.app_conf
+            .storage_opts
+            .data_dir
+            .join(file_id.to_string())
     }
 }
 
 #[async_trait]
 impl Storage for FileStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
-        if !self.app_conf.storage_opts.data.exists() {
+        if !self.app_conf.storage_opts.data_dir.exists() {
             DirBuilder::new()
-                .create(self.app_conf.storage_opts.data.as_path())
+                .create(self.app_conf.storage_opts.data_dir.as_path())
                 .await
                 .map_err(|err| RustusError::UnableToPrepareStorage(err.to_string()))?;
         }
@@ -47,39 +47,7 @@ impl Storage for FileStorage {
     }
 
     async fn get_file_info(&self, file_id: &str) -> RustusResult<FileInfo> {
-        let info_path = self.info_file_path(file_id);
-        if !info_path.exists() {
-            return Err(RustusError::FileNotFound);
-        }
-        let contents = read_to_string(info_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToReadInfo
-        })?;
-        serde_json::from_str::<FileInfo>(contents.as_str()).map_err(RustusError::from)
-    }
-
-    async fn set_file_info(&self, file_info: &FileInfo) -> RustusResult<()> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(self.info_file_path(file_info.id.as_str()).as_path())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(err.to_string())
-            })?;
-        file.write_all(serde_json::to_string(&file_info)?.as_bytes())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(
-                    self.info_file_path(file_info.id.as_str())
-                        .as_path()
-                        .display()
-                        .to_string(),
-                )
-            })?;
-        Ok(())
+        self.info_storage.get_info(file_id).await
     }
 
     async fn get_contents(&self, file_id: &str) -> RustusResult<NamedFile> {
@@ -95,7 +63,7 @@ impl Storage for FileStorage {
         request_offset: usize,
         bytes: &[u8],
     ) -> RustusResult<usize> {
-        let mut info = self.get_file_info(file_id).await?;
+        let mut info = self.info_storage.get_info(file_id).await?;
         if info.offset != request_offset {
             return Err(RustusError::WrongOffset);
         }
@@ -114,7 +82,7 @@ impl Storage for FileStorage {
             RustusError::UnableToWrite(self.data_file_path(file_id).as_path().display().to_string())
         })?;
         info.offset += bytes.len();
-        self.set_file_info(&info).await?;
+        self.info_storage.set_info(&info).await?;
         Ok(info.offset)
     }
 
@@ -157,24 +125,17 @@ impl Storage for FileStorage {
             metadata,
         );
 
-        self.set_file_info(&file_info).await?;
+        self.info_storage.set_info(&file_info).await?;
 
         Ok(file_id)
     }
 
     async fn remove_file(&self, file_id: &str) -> RustusResult<()> {
-        let info_path = self.info_file_path(file_id);
-        if !info_path.exists() {
-            return Err(RustusError::FileNotFound);
-        }
+        self.info_storage.remove_info(file_id).await?;
         let data_path = self.data_file_path(file_id);
         if !data_path.exists() {
             return Err(RustusError::FileNotFound);
         }
-        remove_file(info_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToRemove(String::from(file_id))
-        })?;
         remove_file(data_path).await.map_err(|err| {
             error!("{:?}", err);
             RustusError::UnableToRemove(String::from(file_id))

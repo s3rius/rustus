@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
+use actix_web::{HttpResponse, ResponseError};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
 
 pub type RustusResult<T> = Result<T, RustusError>;
 
@@ -26,6 +26,8 @@ pub enum RustusError {
     UnableToWrite(String),
     #[error("Unable to remove file {0}")]
     UnableToRemove(String),
+    #[error("Unable to prepare info storage. Reason: {0}")]
+    UnableToPrepareInfoStorage(String),
     #[error("Unable to prepare storage. Reason: {0}")]
     UnableToPrepareStorage(String),
     #[error("Unknown extension: {0}")]

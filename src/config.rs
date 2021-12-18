@@ -3,11 +3,15 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use crate::errors::RustusError;
+use crate::info_storages::AvailableInfoStores;
 use crate::storages::AvailableStores;
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct StorageOptions {
     /// Rustus storage type.
+    ///
+    /// Storages are used to store
+    /// uploads.
     #[structopt(long, short, default_value = "file_storage", env = "RUSTUS_STORAGE")]
     pub storage: AvailableStores,
 
@@ -21,18 +25,38 @@ pub struct StorageOptions {
         required_if("storage", "file_storage"),
         required_if("storage", "sqlite_file_storage")
     )]
-    pub data: PathBuf,
+    pub data_dir: PathBuf,
+}
 
-    /// Path to SQLite file.
+#[derive(StructOpt, Debug, Clone)]
+pub struct InfoStoreOptions {
+    /// Type of info storage.
     ///
-    /// This file is used to
-    /// store information about uploaded files.
+    /// Info storages are used
+    /// to store information about
+    /// uploads.
+    ///
+    /// This information is used in
+    /// HEAD requests.
     #[structopt(
         long,
-        default_value = "data/info.sqlite3",
-        required_if("storage", "sqlite_file_storage")
+        short,
+        default_value = "file_info_storage",
+        env = "RUSTUS_INFO_STORAGE"
     )]
-    pub sqlite_dsn: PathBuf,
+    pub info_storage: AvailableInfoStores,
+
+    /// Rustus info directory
+    ///
+    /// This directory is used to store .info files
+    /// for `file_info_storage`.
+    #[structopt(
+        long,
+        default_value = "./data",
+        required_if("info_storage", "file_info_storage"),
+        env = "RUSTUS_INFO_DIR"
+    )]
+    pub info_dir: PathBuf,
 }
 
 #[derive(Debug, StructOpt, Clone)]
@@ -79,6 +103,9 @@ pub struct RustusConf {
 
     #[structopt(flatten)]
     pub storage_opts: StorageOptions,
+
+    #[structopt(flatten)]
+    pub info_storage_opts: InfoStoreOptions,
 }
 
 /// Enum of available Protocol Extensions
