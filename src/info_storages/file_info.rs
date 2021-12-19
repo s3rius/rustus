@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-
+use chrono::serde::ts_seconds;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 /// Information about file.
@@ -11,7 +12,8 @@ pub struct FileInfo {
     pub offset: usize,
     pub length: usize,
     pub path: String,
-    pub created_at: i64,
+    #[serde(with = "ts_seconds")]
+    pub created_at: DateTime<Utc>,
     pub deferred_size: bool,
     pub metadata: HashMap<String, String>,
 }
@@ -51,7 +53,7 @@ impl FileInfo {
             metadata,
             deferred_size,
             offset: 0,
-            created_at: chrono::Utc::now().timestamp(),
+            created_at: chrono::Utc::now(),
         }
     }
 }

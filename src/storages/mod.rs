@@ -4,9 +4,7 @@ use std::str::FromStr;
 use actix_files::NamedFile;
 use async_trait::async_trait;
 
-
 use derive_more::{Display, From};
-
 
 use crate::errors::RustusResult;
 use crate::info_storages::{FileInfo, InfoStorage};
@@ -50,7 +48,9 @@ impl AvailableStores {
     ) -> Box<dyn Storage + Send + Sync> {
         #[allow(clippy::single_match)]
         match self {
-            Self::FileStorage => Box::new(file_storage::FileStorage::new(config.clone(), info_storage)),
+            Self::FileStorage => {
+                Box::new(file_storage::FileStorage::new(config.clone(), info_storage))
+            }
         }
     }
 }

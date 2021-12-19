@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use async_std::fs::{DirBuilder, OpenOptions, read_to_string, remove_file};
+use async_std::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;

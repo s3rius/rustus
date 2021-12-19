@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind};
 
-use actix_web::{HttpResponse, ResponseError};
 use actix_web::dev::HttpResponseBuilder;
 use actix_web::http::StatusCode;
+use actix_web::{HttpResponse, ResponseError};
 
 pub type RustusResult<T> = Result<T, RustusError>;
 
@@ -19,7 +19,7 @@ pub enum RustusError {
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
     #[error("Database error: {0}")]
-    DatabaseError(#[from] sqlx::Error),
+    DatabaseError(#[from] sea_orm::error::DbErr),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]

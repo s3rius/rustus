@@ -1,11 +1,11 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use actix_web::{
-    App,
-    dev::{Server, Service}, HttpServer, middleware, web,
-};
 use actix_web::http::Method;
+use actix_web::{
+    dev::{Server, Service},
+    middleware, web, App, HttpServer,
+};
 use log::{error, info};
 
 use config::RustusConf;
@@ -83,7 +83,7 @@ pub fn create_server(
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))
     })
-        .bind((host, port))?;
+    .bind((host, port))?;
 
     // If custom workers count variable is provided.
     if let Some(workers_count) = workers {
@@ -99,7 +99,11 @@ async fn main() -> std::io::Result<()> {
     let app_conf = RustusConf::from_args();
     simple_logging::log_to_stderr(app_conf.log_level);
 
-    let mut info_storage = app_conf.info_storage_opts.info_storage.get(&app_conf);
+    let mut info_storage = app_conf
+        .info_storage_opts
+        .info_storage
+        .get(&app_conf)
+        .await?;
     info_storage.prepare().await?;
     let mut storage = app_conf.storage_opts.storage.get(&app_conf, info_storage);
     if let Err(err) = storage.prepare().await {

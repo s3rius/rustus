@@ -10,13 +10,16 @@ use crate::RustusConf;
 
 mod file_info;
 
+pub mod db_info_storage;
+pub mod db_model;
 pub mod file_info_storage;
-
 
 #[derive(PartialEq, From, Display, Clone, Debug)]
 pub enum AvailableInfoStores {
-    #[display(fmt = "FileStorage")]
+    #[display(fmt = "FileInfoStorage")]
     FileInfoStorage,
+    #[display(fmt = "DBInfoStorage")]
+    DBInfoStorage,
 }
 
 impl FromStr for AvailableInfoStores {
@@ -25,6 +28,7 @@ impl FromStr for AvailableInfoStores {
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input {
             "file_info_storage" => Ok(AvailableInfoStores::FileInfoStorage),
+            "db_info_storage" => Ok(AvailableInfoStores::DBInfoStorage),
             _ => Err(String::from("Unknown storage type")),
         }
     }
@@ -36,10 +40,17 @@ impl AvailableInfoStores {
     /// # Params
     /// `config` - Rustus configuration.
     ///
-    pub fn get(&self, config: &RustusConf) -> Box<dyn InfoStorage + Sync + Send> {
-        #[allow(clippy::single_match)]
+    pub async fn get(
+        &self,
+        config: &RustusConf,
+    ) -> RustusResult<Box<dyn InfoStorage + Sync + Send>> {
         match self {
-            Self::FileInfoStorage => Box::new(file_info_storage::FileInfoStorage::new(config.clone())),
+            Self::FileInfoStorage => Ok(Box::new(file_info_storage::FileInfoStorage::new(
+                config.clone(),
+            ))),
+            Self::DBInfoStorage => Ok(Box::new(
+                db_info_storage::DBInfoStorage::new(config.clone()).await?,
+            )),
         }
     }
 }

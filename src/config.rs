@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
+use chrono::{Datelike, Timelike};
 use structopt::StructOpt;
 
 use crate::errors::RustusError;
@@ -19,13 +21,11 @@ pub struct StorageOptions {
     ///
     /// This directory is used to store files
     /// for all *file_storage storages.
-    #[structopt(
-        long,
-        default_value = "./data",
-        required_if("storage", "file_storage"),
-        required_if("storage", "sqlite_file_storage")
-    )]
+    #[structopt(long, default_value = "./data")]
     pub data_dir: PathBuf,
+
+    #[structopt(long, short = "dstruct", default_value = "")]
+    pub dis_structure: String,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -50,13 +50,15 @@ pub struct InfoStoreOptions {
     ///
     /// This directory is used to store .info files
     /// for `file_info_storage`.
+    #[structopt(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
+    pub info_dir: PathBuf,
+
     #[structopt(
         long,
-        default_value = "./data",
-        required_if("info_storage", "file_info_storage"),
-        env = "RUSTUS_INFO_DIR"
+        required_if("info-storage", "db_info_storage"),
+        env = "RUSTUS_INFO_DB_DSN"
     )]
-    pub info_dir: PathBuf,
+    pub info_db_dsn: Option<String>,
 }
 
 #[derive(Debug, StructOpt, Clone)]
@@ -178,6 +180,21 @@ impl RustusConf {
                 .strip_suffix('/')
                 .unwrap_or_else(|| base_url.as_str())
         )
+    }
+
+    pub fn dir_struct(&self) -> String {
+        let hostname = gethostname::gethostname();
+
+        let now = chrono::Utc::now();
+        let mut vars: HashMap<String, String> = HashMap::new();
+        vars.insert("day".into(), now.day().to_string());
+        vars.insert("month".into(), now.month().to_string());
+        vars.insert("year".into(), now.year().to_string());
+        vars.insert("hour".into(), now.hour().to_string());
+        vars.insert("minute".into(), now.minute().to_string());
+        vars.insert("hostname".into(), hostname.to_string_lossy().into());
+        strfmt::strfmt(self.storage_opts.dis_structure.as_str(), &vars)
+            .unwrap_or_else(|_| "".into())
     }
 
     /// List of extensions.
