@@ -11,7 +11,6 @@ use crate::RustusConf;
 mod file_info;
 
 pub mod db_info_storage;
-pub mod db_model;
 pub mod file_info_storage;
 
 #[derive(PartialEq, From, Display, Clone, Debug)]
@@ -58,7 +57,7 @@ impl AvailableInfoStores {
 #[async_trait]
 pub trait InfoStorage {
     async fn prepare(&mut self) -> RustusResult<()>;
-    async fn set_info(&self, file_info: &FileInfo) -> RustusResult<()>;
+    async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()>;
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo>;
     async fn remove_info(&self, file_id: &str) -> RustusResult<()>;
 }

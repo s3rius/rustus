@@ -38,10 +38,10 @@ impl InfoStorage for FileInfoStorage {
         Ok(())
     }
 
-    async fn set_info(&self, file_info: &FileInfo) -> RustusResult<()> {
+    async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
         let mut file = OpenOptions::new()
             .write(true)
-            .create(true)
+            .create(create)
             .open(self.info_file_path(file_info.id.as_str()).as_path())
             .await
             .map_err(|err| {

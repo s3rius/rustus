@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use actix_files::NamedFile;
+use async_std::fs::{DirBuilder, OpenOptions, remove_file};
 use async_std::fs::create_dir_all;
-use async_std::fs::{remove_file, DirBuilder, OpenOptions};
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
@@ -11,8 +11,8 @@ use uuid::Uuid;
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
-use crate::storages::Storage;
 use crate::RustusConf;
+use crate::storages::Storage;
 
 pub struct FileStorage {
     app_conf: RustusConf,
@@ -93,7 +93,7 @@ impl Storage for FileStorage {
             RustusError::UnableToWrite(info.path.clone())
         })?;
         info.offset += bytes.len();
-        self.info_storage.set_info(&info).await?;
+        self.info_storage.set_info(&info, false).await?;
         Ok(info.offset)
     }
 
@@ -128,7 +128,7 @@ impl Storage for FileStorage {
             metadata,
         );
 
-        self.info_storage.set_info(&file_info).await?;
+        self.info_storage.set_info(&file_info, true).await?;
 
         Ok(file_id)
     }

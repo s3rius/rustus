@@ -19,7 +19,7 @@ pub enum RustusError {
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
     #[error("Database error: {0}")]
-    DatabaseError(#[from] sea_orm::error::DbErr),
+    DatabaseError(#[from] rbatis::error::Error),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]
