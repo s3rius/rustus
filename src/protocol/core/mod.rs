@@ -1,3 +1,4 @@
+use actix_web::web::PayloadConfig;
 use actix_web::{guard, middleware, web};
 
 use crate::RustusConf;
@@ -26,6 +27,8 @@ pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
             // PATCH /base/{file_id}
             // Main URL for uploading files.
             web::resource(app_conf.file_url().as_str())
+                // 10 MB chunks
+                .app_data(PayloadConfig::new(app_conf.max_body_size))
                 .name("core:write_bytes")
                 .guard(guard::Patch())
                 .to(routes::write_bytes),

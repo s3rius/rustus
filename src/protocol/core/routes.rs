@@ -48,7 +48,7 @@ pub async fn write_bytes(
     storage: web::Data<Box<dyn Storage + Send + Sync>>,
 ) -> actix_web::Result<HttpResponse> {
     if !check_header(&request, "Content-Type", "application/offset+octet-stream") {
-        return Ok(HttpResponseBuilder::new(StatusCode::UNSUPPORTED_MEDIA_TYPE).body(""));
+        return Ok(HttpResponse::UnsupportedMediaType().body(""));
     }
     let offset = parse_header(&request, "Upload-Offset");
 

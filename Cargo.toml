@@ -24,6 +24,5 @@ log = "^0.4.14"
 url = "2.2.2"
 base64 = "^0.13.0"
 simple-logging = { version = "^2.0.2" }
-gethostname = "0.2.1"
 strfmt = "^0.1.6"
 sea-orm = { version = "^0.4.2", features = ["runtime-async-std-rustls", "sqlx-all", "sqlx-chrono"] }

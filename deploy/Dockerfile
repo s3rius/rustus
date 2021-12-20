@@ -13,7 +13,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release --bin rustus
 
-FROM debian:buster-20211201-slim AS runtime
+FROM debian:bullseye-20211201-slim AS runtime
 WORKDIR app
 COPY --from=builder /app/target/release/rustus /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/rustus"]

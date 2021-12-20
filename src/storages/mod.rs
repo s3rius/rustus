@@ -3,7 +3,6 @@ use std::str::FromStr;
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
-
 use derive_more::{Display, From};
 
 use crate::errors::RustusResult;
@@ -102,8 +101,8 @@ pub trait Storage {
     /// This method is used to generate unique file id, create file and store information about it.
     ///
     /// # Params
-    /// `file_size` - Size of a file. It may be None if size is deffered;
-    /// `metadata` - Optional file metainformation;
+    /// `file_size` - Size of a file. It may be None if size is deferred;
+    /// `metadata` - Optional file meta-information;
     async fn create_file(
         &self,
         file_size: Option<usize>,

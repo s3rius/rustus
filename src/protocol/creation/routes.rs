@@ -84,6 +84,9 @@ pub async fn create_file(
         .extensions_vec()
         .contains(&ProtocolExtensions::CreationWithUpload);
     if with_upload && !bytes.is_empty() {
+        if !check_header(&request, "Content-Type", "application/offset+octet-stream") {
+            return Ok(HttpResponse::BadRequest().body(""));
+        }
         // Writing first bytes.
         upload_offset = storage
             .add_bytes(file_id.as_str(), 0, bytes.bytes())

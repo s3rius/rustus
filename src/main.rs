@@ -64,6 +64,7 @@ pub fn create_server(
             .wrap(
                 middleware::DefaultHeaders::new()
                     .header("Tus-Resumable", "1.0.0")
+                    .header("Tus-Max-Size", app_conf.max_body_size.to_string())
                     .header("Tus-Version", "1.0.0"),
             )
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
@@ -89,7 +90,7 @@ pub fn create_server(
     if let Some(workers_count) = workers {
         server = server.workers(workers_count);
     }
-    server = server.server_hostname("meme");
+
     Ok(server.run())
 }
 

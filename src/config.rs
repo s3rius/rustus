@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::path::PathBuf;
 
 use chrono::{Datelike, Timelike};
@@ -82,6 +83,14 @@ pub struct RustusConf {
     /// Rustus base API url
     #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,
+
+    #[structopt(
+        long,
+        short = "mbs",
+        default_value = "262144",
+        env = "RUSTUS_MAX_BODY_SIZE"
+    )]
+    pub max_body_size: usize,
 
     /// Enabled hooks for http events
     #[structopt(long, default_value = "pre-create,post-finish", env = "RUSTUS_HOOKS")]
@@ -183,8 +192,6 @@ impl RustusConf {
     }
 
     pub fn dir_struct(&self) -> String {
-        let hostname = gethostname::gethostname();
-
         let now = chrono::Utc::now();
         let mut vars: HashMap<String, String> = HashMap::new();
         vars.insert("day".into(), now.day().to_string());
@@ -192,7 +199,9 @@ impl RustusConf {
         vars.insert("year".into(), now.year().to_string());
         vars.insert("hour".into(), now.hour().to_string());
         vars.insert("minute".into(), now.minute().to_string());
-        vars.insert("hostname".into(), hostname.to_string_lossy().into());
+        for (key, value) in env::vars() {
+            vars.insert(format!("env[{}]", key), value);
+        }
         strfmt::strfmt(self.storage_opts.dis_structure.as_str(), &vars)
             .unwrap_or_else(|_| "".into())
     }
