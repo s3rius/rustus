@@ -20,6 +20,10 @@ pub enum RustusError {
     UnableToSerialize(#[from] serde_json::Error),
     #[error("Database error: {0}")]
     DatabaseError(#[from] rbatis::error::Error),
+    #[error("Redis error: {0}")]
+    RedisError(#[from] mobc_redis::redis::RedisError),
+    #[error("Redis error: {0}")]
+    MobcError(#[from] mobc_redis::mobc::Error<mobc_redis::redis::RedisError>),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]

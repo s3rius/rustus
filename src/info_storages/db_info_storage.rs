@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rbatis::{crud_table, impl_field_name_method};
 use rbatis::crud::CRUD;
+use rbatis::crud_table;
 use rbatis::db::DBPoolOptions;
 use rbatis::executor::Executor;
 use rbatis::rbatis::Rbatis;
@@ -28,8 +28,6 @@ impl TryFrom<&FileInfo> for DbModel {
     }
 }
 
-impl_field_name_method!(DbModel { id, info });
-
 pub struct DBInfoStorage {
     db: Rbatis,
 }
@@ -43,7 +41,7 @@ impl DBInfoStorage {
             app_conf.info_storage_opts.info_db_dsn.unwrap().as_str(),
             opts,
         )
-            .await?;
+        .await?;
         Ok(Self { db })
     }
 }
@@ -51,7 +49,6 @@ impl DBInfoStorage {
 #[async_trait]
 impl InfoStorage for DBInfoStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
-        // let builder = self.db();
         self.db
             .exec(
                 "CREATE TABLE IF NOT EXISTS db_model (id VARCHAR(40) PRIMARY KEY, info TEXT);",
@@ -66,13 +63,13 @@ impl InfoStorage for DBInfoStorage {
         if create {
             self.db.save(&model, &[]).await?;
         } else {
-            self.db.update_by_column(DbModel::id(), &model).await?;
+            self.db.update_by_column("id", &model).await?;
         }
         Ok(())
     }
 
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
-        let model: Option<DbModel> = self.db.fetch_by_column(DbModel::id(), file_id).await?;
+        let model: Option<DbModel> = self.db.fetch_by_column("id", file_id).await?;
         if let Some(info) = model {
             serde_json::from_str(info.info.as_str()).map_err(RustusError::from)
         } else {
@@ -81,21 +78,9 @@ impl InfoStorage for DBInfoStorage {
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
-        // let model_opt: Option<db_model::Model> =
-        //     db_model::Entity::find_by_id(String::from(file_id))
-        //         .one(&self.db)
-        //         .await
-        //         .map_err(RustusError::from)?;
-        // if let Some(model) = model_opt {
-        //     let active_model: db_model::ActiveModel = model.into();
-        //     active_model
-        //         .delete(&self.db)
-        //         .await
-        //         .map_err(RustusError::from)?;
-        //     Ok(())
-        // } else {
-        //     Err(RustusError::FileNotFound)
-        // }
-        todo!()
+        self.db
+            .remove_by_column::<DbModel, &str>("id", file_id)
+            .await?;
+        Ok(())
     }
 }

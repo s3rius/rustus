@@ -11,6 +11,18 @@ This implementation has several features to make usage as simple as possible.
 * You can specify directory structure to organize your uploads;
 * Highly configurable;
 
+### Supported info storages
+
+* FileSystem
+* PostgresSQL
+* Mysql
+* SQLite
+* Redis
+
+### Supported data storages
+
+* FileSystem
+
 ## Installation
 
 Since I haven't configured build automation yet, you can build it
@@ -55,8 +67,10 @@ All options are listed in `rustus --help`.
 * [x] Termination extension;
 * [x] Route to get uploaded files;
 * [x] Database support for info storage;
+* [x] Redis support for info storage;
 * [ ] S3 as data storage store support;
 * [ ] Notification interface;
+* [ ] Executable files notifications;
 * [ ] Notifications via http hooks;
 * [ ] Notifications via RabbitMQ;
 * [ ] Rustus helm chart;

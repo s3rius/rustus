@@ -12,13 +12,16 @@ mod file_info;
 
 pub mod db_info_storage;
 pub mod file_info_storage;
+pub mod redis_info_storage;
 
 #[derive(PartialEq, From, Display, Clone, Debug)]
 pub enum AvailableInfoStores {
-    #[display(fmt = "FileInfoStorage")]
-    FileInfoStorage,
-    #[display(fmt = "DBInfoStorage")]
-    DBInfoStorage,
+    #[display(fmt = "File info storage")]
+    Files,
+    #[display(fmt = "DB info storage")]
+    DB,
+    #[display(fmt = "Redis info storage")]
+    Redis,
 }
 
 impl FromStr for AvailableInfoStores {
@@ -26,8 +29,9 @@ impl FromStr for AvailableInfoStores {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input {
-            "file_info_storage" => Ok(AvailableInfoStores::FileInfoStorage),
-            "db_info_storage" => Ok(AvailableInfoStores::DBInfoStorage),
+            "file_info_storage" => Ok(AvailableInfoStores::Files),
+            "db_info_storage" => Ok(AvailableInfoStores::DB),
+            "redis_info_storage" => Ok(AvailableInfoStores::Redis),
             _ => Err(String::from("Unknown storage type")),
         }
     }
@@ -44,11 +48,14 @@ impl AvailableInfoStores {
         config: &RustusConf,
     ) -> RustusResult<Box<dyn InfoStorage + Sync + Send>> {
         match self {
-            Self::FileInfoStorage => Ok(Box::new(file_info_storage::FileInfoStorage::new(
+            Self::Files => Ok(Box::new(file_info_storage::FileInfoStorage::new(
                 config.clone(),
             ))),
-            Self::DBInfoStorage => Ok(Box::new(
+            Self::DB => Ok(Box::new(
                 db_info_storage::DBInfoStorage::new(config.clone()).await?,
+            )),
+            AvailableInfoStores::Redis => Ok(Box::new(
+                redis_info_storage::RedisStorage::new(config.clone()).await?,
             )),
         }
     }

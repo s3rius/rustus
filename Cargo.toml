@@ -27,3 +27,4 @@ simple-logging = { version = "^2.0.2" }
 strfmt = "^0.1.6"
 rbson = "2.0"
 rbatis = { version = "^3.0", default-features = false, features = ["runtime-async-std-rustls", "all-database"] }
+mobc-redis = { version = "0.7.0", features = ["async-std-comp"] }

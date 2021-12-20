@@ -57,6 +57,7 @@ pub struct InfoStoreOptions {
     #[structopt(
         long,
         required_if("info-storage", "db_info_storage"),
+        required_if("info-storage", "redis_info_storage"),
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
@@ -107,7 +108,7 @@ pub struct RustusConf {
     /// Enabled extensions for TUS protocol.
     #[structopt(
         long,
-        default_value = "getting,creation,creation-with-upload,creation-defer-length",
+        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length",
         env = "RUSTUS_EXTENSIONS"
     )]
     pub extensions: String,
