@@ -15,6 +15,7 @@ use crate::storages::Storage;
 mod config;
 mod errors;
 mod info_storages;
+mod notifiers;
 mod protocol;
 mod routes;
 mod storages;

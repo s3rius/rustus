@@ -2433,6 +2433,7 @@ dependencies = [
  "base64",
  "chrono",
  "derive_more",
+ "lazy_static",
  "log",
  "mobc-redis",
  "rbatis",

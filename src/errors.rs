@@ -41,12 +41,14 @@ pub enum RustusError {
     UnknownExtension(String),
 }
 
+/// This conversion allows us to use `RustusError` in the `main` function.
 impl From<RustusError> for Error {
     fn from(err: RustusError) -> Self {
         Error::new(ErrorKind::Other, err)
     }
 }
 
+/// Trait to convert errors to http-responses.
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
         HttpResponseBuilder::new(self.status_code())
