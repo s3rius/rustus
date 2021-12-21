@@ -18,10 +18,13 @@ pub enum RustusError {
     Unknown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
+    #[cfg(feature = "db_info_storage")]
     #[error("Database error: {0}")]
     DatabaseError(#[from] rbatis::error::Error),
+    #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
     RedisError(#[from] mobc_redis::redis::RedisError),
+    #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
     MobcError(#[from] mobc_redis::mobc::Error<mobc_redis::redis::RedisError>),
     #[error("Unable to get file information")]

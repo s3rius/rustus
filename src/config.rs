@@ -54,6 +54,7 @@ pub struct InfoStoreOptions {
     #[structopt(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
     pub info_dir: PathBuf,
 
+    #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
     #[structopt(
         long,
         required_if("info-storage", "db_info_storage"),

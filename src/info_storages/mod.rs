@@ -10,17 +10,23 @@ use crate::RustusConf;
 
 mod file_info;
 
+use strum::{EnumIter, IntoEnumIterator};
+
+#[cfg(feature = "db_info_storage")]
 pub mod db_info_storage;
 pub mod file_info_storage;
+#[cfg(feature = "redis_info_storage")]
 pub mod redis_info_storage;
 
-#[derive(PartialEq, From, Display, Clone, Debug)]
+#[derive(PartialEq, From, Display, Clone, Debug, EnumIter)]
 pub enum AvailableInfoStores {
-    #[display(fmt = "File info storage")]
+    #[display(fmt = "file_info_storage")]
     Files,
-    #[display(fmt = "DB info storage")]
+    #[cfg(feature = "db_info_storage")]
+    #[display(fmt = "db_info_storage")]
     DB,
-    #[display(fmt = "Redis info storage")]
+    #[cfg(feature = "redis_info_storage")]
+    #[display(fmt = "redis_info_storage")]
     Redis,
 }
 
@@ -28,12 +34,20 @@ impl FromStr for AvailableInfoStores {
     type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        match input {
-            "file_info_storage" => Ok(AvailableInfoStores::Files),
-            "db_info_storage" => Ok(AvailableInfoStores::DB),
-            "redis_info_storage" => Ok(AvailableInfoStores::Redis),
-            _ => Err(String::from("Unknown storage type")),
+        let available_stores = AvailableInfoStores::iter()
+            .map(|info_store| format!("\t* {}", info_store.to_string()))
+            .collect::<Vec<String>>()
+            .join("\n");
+        let inp_string = String::from(input);
+        for store in AvailableInfoStores::iter() {
+            if inp_string == store.to_string() {
+                return Ok(store);
+            }
         }
+        Err(format!(
+            "Unknown info storage type.\n Available storages:\n{}",
+            available_stores
+        ))
     }
 }
 
@@ -51,9 +65,11 @@ impl AvailableInfoStores {
             Self::Files => Ok(Box::new(file_info_storage::FileInfoStorage::new(
                 config.clone(),
             ))),
+            #[cfg(feature = "db_info_storage")]
             Self::DB => Ok(Box::new(
                 db_info_storage::DBInfoStorage::new(config.clone()).await?,
             )),
+            #[cfg(feature = "redis_info_storage")]
             AvailableInfoStores::Redis => Ok(Box::new(
                 redis_info_storage::RedisStorage::new(config.clone()).await?,
             )),
