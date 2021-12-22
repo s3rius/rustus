@@ -3,11 +3,25 @@ use std::env;
 use std::path::PathBuf;
 
 use chrono::{Datelike, Timelike};
+use lazy_static::lazy_static;
 use structopt::StructOpt;
 
-use crate::errors::RustusError;
 use crate::info_storages::AvailableInfoStores;
+use crate::notifiers::{Format, Hook};
+use crate::protocol::extensions::Extensions;
+
 use crate::storages::AvailableStores;
+
+lazy_static! {
+    /// Freezing ENVS on startup.
+    static ref ENV_MAP: HashMap<String, String> = {
+        let mut m = HashMap::new();
+        for (key, value) in env::vars() {
+            m.insert(format!("env[{}]", key), value);
+        }
+        m
+    };
+}
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct StorageOptions {
@@ -15,7 +29,7 @@ pub struct StorageOptions {
     ///
     /// Storages are used to store
     /// uploads.
-    #[structopt(long, short, default_value = "file_storage", env = "RUSTUS_STORAGE")]
+    #[structopt(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
     pub storage: AvailableStores,
 
     /// Rustus data directory
@@ -25,7 +39,7 @@ pub struct StorageOptions {
     #[structopt(long, default_value = "./data")]
     pub data_dir: PathBuf,
 
-    #[structopt(long, short = "dstruct", default_value = "")]
+    #[structopt(long, default_value = "")]
     pub dis_structure: String,
 }
 
@@ -42,7 +56,7 @@ pub struct InfoStoreOptions {
     #[structopt(
         long,
         short,
-        default_value = "file_info_storage",
+        default_value = "file-info-storage",
         env = "RUSTUS_INFO_STORAGE"
     )]
     pub info_storage: AvailableInfoStores,
@@ -54,18 +68,51 @@ pub struct InfoStoreOptions {
     #[structopt(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
     pub info_dir: PathBuf,
 
+    /// Connection string for remote info storages.
+    ///
+    /// This connection string is used for storages
+    /// which require connection. Examples of such storages
+    /// are `Postgres`, `MySQL` or `Redis`.
+    ///
+    /// Value must include all connection details.
     #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
     #[structopt(
         long,
-        required_if("info-storage", "db_info_storage"),
-        required_if("info-storage", "redis_info_storage"),
+        required_if("info-storage", "db-info-storage"),
+        required_if("info-storage", "redis-info-storage"),
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
 }
 
+#[derive(StructOpt, Debug, Clone)]
+pub struct NotificationsOptions {
+    /// Notifications format.
+    ///
+    /// This format will be used in all
+    /// messages about hooks.
+    #[structopt(long, default_value = "default", env = "RUSTUS_NOTIFICATION_FORMAT")]
+    pub notification_format: Format,
+
+    /// Enabled hooks for notifications.
+    #[structopt(
+        long,
+        default_value = "pre-create,post-create,post-receive,post-terminate,post-finish",
+        env = "RUSTUS_HOOKS",
+        use_delimiter = true
+    )]
+    pub hooks: Vec<Hook>,
+
+    /// List of URLS to send webhooks to.
+    ///
+    /// This list will be notified
+    #[cfg(feature = "http_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
+    pub hooks_http_urls: Vec<String>,
+}
+
 #[derive(Debug, StructOpt, Clone)]
-#[structopt(name = "rustus")]
+#[structopt(name = "Rustus")]
 /// Tus protocol implementation.
 ///
 /// This program is a web-server that
@@ -74,7 +121,7 @@ pub struct InfoStoreOptions {
 /// You can read more about protocol
 /// [here](https://tus.io/).
 pub struct RustusConf {
-    /// Rustus host
+    /// Rustus server host
     #[structopt(short, long, default_value = "0.0.0.0", env = "RUSTUS_HOST")]
     pub host: String,
 
@@ -86,6 +133,9 @@ pub struct RustusConf {
     #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,
 
+    /// Maximum payload size.
+    ///
+    /// This limit used to reduce amount of consumed memory.
     #[structopt(
         long,
         short = "mbs",
@@ -93,10 +143,6 @@ pub struct RustusConf {
         env = "RUSTUS_MAX_BODY_SIZE"
     )]
     pub max_body_size: usize,
-
-    /// Enabled hooks for http events
-    #[structopt(long, default_value = "pre-create,post-finish", env = "RUSTUS_HOOKS")]
-    pub enabled_hooks: String,
 
     /// Rustus maximum log level
     #[structopt(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
@@ -110,57 +156,19 @@ pub struct RustusConf {
     #[structopt(
         long,
         default_value = "getting,creation,termination,creation-with-upload,creation-defer-length",
-        env = "RUSTUS_EXTENSIONS"
+        env = "RUSTUS_TUS_EXTENSIONS",
+        use_delimiter = true
     )]
-    pub extensions: String,
+    pub tus_extensions: Vec<Extensions>,
 
     #[structopt(flatten)]
     pub storage_opts: StorageOptions,
 
     #[structopt(flatten)]
     pub info_storage_opts: InfoStoreOptions,
-}
 
-/// Enum of available Protocol Extensions
-#[derive(PartialEq, PartialOrd, Ord, Eq)]
-pub enum ProtocolExtensions {
-    CreationDeferLength,
-    CreationWithUpload,
-    Creation,
-    Termination,
-    Getting,
-}
-
-impl TryFrom<String> for ProtocolExtensions {
-    type Error = RustusError;
-
-    /// Parse string to protocol extension.
-    ///
-    /// This function raises an error if unknown protocol was passed.
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.as_str() {
-            "creation" => Ok(ProtocolExtensions::Creation),
-            "creation-with-upload" => Ok(ProtocolExtensions::CreationWithUpload),
-            "creation-defer-length" => Ok(ProtocolExtensions::CreationDeferLength),
-            "termination" => Ok(ProtocolExtensions::Termination),
-            "getting" => Ok(ProtocolExtensions::Getting),
-            _ => Err(RustusError::UnknownExtension(value.clone())),
-        }
-    }
-}
-
-impl From<ProtocolExtensions> for String {
-    /// Mapping protocol extensions to their
-    /// original names.
-    fn from(ext: ProtocolExtensions) -> Self {
-        match ext {
-            ProtocolExtensions::Creation => "creation".into(),
-            ProtocolExtensions::CreationWithUpload => "creation-with-upload".into(),
-            ProtocolExtensions::Termination => "termination".into(),
-            ProtocolExtensions::Getting => "getting".into(),
-            ProtocolExtensions::CreationDeferLength => "creation-defer-length".into(),
-        }
-    }
+    #[structopt(flatten)]
+    pub notification_opts: NotificationsOptions,
 }
 
 impl RustusConf {
@@ -193,17 +201,20 @@ impl RustusConf {
         )
     }
 
+    /// Check if hook is enabled by user.
+    pub fn hook_is_active(&self, hook: Hook) -> bool {
+        self.notification_opts.hooks.contains(&hook)
+    }
+
+    /// Generate directory name with user template.
     pub fn dir_struct(&self) -> String {
         let now = chrono::Utc::now();
-        let mut vars: HashMap<String, String> = HashMap::new();
+        let mut vars: HashMap<String, String> = ENV_MAP.clone();
         vars.insert("day".into(), now.day().to_string());
         vars.insert("month".into(), now.month().to_string());
         vars.insert("year".into(), now.year().to_string());
         vars.insert("hour".into(), now.hour().to_string());
         vars.insert("minute".into(), now.minute().to_string());
-        for (key, value) in env::vars() {
-            vars.insert(format!("env[{}]", key), value);
-        }
         strfmt::strfmt(self.storage_opts.dis_structure.as_str(), &vars)
             .unwrap_or_else(|_| "".into())
     }
@@ -216,27 +227,19 @@ impl RustusConf {
     /// Protocol extensions must be sorted,
     /// because Actix doesn't override
     /// existing methods.
-    pub fn extensions_vec(&self) -> Vec<ProtocolExtensions> {
-        let mut ext = self
-            .extensions
-            .split(',')
-            .flat_map(|ext| ProtocolExtensions::try_from(String::from(ext)))
-            .collect::<Vec<ProtocolExtensions>>();
+    pub fn extensions_vec(&self) -> Vec<Extensions> {
+        let mut ext = self.tus_extensions.clone();
 
         // If create-with-upload extension is enabled
         // creation extension must be enabled too.
-        if ext.contains(&ProtocolExtensions::CreationWithUpload)
-            && !ext.contains(&ProtocolExtensions::Creation)
-        {
-            ext.push(ProtocolExtensions::Creation);
+        if ext.contains(&Extensions::CreationWithUpload) && !ext.contains(&Extensions::Creation) {
+            ext.push(Extensions::Creation);
         }
 
         // If create-defer-length extension is enabled
         // creation extension must be enabled too.
-        if ext.contains(&ProtocolExtensions::CreationDeferLength)
-            && !ext.contains(&ProtocolExtensions::Creation)
-        {
-            ext.push(ProtocolExtensions::Creation);
+        if ext.contains(&Extensions::CreationDeferLength) && !ext.contains(&Extensions::Creation) {
+            ext.push(Extensions::Creation);
         }
 
         ext.sort();

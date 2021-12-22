@@ -1,9 +1,8 @@
-use actix_web::dev::HttpResponseBuilder;
-use actix_web::http::StatusCode;
 use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::errors::RustusResult;
-use crate::Storage;
+use crate::notifiers::Hook;
+use crate::{NotificationManager, RustusConf, Storage};
 
 /// Terminate uploading.
 ///
@@ -12,10 +11,23 @@ use crate::Storage;
 pub async fn terminate(
     storage: web::Data<Box<dyn Storage + Send + Sync>>,
     request: HttpRequest,
+    notification_manager: web::Data<Box<NotificationManager>>,
+    app_conf: web::Data<RustusConf>,
 ) -> RustusResult<HttpResponse> {
     let file_id_opt = request.match_info().get("file_id").map(String::from);
     if let Some(file_id) = file_id_opt {
-        storage.remove_file(file_id.as_str()).await?;
+        let file_info = storage.remove_file(file_id.as_str()).await?;
+        if app_conf.hook_is_active(Hook::PostTerminate) {
+            let message = app_conf
+                .notification_opts
+                .notification_format
+                .format(&request, &file_info)?;
+            tokio::spawn(async move {
+                notification_manager
+                    .send_message(message, Hook::PostTerminate)
+                    .await
+            });
+        }
     }
-    Ok(HttpResponseBuilder::new(StatusCode::NO_CONTENT).body(""))
+    Ok(HttpResponse::NoContent().body(""))
 }

@@ -1,31 +1,17 @@
 use crate::info_storages::InfoStorage;
 use crate::storages::file_storage;
-use crate::{RustusConf, Storage};
+use crate::{from_str, RustusConf, Storage};
 use derive_more::{Display, From};
-use std::str::FromStr;
+use strum::EnumIter;
 
 /// Enum of available Storage implementations.
-#[derive(PartialEq, From, Display, Clone, Debug)]
+#[derive(PartialEq, From, Display, EnumIter, Clone, Debug)]
 pub enum AvailableStores {
-    #[display(fmt = "FileStorage")]
+    #[display(fmt = "file-storage")]
     FileStorage,
 }
 
-impl FromStr for AvailableStores {
-    type Err = String;
-
-    /// This function converts string to the `AvailableStore` item.
-    /// This function is used by structopt to parse CLI parameters.
-    ///
-    /// # Params
-    /// `input` - input string.
-    fn from_str(input: &str) -> Result<AvailableStores, Self::Err> {
-        match input {
-            "file_storage" => Ok(AvailableStores::FileStorage),
-            _ => Err(String::from("Unknown storage type")),
-        }
-    }
-}
+from_str!(AvailableStores, "storage");
 
 impl AvailableStores {
     /// Convert `AvailableStores` to the Storage.

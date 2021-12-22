@@ -40,7 +40,7 @@ pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
                 .name("core:file_info")
                 .guard(guard::Head())
                 // Header to prevent the client and/or proxies from caching the response.
-                .wrap(middleware::DefaultHeaders::new().header("Cache-Control", "no-store"))
+                .wrap(middleware::DefaultHeaders::new().add(("Cache-Control", "no-store")))
                 .to(routes::get_file_info),
         );
 }

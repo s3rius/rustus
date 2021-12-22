@@ -69,9 +69,9 @@ All options are listed in `rustus --help`.
 * [x] Database support for info storage;
 * [x] Redis support for info storage;
 * [ ] S3 as data storage store support;
-* [ ] Notification interface;
+* [x] Notification interface;
 * [ ] Executable files notifications;
-* [ ] Notifications via http hooks;
+* [x] Notifications via http hooks;
 * [ ] Notifications via RabbitMQ;
 * [ ] Rustus helm chart;
 * [ ] Cloud native rustus operator.

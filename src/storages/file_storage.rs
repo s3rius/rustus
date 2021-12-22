@@ -35,7 +35,12 @@ impl FileStorage {
             .app_conf
             .storage_opts
             .data_dir
-            .join(self.app_conf.dir_struct());
+            .canonicalize()
+            .map_err(|err| {
+                error!("{}", err);
+                RustusError::UnableToWrite(err.to_string())
+            })?
+            .join(self.app_conf.dir_struct().as_str());
         create_dir_all(dir.as_path()).await.map_err(|err| {
             error!("{}", err);
             RustusError::UnableToWrite(err.to_string())
@@ -62,10 +67,15 @@ impl Storage for FileStorage {
 
     async fn get_contents(&self, file_id: &str) -> RustusResult<NamedFile> {
         let info = self.info_storage.get_info(file_id).await?;
-        NamedFile::open(info.path.as_str()).map_err(|err| {
-            error!("{:?}", err);
-            RustusError::FileNotFound
-        })
+        if info.path.is_none() {
+            return Err(RustusError::FileNotFound);
+        }
+        NamedFile::open_async(info.path.unwrap().as_str())
+            .await
+            .map_err(|err| {
+                error!("{:?}", err);
+                RustusError::FileNotFound
+            })
     }
 
     async fn add_bytes(
@@ -73,16 +83,22 @@ impl Storage for FileStorage {
         file_id: &str,
         request_offset: usize,
         bytes: &[u8],
-    ) -> RustusResult<usize> {
+    ) -> RustusResult<FileInfo> {
         let mut info = self.info_storage.get_info(file_id).await?;
         if info.offset != request_offset {
             return Err(RustusError::WrongOffset);
+        }
+        if info.path.is_none() {
+            return Err(RustusError::FileNotFound);
+        }
+        if info.offset == info.length {
+            return Err(RustusError::FrozenFile);
         }
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
             .create(false)
-            .open(info.path.as_str())
+            .open(info.path.as_ref().unwrap())
             .await
             .map_err(|err| {
                 error!("{:?}", err);
@@ -90,18 +106,18 @@ impl Storage for FileStorage {
             })?;
         file.write_all(bytes).await.map_err(|err| {
             error!("{:?}", err);
-            RustusError::UnableToWrite(info.path.clone())
+            RustusError::UnableToWrite(info.path.clone().unwrap())
         })?;
         info.offset += bytes.len();
         self.info_storage.set_info(&info, false).await?;
-        Ok(info.offset)
+        Ok(info)
     }
 
     async fn create_file(
         &self,
         file_size: Option<usize>,
         metadata: Option<HashMap<String, String>>,
-    ) -> RustusResult<String> {
+    ) -> RustusResult<FileInfo> {
         let file_id = Uuid::new_v4().simple().to_string();
         let file_path = self.data_file_path(file_id.as_str()).await?;
         let mut file = OpenOptions::new()
@@ -124,20 +140,23 @@ impl Storage for FileStorage {
         let file_info = FileInfo::new(
             file_id.as_str(),
             file_size,
-            file_path.display().to_string(),
+            Some(file_path.display().to_string()),
             metadata,
         );
 
         self.info_storage.set_info(&file_info, true).await?;
 
-        Ok(file_id)
+        Ok(file_info)
     }
 
-    async fn remove_file(&self, file_id: &str) -> RustusResult<()> {
+    async fn remove_file(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info = self.info_storage.get_info(file_id).await?;
+        if info.path.is_none() {
+            return Err(RustusError::FileNotFound);
+        }
         self.info_storage.remove_info(file_id).await?;
 
-        let data_path = PathBuf::from(info.path.clone());
+        let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
         if !data_path.exists() {
             return Err(RustusError::FileNotFound);
         }
@@ -145,6 +164,6 @@ impl Storage for FileStorage {
             error!("{:?}", err);
             RustusError::UnableToRemove(String::from(file_id))
         })?;
-        Ok(())
+        Ok(info)
     }
 }

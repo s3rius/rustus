@@ -6,8 +6,12 @@ use actix_web::{
     dev::{Server, Service},
     middleware, web, App, HttpServer,
 };
-use log::{error, info};
+use fern::colors::{Color, ColoredLevelConfig};
+use fern::Dispatch;
+use log::LevelFilter;
 
+use crate::errors::RustusResult;
+use crate::notifiers::models::notification_manager::NotificationManager;
 use config::RustusConf;
 
 use crate::storages::Storage;
@@ -25,12 +29,25 @@ fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
         .extensions_vec()
         .into_iter()
-        .map(String::from)
+        .map(|x| x.to_string())
         .collect::<Vec<String>>()
-        .join(",");
-    info!("Welcome to rustus!");
-    info!("Base URL: {}", app_conf.base_url());
-    info!("Available extensions {}", extensions);
+        .join(", ");
+    let hooks = app_conf
+        .notification_opts
+        .hooks
+        .clone()
+        .into_iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(", ");
+    let rustus_logo = include_str!("../imgs/rustus_startup_logo.txt");
+    eprintln!("\n\n{}", rustus_logo);
+    eprintln!("Welcome to rustus!");
+    eprintln!("Base URL: {}", app_conf.base_url());
+    eprintln!("Available extensions: {}", extensions);
+    eprintln!("Enabled hooks: {}", hooks);
+    eprintln!();
+    eprintln!();
 }
 
 /// Creates Actix server.
@@ -49,24 +66,29 @@ fn greeting(app_conf: &RustusConf) {
 pub fn create_server(
     storage: Box<dyn Storage + Send + Sync>,
     app_conf: RustusConf,
+    notification_manager: NotificationManager,
 ) -> Result<Server, std::io::Error> {
     let host = app_conf.host.clone();
     let port = app_conf.port;
     let workers = app_conf.workers;
+    let app_conf_data = web::Data::new(app_conf.clone());
     let storage_data: web::Data<Box<dyn Storage + Send + Sync>> =
         web::Data::from(Arc::new(storage));
+    let manager_data: web::Data<Box<NotificationManager>> =
+        web::Data::from(Arc::new(Box::new(notification_manager)));
     let mut server = HttpServer::new(move || {
         App::new()
-            .data(app_conf.clone())
+            .app_data(app_conf_data.clone())
             .app_data(storage_data.clone())
+            .app_data(manager_data.clone())
             // Adds all routes.
             .configure(protocol::setup(app_conf.clone()))
             // Main middleware that appends TUS headers.
             .wrap(
                 middleware::DefaultHeaders::new()
-                    .header("Tus-Resumable", "1.0.0")
-                    .header("Tus-Max-Size", app_conf.max_body_size.to_string())
-                    .header("Tus-Version", "1.0.0"),
+                    .add(("Tus-Resumable", "1.0.0"))
+                    .add(("Tus-Max-Size", app_conf.max_body_size.to_string()))
+                    .add(("Tus-Version", "1.0.0")),
             )
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
             // Middleware that overrides method of a request if
@@ -95,24 +117,60 @@ pub fn create_server(
     Ok(server.run())
 }
 
+fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
+    let colors = ColoredLevelConfig::new()
+        // use builder methods
+        .info(Color::Green)
+        .warn(Color::Yellow)
+        .debug(Color::BrightCyan)
+        .error(Color::BrightRed)
+        .trace(Color::Blue);
+
+    Dispatch::new()
+        .level(app_config.log_level)
+        .level_for("rbatis", LevelFilter::Error)
+        .chain(std::io::stdout())
+        .format(move |out, message, record| {
+            out.finish(format_args!(
+                "{}[{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S%:z]"),
+                colors.color(record.level()),
+                message
+            ));
+        })
+        .apply()?;
+    Ok(())
+}
+
 /// Main program entrypoint.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let app_conf = RustusConf::from_args();
-    simple_logging::log_to_stderr(app_conf.log_level);
+    // Configuring logging.
+    // I may change it to another log system like `fern` later, idk.
+    setup_logging(&app_conf)?;
+    // Printing cool message.
+    greeting(&app_conf);
 
+    // Creating info storage.
+    // It's used to store info about files.
     let mut info_storage = app_conf
         .info_storage_opts
         .info_storage
         .get(&app_conf)
         .await?;
+    // Preparing it, lol.
     info_storage.prepare().await?;
+
+    // Creating file storage.
     let mut storage = app_conf.storage_opts.storage.get(&app_conf, info_storage);
-    if let Err(err) = storage.prepare().await {
-        error!("{}", err);
-        return Err(err.into());
-    }
-    greeting(&app_conf);
-    let server = create_server(storage, app_conf)?;
+    // Preparing it.
+    storage.prepare().await?;
+
+    // Creating notification manager.
+    let notification_manager = NotificationManager::new(&app_conf);
+
+    // Creating actual server and running it.
+    let server = create_server(storage, app_conf, notification_manager)?;
     server.await
 }

@@ -44,7 +44,7 @@ pub trait Storage {
         file_id: &str,
         request_offset: usize,
         bytes: &[u8],
-    ) -> RustusResult<usize>;
+    ) -> RustusResult<FileInfo>;
 
     /// Create file in storage.
     ///
@@ -57,7 +57,7 @@ pub trait Storage {
         &self,
         file_size: Option<usize>,
         metadata: Option<HashMap<String, String>>,
-    ) -> RustusResult<String>;
+    ) -> RustusResult<FileInfo>;
 
     /// Remove file from storage
     ///
@@ -66,5 +66,5 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_id` - unique file identifier;
-    async fn remove_file(&self, file_id: &str) -> RustusResult<()>;
+    async fn remove_file(&self, file_id: &str) -> RustusResult<FileInfo>;
 }

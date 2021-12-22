@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use actix_web::web::{Buf, Bytes};
+use actix_web::web::Bytes;
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::config::ProtocolExtensions;
+use crate::info_storages::FileInfo;
+use crate::notifiers::Hook;
+use crate::protocol::extensions::Extensions;
 use crate::utils::headers::{check_header, parse_header};
-use crate::{RustusConf, Storage};
+use crate::{NotificationManager, RustusConf, Storage};
 
 /// Get metadata info from request.
 ///
@@ -49,6 +51,7 @@ fn get_metadata(request: &HttpRequest) -> Option<HashMap<String, String>> {
 
 pub async fn create_file(
     storage: web::Data<Box<dyn Storage + Send + Sync>>,
+    notification_manager: web::Data<Box<NotificationManager>>,
     app_conf: web::Data<RustusConf>,
     request: HttpRequest,
     bytes: Bytes,
@@ -61,7 +64,7 @@ pub async fn create_file(
     // Indicator that creation-defer-length is enabled.
     let defer_ext = app_conf
         .extensions_vec()
-        .contains(&ProtocolExtensions::CreationDeferLength);
+        .contains(&Extensions::CreationDeferLength);
 
     // Check that Upload-Length header is provided.
     // Otherwise checking that defer-size feature is enabled
@@ -71,30 +74,52 @@ pub async fn create_file(
     }
 
     let meta = get_metadata(&request);
+
+    if app_conf.hook_is_active(Hook::PreCreate) {
+        let initial_file_info = FileInfo::new("", length, None, meta.clone());
+        let message = app_conf
+            .notification_opts
+            .notification_format
+            .format(&request, &initial_file_info)?;
+        notification_manager
+            .send_message(message, Hook::PreCreate)
+            .await?;
+    }
+
     // Create file and get the id.
-    let file_id = storage.create_file(length, meta).await?;
+    let mut file_info = storage.create_file(length, meta).await?;
 
     // Create upload URL for this file.
-    let upload_url = request.url_for("core:write_bytes", &[file_id.clone()])?;
-
-    let mut upload_offset = 0;
+    let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
 
     // Checking if creation-with-upload extension is enabled.
     let with_upload = app_conf
         .extensions_vec()
-        .contains(&ProtocolExtensions::CreationWithUpload);
+        .contains(&Extensions::CreationWithUpload);
     if with_upload && !bytes.is_empty() {
         if !check_header(&request, "Content-Type", "application/offset+octet-stream") {
             return Ok(HttpResponse::BadRequest().body(""));
         }
         // Writing first bytes.
-        upload_offset = storage
-            .add_bytes(file_id.as_str(), 0, bytes.bytes())
+        file_info = storage
+            .add_bytes(file_info.id.as_str(), 0, bytes.as_ref())
             .await?;
     }
 
+    if app_conf.hook_is_active(Hook::PostCreate) {
+        let message = app_conf
+            .notification_opts
+            .notification_format
+            .format(&request, &file_info)?;
+        tokio::spawn(async move {
+            notification_manager
+                .send_message(message, Hook::PostCreate)
+                .await
+        });
+    }
+
     Ok(HttpResponse::Created()
-        .set_header("Location", upload_url.as_str())
-        .set_header("Upload-Offset", upload_offset.to_string())
+        .insert_header(("Location", upload_url.as_str()))
+        .insert_header(("Upload-Offset", file_info.offset.to_string()))
         .body(""))
 }

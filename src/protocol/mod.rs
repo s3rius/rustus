@@ -1,10 +1,10 @@
 use actix_web::web;
 
-use crate::config::ProtocolExtensions;
 use crate::RustusConf;
 
 mod core;
 mod creation;
+pub mod extensions;
 mod getting;
 mod termination;
 
@@ -16,11 +16,11 @@ pub fn setup(app_conf: RustusConf) -> Box<dyn Fn(&mut web::ServiceConfig)> {
     Box::new(move |web_app| {
         for extension in app_conf.extensions_vec() {
             match extension {
-                ProtocolExtensions::Creation => creation::add_extension(web_app, &app_conf),
-                ProtocolExtensions::Termination => {
+                extensions::Extensions::Creation => creation::add_extension(web_app, &app_conf),
+                extensions::Extensions::Termination => {
                     termination::add_extension(web_app, &app_conf);
                 }
-                ProtocolExtensions::Getting => {
+                extensions::Extensions::Getting => {
                     getting::add_extension(web_app, &app_conf);
                 }
                 _ => {}

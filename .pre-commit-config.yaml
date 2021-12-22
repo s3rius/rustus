@@ -1,0 +1,45 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+
+      - id: build
+        types:
+          - rust
+        name: cargo build
+        language: system
+        entry: cargo
+        pass_filenames: false
+        args:
+          - build
+          - --features=all
+
+      - id: fmt
+        types:
+          - rust
+        name: cargo fmt
+        language: system
+        entry: cargo
+        pass_filenames: false
+        args:
+          - fmt
+
+      - id: clippy
+        types:
+          - rust
+        name: cargo clippy
+        language: system
+        pass_filenames: false
+        entry: cargo
+        args:
+          - clippy
+          - --features=all
+          - --all
+          - --
+          - -W
+          - clippy::all
+          - -W
+          - clippy::pedantic
