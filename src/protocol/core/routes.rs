@@ -1,6 +1,7 @@
 use actix_web::{http::StatusCode, web, web::Bytes, HttpRequest, HttpResponse};
 
 use crate::notifiers::Hook;
+use crate::protocol::extensions::Extensions;
 use crate::utils::headers::{check_header, parse_header};
 use crate::{NotificationManager, RustusConf, Storage};
 
@@ -26,10 +27,15 @@ pub async fn get_file_info(
         let file_info = storage.get_file_info(file_id).await?;
         builder
             .insert_header(("Upload-Offset", file_info.offset.to_string()))
-            .insert_header(("Upload-Length", file_info.length.to_string()))
             .insert_header(("Content-Length", file_info.offset.to_string()));
-        if file_info.deferred_size {
+        // Upload length is known.
+        if let Some(upload_len) = file_info.length {
+            builder.insert_header(("Upload-Length", upload_len.to_string()));
+        } else {
             builder.insert_header(("Upload-Defer-Length", "1"));
+        }
+        if let Some(meta) = file_info.get_metadata_string() {
+            builder.insert_header(("Upload-Metadata", meta));
         }
     } else {
         builder.status(StatusCode::NOT_FOUND);
@@ -53,12 +59,23 @@ pub async fn write_bytes(
         return Ok(HttpResponse::UnsupportedMediaType().body(""));
     }
 
+    // New upload length.
+    // Parses header `Upload-Length` only if the creation-defer-length extension is enabled.
+    let updated_len = if app_conf
+        .extensions_vec()
+        .contains(&Extensions::CreationDeferLength)
+    {
+        parse_header(&request, "Upload-Length")
+    } else {
+        None
+    };
+
     if let Some(file_id) = request.match_info().get("file_id") {
         let file_info = storage
-            .add_bytes(file_id, offset.unwrap(), bytes.as_ref())
+            .add_bytes(file_id, offset.unwrap(), updated_len, bytes.as_ref())
             .await?;
         let mut hook = Hook::PostReceive;
-        if file_info.length == file_info.offset {
+        if file_info.length == Some(file_info.offset) {
             hook = Hook::PostFinish;
         }
         if app_conf.hook_is_active(hook) {

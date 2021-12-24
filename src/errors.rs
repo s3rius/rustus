@@ -17,6 +17,8 @@ pub enum RustusError {
     Unknown,
     #[error("File is frozen")]
     FrozenFile,
+    #[error("Size already known")]
+    SizeAlreadyKnown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
     #[cfg(feature = "db_info_storage")]
@@ -68,7 +70,9 @@ impl ResponseError for RustusError {
         match self {
             RustusError::FileNotFound => StatusCode::NOT_FOUND,
             RustusError::WrongOffset => StatusCode::CONFLICT,
-            RustusError::FrozenFile | RustusError::HookError(_) => StatusCode::BAD_REQUEST,
+            RustusError::FrozenFile | RustusError::SizeAlreadyKnown | RustusError::HookError(_) => {
+                StatusCode::BAD_REQUEST
+            }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

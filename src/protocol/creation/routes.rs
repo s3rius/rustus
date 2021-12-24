@@ -102,7 +102,7 @@ pub async fn create_file(
         }
         // Writing first bytes.
         file_info = storage
-            .add_bytes(file_info.id.as_str(), 0, bytes.as_ref())
+            .add_bytes(file_info.id.as_str(), 0, None, bytes.as_ref())
             .await?;
     }
 
@@ -111,6 +111,8 @@ pub async fn create_file(
             .notification_opts
             .notification_format
             .format(&request, &file_info)?;
+        // Adding send_message task to tokio reactor.
+        // Thin function would be executed in background.
         tokio::spawn(async move {
             notification_manager
                 .send_message(message, Hook::PostCreate)

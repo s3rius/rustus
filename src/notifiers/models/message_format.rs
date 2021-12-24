@@ -46,20 +46,23 @@ struct TusdFileInfo {
     #[serde(rename = "ID")]
     id: String,
     offset: usize,
-    size: usize,
+    size: Option<usize>,
     is_final: bool,
     is_partial: bool,
     partial_uploads: Option<Vec<String>>,
+    size_is_deferred: bool,
     metadata: HashMap<String, String>,
     storage: TusdStorageInfo,
 }
 
 impl From<FileInfo> for TusdFileInfo {
     fn from(file_info: FileInfo) -> Self {
+        let deferred_size = file_info.length.is_none();
         Self {
             id: file_info.id,
             offset: file_info.offset,
             size: file_info.length,
+            size_is_deferred: deferred_size,
             is_final: true,
             is_partial: false,
             partial_uploads: None,

@@ -38,8 +38,12 @@ repos:
           - clippy
           - --features=all
           - --all
+          - -p
+          - rustus
           - --
           - -W
           - clippy::all
           - -W
           - clippy::pedantic
+          - -D
+          - warnings
