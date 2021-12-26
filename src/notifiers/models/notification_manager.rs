@@ -1,4 +1,6 @@
 use crate::errors::{RustusError, RustusResult};
+#[cfg(feature = "amqp_notifier")]
+use crate::notifiers::amqp_notifier;
 #[cfg(feature = "http_notifier")]
 use crate::notifiers::http_notifier;
 use crate::notifiers::{Hook, Notifier};
@@ -11,7 +13,7 @@ pub struct NotificationManager {
 }
 
 impl NotificationManager {
-    pub fn new(tus_config: &RustusConf) -> Self {
+    pub async fn new(tus_config: &RustusConf) -> RustusResult<Self> {
         let mut manager = Self {
             notifiers: Vec::new(),
         };
@@ -25,8 +27,20 @@ impl NotificationManager {
                     tus_config.notification_opts.hooks_http_urls.clone(),
                 )));
         }
+        #[cfg(feature = "amqp_notifier")]
+        if tus_config.notification_opts.hooks_amqp_url.is_some() {
+            debug!("Found AMQP notifier.");
+            manager
+                .notifiers
+                .push(Box::new(amqp_notifier::AMQPNotifier::new(
+                    tus_config.clone(),
+                )));
+        }
+        for notifier in &mut manager.notifiers.iter_mut() {
+            notifier.prepare().await?;
+        }
         debug!("Notification manager initialized.");
-        manager
+        Ok(manager)
     }
 
     pub async fn send_message(&self, message: String, hook: Hook) -> RustusResult<()> {

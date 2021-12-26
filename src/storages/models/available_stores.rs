@@ -18,6 +18,7 @@ impl AvailableStores {
     ///
     /// # Params
     /// `config` - Rustus configuration.
+    /// `info_storage` - Storage for information about files.
     ///
     pub fn get(
         &self,

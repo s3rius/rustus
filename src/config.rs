@@ -104,11 +104,19 @@ pub struct NotificationsOptions {
     pub hooks: Vec<Hook>,
 
     /// List of URLS to send webhooks to.
-    ///
-    /// This list will be notified
     #[cfg(feature = "http_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
     pub hooks_http_urls: Vec<String>,
+
+    /// Url for AMQP server.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_URL")]
+    pub hooks_amqp_url: Option<String>,
+
+    /// Name of amqp exchange.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
+    pub hooks_amqp_exchange: String,
 }
 
 #[derive(Debug, StructOpt, Clone)]

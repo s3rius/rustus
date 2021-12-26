@@ -29,16 +29,21 @@ strfmt = "^0.1.6"
 lazy_static = "1.4.0"
 strum = { version = "0.23", features = ["derive"] }
 futures = { version = "^0.3.19", features = ["executor"] }
-reqwest = { version = "^0.11.8", features = ["json"], optional = true }
 # Deps for info storages.
 rbson = { version = "2.0", optional = true }
 rbatis = { version = "^3.0", default-features = false, features = ["runtime-actix-rustls", "all-database"], optional = true }
 mobc-redis = { version = "^0.7.0", optional = true }
+# Deps for notifiers
+lapin = { version = "^1.9.0", optional = true }
+tokio-amqp = { version = "1.0.0", optional = true }
+mobc-lapin = { version = "0.7.0", optional = true }
+reqwest = { version = "^0.11.8", features = ["json"], optional = true }
 
 [features]
 default = []
-all = ["redis_info_storage", "db_info_storage", "http_notifier"]
+all = ["redis_info_storage", "db_info_storage", "http_notifier", "amqp_notifier"]
 redis_info_storage = ["mobc-redis"]
 db_info_storage = ["rbatis", "rbson"]
+amqp_notifier = ["lapin", "tokio-amqp", "mobc-lapin"]
 
 http_notifier = ["reqwest"]

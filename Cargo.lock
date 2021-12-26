@@ -233,6 +233,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "amq-protocol"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3b51c409a2b30e48826a593d56a26a43f37bf3df682821e55cd108e24de9ce7"
+dependencies = [
+ "amq-protocol-tcp",
+ "amq-protocol-types",
+ "amq-protocol-uri",
+ "cookie-factory",
+ "nom",
+]
+
+[[package]]
+name = "amq-protocol-tcp"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9797cd3a8f1491e4828818341aea5e1378029ec89dc2422cd85d62715f913080"
+dependencies = [
+ "amq-protocol-uri",
+ "tcp-stream",
+ "tracing",
+]
+
+[[package]]
+name = "amq-protocol-types"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "028cb766932137535fe8a320245e385bac379506d7e9e3d0375be069bb6fb0de"
+dependencies = [
+ "cookie-factory",
+ "nom",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "amq-protocol-uri"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b08059afa9495f674408891c5eaee50c5eca3532598c90532c1856990b91da96"
+dependencies = [
+ "percent-encoding",
+ "url",
+]
+
+[[package]]
 name = "ansi_term"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -658,6 +704,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cookie-factory"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "396de984970346b0d9e93d1415082923c679e5ae5c3ee3dcbd104f5610af126b"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -822,6 +874,12 @@ name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
+
+[[package]]
+name = "doc-comment"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
 
 [[package]]
 name = "dtoa"
@@ -1354,6 +1412,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4345964bb142484797b161f473a503a434de77149dd8c7427788c6e13379388"
 
 [[package]]
+name = "lapin"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef0a8c145a248b1536cfa06890d480cda7982add59f77973ac7b03db47f349b5"
+dependencies = [
+ "amq-protocol",
+ "async-task",
+ "crossbeam-channel",
+ "futures-core",
+ "log",
+ "mio 0.7.14",
+ "parking_lot",
+ "pinky-swear",
+ "serde",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1531,6 +1606,16 @@ dependencies = [
  "futures-util",
  "log",
  "tokio",
+]
+
+[[package]]
+name = "mobc-lapin"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c0820bedacbc30154f91261b87d6f92ee40e74592df4e5e815f9b817f290127"
+dependencies = [
+ "lapin",
+ "mobc",
 ]
 
 [[package]]
@@ -1821,6 +1906,17 @@ name = "pin-utils"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
+
+[[package]]
+name = "pinky-swear"
+version = "4.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9bf8cda6f8e1500338634e4e3ce90ac59eb7929a1e088b6946c742be1cc44dc1"
+dependencies = [
+ "doc-comment",
+ "parking_lot",
+ "tracing",
+]
 
 [[package]]
 name = "pkg-config"
@@ -2256,8 +2352,10 @@ dependencies = [
  "derive_more",
  "fern",
  "futures",
+ "lapin",
  "lazy_static",
  "log",
+ "mobc-lapin",
  "mobc-redis",
  "rbatis",
  "rbson",
@@ -2269,6 +2367,7 @@ dependencies = [
  "strum",
  "thiserror",
  "tokio",
+ "tokio-amqp",
  "url",
  "uuid 1.0.0-alpha.1",
 ]
@@ -2745,6 +2844,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tcp-stream"
+version = "0.20.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a77f06a7c6a1ecff1bbab0743a8beca305ca1ebcbe5d1bc32390e94117859af"
+dependencies = [
+ "cfg-if",
+ "mio 0.7.14",
+ "native-tls",
+ "pem",
+]
+
+[[package]]
 name = "tempfile"
 version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2878,6 +2989,17 @@ dependencies = [
  "pin-project-lite",
  "signal-hook-registry",
  "winapi",
+]
+
+[[package]]
+name = "tokio-amqp"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a236324e1e84931e62c22e2ee47688e077aa33a2a95f14d29ab8ec4dbaf9845"
+dependencies = [
+ "lapin",
+ "parking_lot",
+ "tokio",
 ]
 
 [[package]]

@@ -68,10 +68,10 @@ All options are listed in `rustus --help`.
 * [x] Route to get uploaded files;
 * [x] Database support for info storage;
 * [x] Redis support for info storage;
-* [ ] S3 as data storage store support;
 * [x] Notification interface;
-* [ ] Executable files notifications;
 * [x] Notifications via http hooks;
-* [ ] Notifications via RabbitMQ;
+* [x] Notifications via RabbitMQ;
+* [ ] S3 as data storage store support;
+* [ ] Executable files notifications;
 * [ ] Rustus helm chart;
 * [ ] Cloud native rustus operator.

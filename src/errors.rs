@@ -49,6 +49,12 @@ pub enum RustusError {
     HookError(String),
     #[error("Unable to configure logging: {0}")]
     LogConfigError(#[from] log::SetLoggerError),
+    #[cfg(feature = "amqp_notifier")]
+    #[error("AMQP error: {0}")]
+    AMQPError(#[from] lapin::Error),
+    #[cfg(feature = "amqp_notifier")]
+    #[error("AMQP error: {0}")]
+    AMQPPoolError(#[from] mobc_lapin::mobc::Error<lapin::Error>),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

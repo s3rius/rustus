@@ -168,7 +168,7 @@ async fn main() -> std::io::Result<()> {
     storage.prepare().await?;
 
     // Creating notification manager.
-    let notification_manager = NotificationManager::new(&app_conf);
+    let notification_manager = NotificationManager::new(&app_conf).await?;
 
     // Creating actual server and running it.
     let server = create_server(storage, app_conf, notification_manager)?;
