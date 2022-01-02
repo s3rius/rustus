@@ -22,9 +22,10 @@ pub async fn terminate(
                 .notification_opts
                 .notification_format
                 .format(&request, &file_info)?;
+            let headers = request.headers().clone();
             tokio::spawn(async move {
                 notification_manager
-                    .send_message(message, Hook::PostTerminate)
+                    .send_message(message, Hook::PostTerminate, &headers)
                     .await
             });
         }

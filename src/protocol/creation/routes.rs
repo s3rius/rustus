@@ -81,8 +81,9 @@ pub async fn create_file(
             .notification_opts
             .notification_format
             .format(&request, &initial_file_info)?;
+        let headers = request.headers();
         notification_manager
-            .send_message(message, Hook::PreCreate)
+            .send_message(message, Hook::PreCreate, headers)
             .await?;
     }
 
@@ -111,11 +112,12 @@ pub async fn create_file(
             .notification_opts
             .notification_format
             .format(&request, &file_info)?;
+        let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
         tokio::spawn(async move {
             notification_manager
-                .send_message(message, Hook::PostCreate)
+                .send_message(message, Hook::PostCreate, &headers)
                 .await
         });
     }

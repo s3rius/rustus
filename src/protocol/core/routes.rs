@@ -83,7 +83,12 @@ pub async fn write_bytes(
                 .notification_opts
                 .notification_format
                 .format(&request, &file_info)?;
-            tokio::spawn(async move { notification_manager.send_message(message, hook).await });
+            let headers = request.headers().clone();
+            tokio::spawn(async move {
+                notification_manager
+                    .send_message(message, hook, &headers)
+                    .await
+            });
         }
         Ok(HttpResponse::NoContent()
             .insert_header(("Upload-Offset", file_info.offset.to_string()))

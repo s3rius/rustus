@@ -1,11 +1,11 @@
-use crate::errors::{RustusError, RustusResult};
+use crate::errors::RustusResult;
 #[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
 #[cfg(feature = "http_notifier")]
 use crate::notifiers::http_notifier;
 use crate::notifiers::{Hook, Notifier};
 use crate::RustusConf;
-use futures::future::try_join_all;
+use actix_web::http::header::HeaderMap;
 use log::debug;
 
 pub struct NotificationManager {
@@ -25,6 +25,10 @@ impl NotificationManager {
                 .notifiers
                 .push(Box::new(http_notifier::HttpNotifier::new(
                     tus_config.notification_opts.hooks_http_urls.clone(),
+                    tus_config
+                        .notification_opts
+                        .hooks_http_proxy_headers
+                        .clone(),
                 )));
         }
         #[cfg(feature = "amqp_notifier")]
@@ -43,15 +47,16 @@ impl NotificationManager {
         Ok(manager)
     }
 
-    pub async fn send_message(&self, message: String, hook: Hook) -> RustusResult<()> {
-        let mut futures = Vec::new();
+    pub async fn send_message(
+        &self,
+        message: String,
+        hook: Hook,
+        header_map: &HeaderMap,
+    ) -> RustusResult<()> {
         for notifier in &self.notifiers {
-            futures.push(notifier.send_message(message.clone(), hook));
-        }
-        if !futures.is_empty() {
-            try_join_all(futures)
-                .await
-                .map_err(|err| RustusError::HookError(err.to_string()))?;
+            notifier
+                .send_message(message.clone(), hook, header_map)
+                .await?;
         }
         Ok(())
     }

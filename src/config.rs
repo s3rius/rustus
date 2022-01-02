@@ -108,6 +108,11 @@ pub struct NotificationsOptions {
     #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
     pub hooks_http_urls: Vec<String>,
 
+    // List of headers to forward from client.
+    #[cfg(feature = "http_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS", use_delimiter = true)]
+    pub hooks_http_proxy_headers: Vec<String>,
+
     /// Url for AMQP server.
     #[cfg(feature = "amqp_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_URL")]

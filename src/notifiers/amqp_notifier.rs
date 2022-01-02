@@ -1,5 +1,6 @@
 use crate::notifiers::{Hook, Notifier};
 use crate::{RustusConf, RustusResult};
+use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
 use lapin::options::{
     BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
@@ -65,7 +66,12 @@ impl Notifier for AMQPNotifier {
         Ok(())
     }
 
-    async fn send_message(&self, message: String, hook: Hook) -> RustusResult<()> {
+    async fn send_message(
+        &self,
+        message: String,
+        hook: Hook,
+        _header_map: &HeaderMap,
+    ) -> RustusResult<()> {
         let chan = self.pool.get().await?.create_channel().await?;
         let queue = Self::get_queue_name(hook);
         chan.basic_publish(
