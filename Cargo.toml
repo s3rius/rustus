@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 
+[profile.release]
+lto = true
+opt-level = "z"  # Optimize for size.
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]
 name = "rustus"
