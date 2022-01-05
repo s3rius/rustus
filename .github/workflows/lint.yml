@@ -1,4 +1,8 @@
-on: push
+on:
+  push:
+    tags-ignore:
+      - '**'
+
 name: Lint check
 jobs:
   clippy_check:

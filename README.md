@@ -32,10 +32,10 @@ from source using `cargo`.
 cargo install --path .
 ```
 
-Or you can build a docker image.
+Or you can use a docker image.
 
 ```bash
-docker build --tag="rustus:latest" --cache-from=s3rius/tuser:latest -f deploy/Dockerfile .
+docker run --rm -it -p 1081:1081 s3rius/rustus:latest
 ```
 
 Docker image and binaries will be available soon.
@@ -47,13 +47,52 @@ In order to modify original file rustus searches for information about
 the file in information storage.
 
 However, automatic migration between different information
-storages is not supported.
+storages is not supported yet.
 
+## Info storages
 
-## Configuration
+The info storage is a database or directory. The main goal is to keep track
+of uploads. Rustus stores information about download in json format inside
+database.
 
-You can configure rustus via command line or environment variables.
-All options are listed in `rustus --help`.
+File storage is a default one. You can customize the directory of an .info files
+by providing `--info-dir` parameter.
+
+```bash
+rustus --info-dir "./info_dir"
+```
+
+If you want to choose different storage you have to specify its type and connection string.
+
+```bash
+# Redis info storage
+rustus --info-storage redis-info-storage --info-db-dsn "redis://localhost"
+# PostgreSQL info storage
+rustus --info-storage db-info-storage --info-db-dsn "postgres://rustus:rustus@192.168.1.89:5440/rustus"
+# SQLite3 info storage
+rustus --info-storage db-info-storage --info-db-dsn "sqlite:////test.sqlite3"
+# MySQL
+rustus --info-storage db-info-storage --info-db-dsn "mysql://rustus:rustus@192.168.1.89:3306/rustus"
+```
+
+## Hooks
+
+Rustus supports several event hooks, such as:
+* File hooks;
+* HTTP hooks;
+* AMQP hooks.
+
+You can combine them, but you have to be careful, since
+AMQP hooks won't block uploading.
+
+If you want to check the "Authorization" header value or validate some information,
+you have to use webhooks or File hooks.
+
+Hooks have priorities: file hooks are the most important, then goes webhooks and AMQP hooks have the least priority.
+If pre-create hook failed, the upload would not start.
+Of course, since AMQP is a protocol that doesn't allow you to track responses.
+We can't validate anything to stop uploading.
+
 
 ### Roadmap
 
@@ -71,7 +110,7 @@ All options are listed in `rustus --help`.
 * [x] Notification interface;
 * [x] Notifications via http hooks;
 * [x] Notifications via RabbitMQ;
-* [ ] S3 as data storage store support;
 * [ ] Executable files notifications;
+* [ ] S3 as data storage store support;
 * [ ] Rustus helm chart;
 * [ ] Cloud native rustus operator.
