@@ -1,53 +1,110 @@
 [package]
 name = "rustus"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 
-[profile.release]
-lto = true
-opt-level = "z"  # Optimize for size.
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]
 name = "rustus"
 
 [dependencies]
-actix-web = { version = "^4.0.0-beta.15" }
-actix-files = { version = "0.6.0-beta.13" }
-tokio = { version = "1.4.0", features = ["time"] }
-derive_more = { version = "^0.99.9", default-features = false, features = ["display", "from", "from_str"] }
-thiserror = "^1.0"
 async-trait = "0.1.52"
-structopt = { version = "^0.3" }
-uuid = { version = "^1.0.0-alpha.1", features = ["v4"] }
-async-std = { version = "^1.10.0", features = ["tokio1"] }
-serde = "1"
-chrono = { version = "^0.4.19", features = ["serde"] }
-serde_json = "1"
-log = "^0.4.14"
-url = "2.2.2"
 base64 = "^0.13.0"
-fern = { version = "0.6.0", features = ["colored"] }
-strfmt = "^0.1.6"
 lazy_static = "1.4.0"
-strum = { version = "0.23", features = ["derive"] }
-futures = { version = "^0.3.19", features = ["executor"] }
-# Deps for info storages.
-rbson = { version = "2.0", optional = true }
-rbatis = { version = "^3.0", default-features = false, features = ["runtime-actix-rustls", "all-database"], optional = true }
-mobc-redis = { version = "^0.7.0", optional = true }
-# Deps for notifiers
-lapin = { version = "^1.9.0", optional = true }
-tokio-amqp = { version = "1.0.0", optional = true }
-mobc-lapin = { version = "0.7.0", optional = true }
-reqwest = { version = "^0.11.8", features = ["json"], optional = true }
+log = "^0.4.14"
+serde = "1"
+serde_json = "1"
+strfmt = "^0.1.6"
+thiserror = "^1.0"
+url = "2.2.2"
+
+[dependencies.openssl]
+version = "0.10.38"
+features = ["vendored"]
+
+[dependencies.actix-files]
+version = "0.6.0-beta.13"
+
+[dependencies.actix-web]
+version = "^4.0.0-beta.15"
+
+[dependencies.async-std]
+features = ["tokio1"]
+version = "^1.10.0"
+
+[dependencies.chrono]
+features = ["serde"]
+version = "^0.4.19"
+
+[dependencies.derive_more]
+default-features = false
+features = ["display", "from", "from_str"]
+version = "^0.99.9"
+
+[dependencies.fern]
+features = ["colored"]
+version = "0.6.0"
+
+[dependencies.futures]
+features = ["executor"]
+version = "^0.3.19"
+
+[dependencies.lapin]
+optional = true
+version = "^1.9.0"
+
+[dependencies.mobc-lapin]
+optional = true
+version = "0.7.0"
+
+[dependencies.mobc-redis]
+optional = true
+version = "^0.7.0"
+
+[dependencies.rbatis]
+default-features = false
+features = ["runtime-actix-rustls", "all-database"]
+optional = true
+version = "^3.0"
+
+[dependencies.rbson]
+optional = true
+version = "2.0"
+
+[dependencies.reqwest]
+features = ["json"]
+optional = true
+version = "^0.11.8"
+
+[dependencies.structopt]
+version = "^0.3"
+
+[dependencies.strum]
+features = ["derive"]
+version = "0.23"
+
+[dependencies.tokio]
+features = ["time"]
+version = "1.4.0"
+
+[dependencies.tokio-amqp]
+optional = true
+version = "1.0.0"
+
+[dependencies.uuid]
+features = ["v4"]
+version = "^1.0.0-alpha.1"
 
 [features]
-default = []
 all = ["redis_info_storage", "db_info_storage", "http_notifier", "amqp_notifier"]
-redis_info_storage = ["mobc-redis"]
-db_info_storage = ["rbatis", "rbson"]
 amqp_notifier = ["lapin", "tokio-amqp", "mobc-lapin"]
-
+db_info_storage = ["rbatis", "rbson"]
+default = []
 http_notifier = ["reqwest"]
+redis_info_storage = ["mobc-redis"]
+
+[profile]
+[profile.release]
+lto = true
+opt-level = "z"
+codegen-units = 1
