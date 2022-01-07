@@ -122,6 +122,14 @@ pub struct NotificationsOptions {
     #[cfg(feature = "amqp_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
+
+    #[cfg(feature = "file_notifiers")]
+    #[structopt(long, env = "RUSTUS_HOOKS_DIR")]
+    pub hooks_dir: Option<PathBuf>,
+
+    #[cfg(feature = "file_notifiers")]
+    #[structopt(long, env = "RUSTUS_HOOKS_FILE")]
+    pub hooks_file: Option<String>,
 }
 
 #[derive(Debug, StructOpt, Clone)]
