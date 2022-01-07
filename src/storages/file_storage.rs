@@ -144,6 +144,7 @@ impl Storage for FileStorage {
             error!("{:?}", err);
             RustusError::UnableToWrite(info.path.clone().unwrap())
         })?;
+        file.sync_data().await?;
         // Updating information about file.
         info.offset += bytes.len();
         self.info_storage.set_info(&info, false).await?;
@@ -180,7 +181,7 @@ impl Storage for FileStorage {
             error!("{:?}", err);
             RustusError::UnableToWrite(file_path.display().to_string())
         })?;
-
+        file.sync_all().await?;
         // Creating new FileInfo object and saving it.
         let file_info = FileInfo::new(
             file_id.as_str(),

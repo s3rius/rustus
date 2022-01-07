@@ -59,6 +59,7 @@ impl InfoStorage for FileInfoStorage {
                         .to_string(),
                 )
             })?;
+        file.sync_data().await?;
         Ok(())
     }
 
