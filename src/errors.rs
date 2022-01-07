@@ -55,6 +55,8 @@ pub enum RustusError {
     #[cfg(feature = "amqp_notifier")]
     #[error("AMQP error: {0}")]
     AMQPPoolError(#[from] mobc_lapin::mobc::Error<lapin::Error>),
+    #[error("Std error: {0}")]
+    StdError(#[from] std::io::Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
