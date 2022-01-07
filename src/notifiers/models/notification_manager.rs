@@ -1,6 +1,10 @@
 use crate::errors::RustusResult;
 #[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
+#[cfg(feature = "file_notifiers")]
+use crate::notifiers::dir_notifier::DirNotifier;
+#[cfg(feature = "file_notifiers")]
+use crate::notifiers::file_notifier::FileNotifier;
 #[cfg(feature = "http_notifier")]
 use crate::notifiers::http_notifier;
 use crate::notifiers::{Hook, Notifier};
@@ -18,6 +22,19 @@ impl NotificationManager {
             notifiers: Vec::new(),
         };
         debug!("Initializing notification manager.");
+        if tus_config.notification_opts.hooks_file.is_some() {
+            debug!("Found hooks file");
+            manager.notifiers.push(Box::new(FileNotifier::new(
+                tus_config.notification_opts.hooks_file.clone().unwrap(),
+            )));
+        }
+        #[cfg(feature = "file_notifiers")]
+        if tus_config.notification_opts.hooks_dir.is_some() {
+            debug!("Found hooks directory");
+            manager.notifiers.push(Box::new(DirNotifier::new(
+                tus_config.notification_opts.hooks_dir.clone().unwrap(),
+            )));
+        }
         #[cfg(feature = "http_notifier")]
         if !tus_config.notification_opts.hooks_http_urls.is_empty() {
             debug!("Found http hook urls.");

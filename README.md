@@ -110,7 +110,7 @@ We can't validate anything to stop uploading.
 * [x] Notification interface;
 * [x] Notifications via http hooks;
 * [x] Notifications via RabbitMQ;
-* [ ] Executable files notifications;
+* [X] Executable files notifications;
 * [ ] S3 as data storage store support;
 * [ ] Rustus helm chart;
 * [ ] Cloud native rustus operator.
