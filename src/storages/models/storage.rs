@@ -2,10 +2,10 @@ use crate::errors::RustusResult;
 use crate::info_storages::FileInfo;
 use actix_files::NamedFile;
 use async_trait::async_trait;
-use std::collections::HashMap;
+use std::fmt::Display;
 
 #[async_trait]
-pub trait Storage {
+pub trait Storage: Display {
     /// Prepare storage before starting up server.
     ///
     /// Function to check if configuration is correct
@@ -17,24 +17,15 @@ pub trait Storage {
     /// be a problem later on.
     async fn prepare(&mut self) -> RustusResult<()>;
 
-    /// Get file information.
-    ///
-    /// This method returns all information about file.
-    ///
-    /// # Params
-    /// `file_id` - unique file identifier.
-    async fn get_file_info(&self, file_id: &str) -> RustusResult<FileInfo>;
-
     /// Get contents of a file.
     ///
     /// This method must return NamedFile since it
     /// is compatible with ActixWeb files interface.
-    ///
-    /// This method basically must call info storage method.
+    /// FIXME: change return type to stream.
     ///
     /// # Params
-    /// `file_id` - unique file identifier.
-    async fn get_contents(&self, file_id: &str) -> RustusResult<NamedFile>;
+    /// `file_info` - info about current file.
+    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<NamedFile>;
 
     /// Add bytes to the file.
     ///
@@ -44,24 +35,13 @@ pub trait Storage {
     /// # Errors
     ///
     /// Implementations MUST throw errors at following cases:
-    /// * Offset for request doesn't match offset we have in info storage.
-    /// * Updated length is provided, but we already know total size in bytes.
     /// * If the info about the file can't be found.
     /// * If the storage is offline.
     ///
     /// # Params
-    /// `file_id` - unique file identifier;
-    /// `request_offset` - offset from the client.
-    /// `updated_length` - total file size in bytes.
-    ///     This value is used by creation-defer-length extension.
+    /// `file_info` - info about current file.
     /// `bytes` - bytes to append to the file.
-    async fn add_bytes(
-        &self,
-        file_id: &str,
-        request_offset: usize,
-        updated_length: Option<usize>,
-        bytes: &[u8],
-    ) -> RustusResult<FileInfo>;
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: &[u8]) -> RustusResult<()>;
 
     /// Create file in storage.
     ///
@@ -70,13 +50,8 @@ pub trait Storage {
     /// This function must use info storage to store information about the upload.
     ///
     /// # Params
-    /// `file_size` - Size of a file. It may be None if size is deferred;
-    /// `metadata` - Optional file meta-information;
-    async fn create_file(
-        &self,
-        file_size: Option<usize>,
-        metadata: Option<HashMap<String, String>>,
-    ) -> RustusResult<FileInfo>;
+    /// `file_info` - info about current file.
+    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String>;
 
     /// Remove file from storage
     ///
@@ -84,6 +59,6 @@ pub trait Storage {
     /// object if any.
     ///
     /// # Params
-    /// `file_id` - unique file identifier;
-    async fn remove_file(&self, file_id: &str) -> RustusResult<FileInfo>;
+    /// `file_info` - info about current file.
+    async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()>;
 }

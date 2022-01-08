@@ -1,3 +1,4 @@
+/// Implement `FromStr` for enums with `EnumIterator` trait from strum.
 #[macro_export]
 macro_rules! from_str {
     ($enum_name:ty, $name:literal) => {
