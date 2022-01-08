@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 use chrono::{Datelike, Timelike};
 use lazy_static::lazy_static;
+use log::error;
 use structopt::StructOpt;
 
 use crate::info_storages::AvailableInfoStores;
@@ -36,11 +37,11 @@ pub struct StorageOptions {
     ///
     /// This directory is used to store files
     /// for all *file_storage storages.
-    #[structopt(long, default_value = "./data")]
+    #[structopt(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
-    #[structopt(long, default_value = "")]
-    pub dis_structure: String,
+    #[structopt(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
+    pub dir_structure: String,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -91,8 +92,8 @@ pub struct NotificationsOptions {
     ///
     /// This format will be used in all
     /// messages about hooks.
-    #[structopt(long, default_value = "default", env = "RUSTUS_NOTIFICATION_FORMAT")]
-    pub notification_format: Format,
+    #[structopt(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
+    pub hooks_format: Format,
 
     /// Enabled hooks for notifications.
     #[structopt(
@@ -236,8 +237,10 @@ impl RustusConf {
         vars.insert("year".into(), now.year().to_string());
         vars.insert("hour".into(), now.hour().to_string());
         vars.insert("minute".into(), now.minute().to_string());
-        strfmt::strfmt(self.storage_opts.dis_structure.as_str(), &vars)
-            .unwrap_or_else(|_| "".into())
+        strfmt::strfmt(self.storage_opts.dir_structure.as_str(), &vars).unwrap_or_else(|err| {
+            error!("{}", err);
+            "".into()
+        })
     }
 
     /// List of extensions.

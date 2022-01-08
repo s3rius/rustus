@@ -79,7 +79,7 @@ pub async fn create_file(
         let initial_file_info = FileInfo::new("", length, None, meta.clone());
         let message = app_conf
             .notification_opts
-            .notification_format
+            .hooks_format
             .format(&request, &initial_file_info)?;
         let headers = request.headers();
         notification_manager
@@ -110,7 +110,7 @@ pub async fn create_file(
     if app_conf.hook_is_active(Hook::PostCreate) {
         let message = app_conf
             .notification_opts
-            .notification_format
+            .hooks_format
             .format(&request, &file_info)?;
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
