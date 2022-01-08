@@ -81,7 +81,7 @@ pub async fn write_bytes(
         if app_conf.hook_is_active(hook) {
             let message = app_conf
                 .notification_opts
-                .notification_format
+                .hooks_format
                 .format(&request, &file_info)?;
             let headers = request.headers().clone();
             tokio::spawn(async move {
