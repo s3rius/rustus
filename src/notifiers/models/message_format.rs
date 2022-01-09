@@ -68,7 +68,7 @@ impl From<FileInfo> for TusdFileInfo {
             partial_uploads: None,
             metadata: file_info.metadata,
             storage: TusdStorageInfo {
-                storage_type: "filestore".into(),
+                storage_type: file_info.storage,
                 path: file_info.path,
             },
         }

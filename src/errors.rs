@@ -2,6 +2,7 @@ use std::io::{Error, ErrorKind};
 
 use actix_web::http::StatusCode;
 use actix_web::{HttpResponse, HttpResponseBuilder, ResponseError};
+use log::error;
 
 pub type RustusResult<T> = Result<T, RustusError>;
 
@@ -69,6 +70,7 @@ impl From<RustusError> for Error {
 /// Trait to convert errors to http-responses.
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
+        error!("{}", self);
         HttpResponseBuilder::new(self.status_code())
             .insert_header(("Content-Type", "text/html; charset=utf-8"))
             .body(format!("{}", self))
