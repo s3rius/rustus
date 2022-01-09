@@ -11,6 +11,7 @@ use fern::Dispatch;
 use log::LevelFilter;
 
 use crate::errors::RustusResult;
+use crate::info_storages::InfoStorage;
 use crate::notifiers::models::notification_manager::NotificationManager;
 use config::RustusConf;
 
@@ -65,6 +66,7 @@ fn greeting(app_conf: &RustusConf) {
 /// given address.
 pub fn create_server(
     storage: Box<dyn Storage + Send + Sync>,
+    info_storage: Box<dyn InfoStorage + Send + Sync>,
     app_conf: RustusConf,
     notification_manager: NotificationManager,
 ) -> Result<Server, std::io::Error> {
@@ -72,6 +74,8 @@ pub fn create_server(
     let port = app_conf.port;
     let workers = app_conf.workers;
     let app_conf_data = web::Data::new(app_conf.clone());
+    let info_storage_data: web::Data<Box<dyn InfoStorage + Send + Sync>> =
+        web::Data::from(Arc::new(info_storage));
     let storage_data: web::Data<Box<dyn Storage + Send + Sync>> =
         web::Data::from(Arc::new(storage));
     let manager_data: web::Data<Box<NotificationManager>> =
@@ -81,6 +85,7 @@ pub fn create_server(
             .app_data(app_conf_data.clone())
             .app_data(storage_data.clone())
             .app_data(manager_data.clone())
+            .app_data(info_storage_data.clone())
             // Adds all routes.
             .configure(protocol::setup(app_conf.clone()))
             // Main middleware that appends TUS headers.
@@ -163,7 +168,7 @@ async fn main() -> std::io::Result<()> {
     info_storage.prepare().await?;
 
     // Creating file storage.
-    let mut storage = app_conf.storage_opts.storage.get(&app_conf, info_storage);
+    let mut storage = app_conf.storage_opts.storage.get(&app_conf);
     // Preparing it.
     storage.prepare().await?;
 
@@ -171,6 +176,6 @@ async fn main() -> std::io::Result<()> {
     let notification_manager = NotificationManager::new(&app_conf).await?;
 
     // Creating actual server and running it.
-    let server = create_server(storage, app_conf, notification_manager)?;
+    let server = create_server(storage, info_storage, app_conf, notification_manager)?;
     server.await
 }

@@ -1,4 +1,3 @@
-use crate::info_storages::InfoStorage;
 use crate::storages::file_storage;
 use crate::{from_str, RustusConf, Storage};
 use derive_more::{Display, From};
@@ -20,16 +19,10 @@ impl AvailableStores {
     /// `config` - Rustus configuration.
     /// `info_storage` - Storage for information about files.
     ///
-    pub fn get(
-        &self,
-        config: &RustusConf,
-        info_storage: Box<dyn InfoStorage + Sync + Send>,
-    ) -> Box<dyn Storage + Send + Sync> {
+    pub fn get(&self, config: &RustusConf) -> Box<dyn Storage + Send + Sync> {
         #[allow(clippy::single_match)]
         match self {
-            Self::FileStorage => {
-                Box::new(file_storage::FileStorage::new(config.clone(), info_storage))
-            }
+            Self::FileStorage => Box::new(file_storage::FileStorage::new(config.clone())),
         }
     }
 }
