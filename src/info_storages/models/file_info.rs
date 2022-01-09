@@ -15,6 +15,7 @@ pub struct FileInfo {
     #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
     pub deferred_size: bool,
+    pub storage: String,
     pub metadata: HashMap<String, String>,
 }
 
@@ -32,6 +33,7 @@ impl FileInfo {
         file_id: &str,
         length: Option<usize>,
         path: Option<String>,
+        storage: String,
         initial_metadata: Option<HashMap<String, String>>,
     ) -> FileInfo {
         let id = String::from(file_id);
@@ -49,6 +51,7 @@ impl FileInfo {
             id,
             path,
             length,
+            storage,
             metadata,
             deferred_size,
             offset: 0,

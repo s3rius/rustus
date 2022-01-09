@@ -7,7 +7,7 @@ use crate::info_storages::FileInfo;
 use crate::notifiers::Hook;
 use crate::protocol::extensions::Extensions;
 use crate::utils::headers::{check_header, parse_header};
-use crate::{NotificationManager, RustusConf, Storage};
+use crate::{InfoStorage, NotificationManager, RustusConf, Storage};
 
 /// Get metadata info from request.
 ///
@@ -49,8 +49,17 @@ fn get_metadata(request: &HttpRequest) -> Option<HashMap<String, String>> {
         })
 }
 
+/// Create file.
+///
+/// This method allows you to create file to start uploading.
+///
+/// This method supports defer-length if
+/// you don't know actual file length and
+/// you can upload first bytes if creation-with-upload
+/// extension is enabled.
 pub async fn create_file(
     storage: web::Data<Box<dyn Storage + Send + Sync>>,
+    info_storage: web::Data<Box<dyn InfoStorage + Send + Sync>>,
     notification_manager: web::Data<Box<NotificationManager>>,
     app_conf: web::Data<RustusConf>,
     request: HttpRequest,
@@ -75,20 +84,28 @@ pub async fn create_file(
 
     let meta = get_metadata(&request);
 
+    let file_id = uuid::Uuid::new_v4().to_string();
+    let mut file_info = FileInfo::new(
+        file_id.as_str(),
+        length,
+        None,
+        storage.to_string(),
+        meta.clone(),
+    );
+
     if app_conf.hook_is_active(Hook::PreCreate) {
-        let initial_file_info = FileInfo::new("", length, None, meta.clone());
         let message = app_conf
             .notification_opts
-            .notification_format
-            .format(&request, &initial_file_info)?;
+            .hooks_format
+            .format(&request, &file_info)?;
         let headers = request.headers();
         notification_manager
             .send_message(message, Hook::PreCreate, headers)
             .await?;
     }
 
-    // Create file and get the id.
-    let mut file_info = storage.create_file(length, meta).await?;
+    // Create file and get the it's path.
+    file_info.path = Some(storage.create_file(&file_info).await?);
 
     // Create upload URL for this file.
     let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
@@ -102,15 +119,16 @@ pub async fn create_file(
             return Ok(HttpResponse::BadRequest().body(""));
         }
         // Writing first bytes.
-        file_info = storage
-            .add_bytes(file_info.id.as_str(), 0, None, bytes.as_ref())
-            .await?;
+        storage.add_bytes(&file_info, bytes.as_ref()).await?;
+        file_info.offset += bytes.len();
     }
+
+    info_storage.set_info(&file_info, true).await?;
 
     if app_conf.hook_is_active(Hook::PostCreate) {
         let message = app_conf
             .notification_opts
-            .notification_format
+            .hooks_format
             .format(&request, &file_info)?;
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
