@@ -4,7 +4,7 @@ use crate::errors::RustusError;
 use crate::notifiers::Hook;
 use crate::protocol::extensions::Extensions;
 use crate::utils::headers::{check_header, parse_header};
-use crate::{InfoStorage, NotificationManager, RustusConf, Storage};
+use crate::{RustusConf, State};
 
 #[allow(clippy::needless_pass_by_value)]
 pub fn server_info(app_conf: web::Data<RustusConf>) -> HttpResponse {
@@ -20,8 +20,7 @@ pub fn server_info(app_conf: web::Data<RustusConf>) -> HttpResponse {
 }
 
 pub async fn get_file_info(
-    info_storage: web::Data<Box<dyn InfoStorage + Send + Sync>>,
-    storage: web::Data<Box<dyn Storage + Send + Sync>>,
+    state: web::Data<State>,
     request: HttpRequest,
 ) -> actix_web::Result<HttpResponse> {
     // Getting file id from URL.
@@ -31,8 +30,8 @@ pub async fn get_file_info(
     let file_id = request.match_info().get("file_id").unwrap();
 
     // Getting file info from info_storage.
-    let file_info = info_storage.get_info(file_id).await?;
-    if file_info.storage != storage.to_string() {
+    let file_info = state.info_storage.get_info(file_id).await?;
+    if file_info.storage != state.data_storage.to_string() {
         return Ok(HttpResponse::NotFound().body(""));
     }
     let mut builder = HttpResponse::Ok();
@@ -54,10 +53,7 @@ pub async fn get_file_info(
 pub async fn write_bytes(
     request: HttpRequest,
     bytes: Bytes,
-    storage: web::Data<Box<dyn Storage + Send + Sync>>,
-    info_storage: web::Data<Box<dyn InfoStorage + Send + Sync>>,
-    notification_manager: web::Data<Box<NotificationManager>>,
-    app_conf: web::Data<RustusConf>,
+    state: web::Data<State>,
 ) -> actix_web::Result<HttpResponse> {
     // Checking if request has required headers.
     if !check_header(&request, "Content-Type", "application/offset+octet-stream") {
@@ -76,7 +72,8 @@ pub async fn write_bytes(
 
     // New upload length.
     // Parses header `Upload-Length` only if the creation-defer-length extension is enabled.
-    let updated_len = if app_conf
+    let updated_len = if state
+        .config
         .extensions_vec()
         .contains(&Extensions::CreationDeferLength)
     {
@@ -87,10 +84,10 @@ pub async fn write_bytes(
 
     let file_id = request.match_info().get("file_id").unwrap();
     // Getting file info.
-    let mut file_info = info_storage.get_info(file_id).await?;
+    let mut file_info = state.info_storage.get_info(file_id).await?;
 
     // Checking if file was stored in the same storage.
-    if file_info.storage != storage.to_string() {
+    if file_info.storage != state.data_storage.to_string() {
         return Ok(HttpResponse::NotFound().body(""));
     }
     // Checking if offset from request is the same as the real offset.
@@ -125,24 +122,29 @@ pub async fn write_bytes(
     }
 
     // Appending bytes to file.
-    storage.add_bytes(&file_info, bytes.as_ref()).await?;
+    state
+        .data_storage
+        .add_bytes(&file_info, bytes.as_ref())
+        .await?;
     // Updating offset.
     file_info.offset += bytes.len();
     // Saving info to info storage.
-    info_storage.set_info(&file_info, false).await?;
+    state.info_storage.set_info(&file_info, false).await?;
 
     let mut hook = Hook::PostReceive;
     if file_info.length == Some(file_info.offset) {
         hook = Hook::PostFinish;
     }
-    if app_conf.hook_is_active(hook) {
-        let message = app_conf
+    if state.config.hook_is_active(hook) {
+        let message = state
+            .config
             .notification_opts
             .hooks_format
             .format(&request, &file_info)?;
         let headers = request.headers().clone();
         tokio::spawn(async move {
-            notification_manager
+            state
+                .notification_manager
                 .send_message(message, hook, &headers)
                 .await
         });
