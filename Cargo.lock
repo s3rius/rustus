@@ -2186,16 +2186,15 @@ dependencies = [
 
 [[package]]
 name = "rbatis"
-version = "3.0.29"
+version = "3.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50c605c2852c546aa377cb7c672679c6e4e345fb938b8407fcb0bfc149d56999"
+checksum = "1b8c968bd15606738295d8b71dca35cfef3bb1a124af89dab45a18ed83b19975"
 dependencies = [
  "async-trait",
  "chrono",
  "futures",
  "futures-core",
  "hex",
- "lazy_static",
  "log",
  "once_cell",
  "rand",
@@ -2209,9 +2208,9 @@ dependencies = [
 
 [[package]]
 name = "rbatis-core"
-version = "3.0.19"
+version = "3.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a2c87fa8e1ff3d9ae75b26188d1f7eca3222edbdd65883eff1ae885a7e12c2e"
+checksum = "2cd0da1efe628da94506a15dc8e628a6c25b6d8de77fb2d51149ac9c7893153d"
 dependencies = [
  "base64",
  "bigdecimal",
