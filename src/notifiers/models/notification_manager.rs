@@ -22,6 +22,7 @@ impl NotificationManager {
             notifiers: Vec::new(),
         };
         debug!("Initializing notification manager.");
+        #[cfg(feature = "file_notifiers")]
         if tus_config.notification_opts.hooks_file.is_some() {
             debug!("Found hooks file");
             manager.notifiers.push(Box::new(FileNotifier::new(
