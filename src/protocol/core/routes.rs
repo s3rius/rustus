@@ -56,7 +56,8 @@ pub async fn write_bytes(
     state: web::Data<State>,
 ) -> actix_web::Result<HttpResponse> {
     // Checking if request has required headers.
-    if !check_header(&request, "Content-Type", "application/offset+octet-stream") {
+    let check_content_type = |val: &str| val == "application/offset+octet-stream";
+    if !check_header(&request, "Content-Type", check_content_type) {
         return Ok(HttpResponse::UnsupportedMediaType().body(""));
     }
     // Getting current offset.

@@ -63,9 +63,9 @@ impl From<FileInfo> for TusdFileInfo {
             offset: file_info.offset,
             size: file_info.length,
             size_is_deferred: deferred_size,
-            is_final: true,
-            is_partial: false,
-            partial_uploads: None,
+            is_final: file_info.is_final,
+            is_partial: file_info.is_partial,
+            partial_uploads: file_info.parts,
             metadata: file_info.metadata,
             storage: TusdStorageInfo {
                 storage_type: file_info.storage,

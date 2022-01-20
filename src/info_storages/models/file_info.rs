@@ -15,6 +15,9 @@ pub struct FileInfo {
     #[serde(with = "ts_seconds")]
     pub created_at: DateTime<Utc>,
     pub deferred_size: bool,
+    pub is_partial: bool,
+    pub is_final: bool,
+    pub parts: Option<Vec<String>>,
     pub storage: String,
     pub metadata: HashMap<String, String>,
 }
@@ -55,6 +58,9 @@ impl FileInfo {
             metadata,
             deferred_size,
             offset: 0,
+            is_final: false,
+            is_partial: false,
+            parts: None,
             created_at: chrono::Utc::now(),
         }
     }
