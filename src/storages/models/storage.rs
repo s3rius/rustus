@@ -53,6 +53,21 @@ pub trait Storage: Display {
     /// `file_info` - info about current file.
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String>;
 
+    /// Concatenate files.
+    ///
+    /// This method is used to merge multiple files together.
+    ///
+    /// This function is used by concat extension of the protocol.
+    ///
+    /// # Params
+    /// `file_info` - info about current file.
+    /// `parts_info` - info about merged files.
+    async fn concat_files(
+        &self,
+        file_info: &FileInfo,
+        parts_info: Vec<FileInfo>,
+    ) -> RustusResult<()>;
+
     /// Remove file from storage
     ///
     /// This method removes file and all associated

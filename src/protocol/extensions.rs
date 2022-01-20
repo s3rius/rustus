@@ -14,6 +14,8 @@ pub enum Extensions {
     Creation,
     #[display(fmt = "termination")]
     Termination,
+    #[display(fmt = "concatenation")]
+    Concatenation,
     #[display(fmt = "getting")]
     Getting,
 }

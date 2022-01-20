@@ -177,7 +177,7 @@ pub struct RustusConf {
     /// Enabled extensions for TUS protocol.
     #[structopt(
         long,
-        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length",
+        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation",
         env = "RUSTUS_TUS_EXTENSIONS",
         use_delimiter = true
     )]
