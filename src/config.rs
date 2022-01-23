@@ -183,6 +183,13 @@ pub struct RustusConf {
     )]
     pub tus_extensions: Vec<Extensions>,
 
+    /// Remove part files after concatenation is done.
+    /// By default rustus does nothing with part files after concatenation.
+    ///
+    /// This parameter is only needed if concatenation extension is enabled.
+    #[structopt(long, parse(from_flag))]
+    pub remove_parts: bool,
+
     #[structopt(flatten)]
     pub storage_opts: StorageOptions,
 

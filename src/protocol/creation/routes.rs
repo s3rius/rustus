@@ -116,6 +116,7 @@ pub async fn create_file(
         if is_final {
             file_info.is_final = true;
             file_info.parts = Some(get_upload_parts(&request));
+            file_info.deferred_size = false;
         }
         if is_partial {
             file_info.is_partial = true;
@@ -158,10 +159,16 @@ pub async fn create_file(
         }
         state
             .data_storage
-            .concat_files(&file_info, parts_info)
+            .concat_files(&file_info, parts_info.clone())
             .await?;
         file_info.offset = final_size;
         file_info.length = Some(final_size);
+        if state.config.remove_parts {
+            for part in parts_info {
+                state.data_storage.remove_file(&part).await?;
+                state.info_storage.remove_info(part.id.as_str()).await?;
+            }
+        }
     }
 
     // Create upload URL for this file.
@@ -175,7 +182,7 @@ pub async fn create_file(
     if with_upload && !bytes.is_empty() && !(concat_ext && is_final) {
         let octet_stream = |val: &str| val == "application/offset+octet-stream";
         if !check_header(&request, "Content-Type", octet_stream) {
-            return Ok(HttpResponse::BadRequest().body(""));
+            return Ok(HttpResponse::BadRequest().finish());
         }
         // Writing first bytes.
         state
@@ -207,5 +214,5 @@ pub async fn create_file(
     Ok(HttpResponse::Created()
         .insert_header(("Location", upload_url.as_str()))
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
-        .body(""))
+        .finish())
 }
