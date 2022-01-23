@@ -16,7 +16,7 @@ pub async fn terminate(
     if let Some(file_id) = file_id_opt {
         let file_info = state.info_storage.get_info(file_id.as_str()).await?;
         if file_info.storage != state.data_storage.to_string() {
-            return Ok(HttpResponse::NotFound().body(""));
+            return Ok(HttpResponse::NotFound().finish());
         }
         state.info_storage.remove_info(file_id.as_str()).await?;
         state.data_storage.remove_file(&file_info).await?;
@@ -35,5 +35,5 @@ pub async fn terminate(
             });
         }
     }
-    Ok(HttpResponse::NoContent().body(""))
+    Ok(HttpResponse::NoContent().finish())
 }

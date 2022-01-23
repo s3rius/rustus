@@ -16,7 +16,7 @@ pub fn server_info(app_conf: web::Data<RustusConf>) -> HttpResponse {
         .join(",");
     HttpResponse::Ok()
         .insert_header(("Tus-Extension", ext_str.as_str()))
-        .body("")
+        .finish()
 }
 
 pub async fn get_file_info(
@@ -25,17 +25,43 @@ pub async fn get_file_info(
 ) -> actix_web::Result<HttpResponse> {
     // Getting file id from URL.
     if request.match_info().get("file_id").is_none() {
-        return Ok(HttpResponse::NotFound().body(""));
+        return Ok(HttpResponse::NotFound().body("No file id provided."));
     }
     let file_id = request.match_info().get("file_id").unwrap();
 
     // Getting file info from info_storage.
     let file_info = state.info_storage.get_info(file_id).await?;
     if file_info.storage != state.data_storage.to_string() {
-        return Ok(HttpResponse::NotFound().body(""));
+        return Ok(HttpResponse::NotFound().body("File not found."));
     }
     let mut builder = HttpResponse::Ok();
+    if file_info.is_partial {
+        builder.insert_header(("Upload-Concat", "partial"));
+    }
+    if file_info.is_final && file_info.parts.is_some() {
+        #[allow(clippy::or_fun_call)]
+        let parts = file_info
+            .parts
+            .clone()
+            .unwrap()
+            .iter()
+            .map(|file| {
+                format!(
+                    "{}/{}",
+                    state
+                        .config
+                        .base_url()
+                        .strip_suffix('/')
+                        .unwrap_or(state.config.base_url().as_str()),
+                    file.as_str()
+                )
+            })
+            .collect::<Vec<String>>()
+            .join(" ");
+        builder.insert_header(("Upload-Concat", format!("final; {}", parts)));
+    }
     builder
+        .no_chunking(file_info.offset as u64)
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
         .insert_header(("Content-Length", file_info.offset.to_string()));
     // Upload length is known.
@@ -47,7 +73,7 @@ pub async fn get_file_info(
     if let Some(meta) = file_info.get_metadata_string() {
         builder.insert_header(("Upload-Metadata", meta));
     }
-    Ok(builder.body(""))
+    Ok(builder.finish())
 }
 
 pub async fn write_bytes(
@@ -58,17 +84,17 @@ pub async fn write_bytes(
     // Checking if request has required headers.
     let check_content_type = |val: &str| val == "application/offset+octet-stream";
     if !check_header(&request, "Content-Type", check_content_type) {
-        return Ok(HttpResponse::UnsupportedMediaType().body(""));
+        return Ok(HttpResponse::UnsupportedMediaType().body("Unknown content-type."));
     }
     // Getting current offset.
     let offset: Option<usize> = parse_header(&request, "Upload-Offset");
 
     if offset.is_none() {
-        return Ok(HttpResponse::UnsupportedMediaType().body(""));
+        return Ok(HttpResponse::UnsupportedMediaType().body("No offset provided."));
     }
 
     if request.match_info().get("file_id").is_none() {
-        return Ok(HttpResponse::NotFound().body(""));
+        return Ok(HttpResponse::NotFound().body("No file id provided."));
     }
 
     // New upload length.
@@ -87,13 +113,18 @@ pub async fn write_bytes(
     // Getting file info.
     let mut file_info = state.info_storage.get_info(file_id).await?;
 
+    // According to TUS protocol you can't update final uploads.
+    if file_info.is_final {
+        return Ok(HttpResponse::Forbidden().finish());
+    }
+
     // Checking if file was stored in the same storage.
     if file_info.storage != state.data_storage.to_string() {
-        return Ok(HttpResponse::NotFound().body(""));
+        return Ok(HttpResponse::NotFound().finish());
     }
     // Checking if offset from request is the same as the real offset.
     if offset.unwrap() != file_info.offset {
-        return Ok(HttpResponse::Conflict().body(""));
+        return Ok(HttpResponse::Conflict().finish());
     }
 
     // If someone want to update file length.
@@ -152,5 +183,5 @@ pub async fn write_bytes(
     }
     Ok(HttpResponse::NoContent()
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
-        .body(""))
+        .finish())
 }
