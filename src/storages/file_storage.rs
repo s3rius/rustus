@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use actix_files::NamedFile;
-use async_std::fs::{remove_file, DirBuilder, OpenOptions};
+use async_std::fs::{remove_file, DirBuilder, File, OpenOptions};
+use async_std::io::copy;
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
@@ -126,6 +127,33 @@ impl Storage for FileStorage {
         file.sync_all().await?;
 
         Ok(file_path.display().to_string())
+    }
+
+    async fn concat_files(
+        &self,
+        file_info: &FileInfo,
+        parts_info: Vec<FileInfo>,
+    ) -> RustusResult<()> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(false)
+            .create_new(false)
+            .open(file_info.path.as_ref().unwrap().clone())
+            .await
+            .map_err(|err| {
+                error!("{:?}", err);
+                RustusError::UnableToWrite(err.to_string())
+            })?;
+        for part in parts_info {
+            if part.path.is_none() {
+                return Err(RustusError::FileNotFound);
+            }
+            let mut part_file = File::open(part.path.as_ref().unwrap()).await?;
+            copy(&mut part_file, &mut file).await?;
+        }
+        file.sync_data().await?;
+        Ok(())
     }
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
