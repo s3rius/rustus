@@ -144,11 +144,11 @@ pub struct NotificationsOptions {
 /// [here](https://tus.io/).
 pub struct RustusConf {
     /// Rustus server host
-    #[structopt(short, long, default_value = "0.0.0.0", env = "RUSTUS_HOST")]
+    #[structopt(short, long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
     pub host: String,
 
     /// Rustus server port
-    #[structopt(short, long, default_value = "1081", env = "RUSTUS_PORT")]
+    #[structopt(short, long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
     pub port: u16,
 
     /// Rustus base API url
@@ -177,11 +177,18 @@ pub struct RustusConf {
     /// Enabled extensions for TUS protocol.
     #[structopt(
         long,
-        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length",
+        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation",
         env = "RUSTUS_TUS_EXTENSIONS",
         use_delimiter = true
     )]
     pub tus_extensions: Vec<Extensions>,
+
+    /// Remove part files after concatenation is done.
+    /// By default rustus does nothing with part files after concatenation.
+    ///
+    /// This parameter is only needed if concatenation extension is enabled.
+    #[structopt(long, parse(from_flag))]
+    pub remove_parts: bool,
 
     #[structopt(flatten)]
     pub storage_opts: StorageOptions,

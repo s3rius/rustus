@@ -91,9 +91,9 @@ dependencies = [
 
 [[package]]
 name = "actix-router"
-version = "0.5.0-beta.4"
+version = "0.5.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b53c1deabdbf3a8a8b9a949123edd3cafb873abd75da96b5933a8b590f9d6dc2"
+checksum = "5e0b59ad08167ffbb686ddb495846707231e96908b829b1fc218198ec581e2ad"
 dependencies = [
  "bytestring",
  "firestorm",
@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "actix-rt"
-version = "2.5.1"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82cf33e04d9911b39bfb7be3c01309568b4315895d3358372dce64ed2c2bf32d"
+checksum = "cdf3f2183be1241ed4dd22611850b85d38de0b08a09f1f7bcccbd0809084b359"
 dependencies = [
  "actix-macros",
  "futures-core",
@@ -116,9 +116,9 @@ dependencies = [
 
 [[package]]
 name = "actix-server"
-version = "2.0.0-rc.3"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9259b4f3cc9ca96d7d91a7da66b7b01c47653a0da5b0ba3f7f45a344480443b"
+checksum = "d9e7472ac180abb0a8e592b653744345983a7a14f44691c8394a799d0df4dbbf"
 dependencies = [
  "actix-rt",
  "actix-service",
@@ -155,9 +155,9 @@ dependencies = [
 
 [[package]]
 name = "actix-web"
-version = "4.0.0-beta.19"
+version = "4.0.0-beta.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "229d0d2c11d6c734327cf1fbc15dd644b351b440bcb4608349258f5e00605bdc"
+checksum = "aa8ba5081e9f8d0016cf34df516c699198158fd8c77990aa284115b055ead61b"
 dependencies = [
  "actix-codec",
  "actix-http",
@@ -2186,16 +2186,15 @@ dependencies = [
 
 [[package]]
 name = "rbatis"
-version = "3.0.29"
+version = "3.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50c605c2852c546aa377cb7c672679c6e4e345fb938b8407fcb0bfc149d56999"
+checksum = "1b8c968bd15606738295d8b71dca35cfef3bb1a124af89dab45a18ed83b19975"
 dependencies = [
  "async-trait",
  "chrono",
  "futures",
  "futures-core",
  "hex",
- "lazy_static",
  "log",
  "once_cell",
  "rand",
@@ -2209,9 +2208,9 @@ dependencies = [
 
 [[package]]
 name = "rbatis-core"
-version = "3.0.19"
+version = "3.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a2c87fa8e1ff3d9ae75b26188d1f7eca3222edbdd65883eff1ae885a7e12c2e"
+checksum = "2cd0da1efe628da94506a15dc8e628a6c25b6d8de77fb2d51149ac9c7893153d"
 dependencies = [
  "base64",
  "bigdecimal",
@@ -2482,7 +2481,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "actix-files",
  "actix-web",
