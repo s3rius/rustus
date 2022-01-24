@@ -28,15 +28,15 @@ pub fn parse_header<T: FromStr>(request: &HttpRequest, header_name: &str) -> Opt
             })
 }
 
-/// Check that header's value is equal to some value.
+/// Check that header value satisfies some predicate.
 ///
-/// Returns false if header is not present or values don't match.
-pub fn check_header(request: &HttpRequest, header_name: &str, value: &str) -> bool {
+/// Passes header as a parameter to expr if header is present.
+pub fn check_header(request: &HttpRequest, header_name: &str, expr: fn(&str) -> bool) -> bool {
     request
         .headers()
         .get(header_name)
         .and_then(|header_val| match header_val.to_str() {
-            Ok(val) => Some(val == value),
+            Ok(val) => Some(expr(val)),
             Err(_) => None,
         })
         .unwrap_or(false)

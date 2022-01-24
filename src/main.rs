@@ -13,6 +13,7 @@ use log::LevelFilter;
 use crate::errors::RustusResult;
 use crate::info_storages::InfoStorage;
 use crate::notifiers::models::notification_manager::NotificationManager;
+use crate::state::State;
 use config::RustusConf;
 
 use crate::storages::Storage;
@@ -23,6 +24,7 @@ mod info_storages;
 mod notifiers;
 mod protocol;
 mod routes;
+mod state;
 mod storages;
 mod utils;
 
@@ -64,35 +66,22 @@ fn greeting(app_conf: &RustusConf) {
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
-pub fn create_server(
-    storage: Box<dyn Storage + Send + Sync>,
-    info_storage: Box<dyn InfoStorage + Send + Sync>,
-    app_conf: RustusConf,
-    notification_manager: NotificationManager,
-) -> Result<Server, std::io::Error> {
-    let host = app_conf.host.clone();
-    let port = app_conf.port;
-    let workers = app_conf.workers;
-    let app_conf_data = web::Data::new(app_conf.clone());
-    let info_storage_data: web::Data<Box<dyn InfoStorage + Send + Sync>> =
-        web::Data::from(Arc::new(info_storage));
-    let storage_data: web::Data<Box<dyn Storage + Send + Sync>> =
-        web::Data::from(Arc::new(storage));
-    let manager_data: web::Data<Box<NotificationManager>> =
-        web::Data::from(Arc::new(Box::new(notification_manager)));
+pub fn create_server(state: State) -> Result<Server, std::io::Error> {
+    let host = state.config.host.clone();
+    let port = state.config.port;
+    let config = state.config.clone();
+    let workers = state.config.workers;
+    let state_data: web::Data<State> = web::Data::from(Arc::new(state));
     let mut server = HttpServer::new(move || {
         App::new()
-            .app_data(app_conf_data.clone())
-            .app_data(storage_data.clone())
-            .app_data(manager_data.clone())
-            .app_data(info_storage_data.clone())
+            .app_data(state_data.clone())
             // Adds all routes.
-            .configure(protocol::setup(app_conf.clone()))
+            .configure(protocol::setup(config.clone()))
             // Main middleware that appends TUS headers.
             .wrap(
                 middleware::DefaultHeaders::new()
                     .add(("Tus-Resumable", "1.0.0"))
-                    .add(("Tus-Max-Size", app_conf.max_body_size.to_string()))
+                    .add(("Tus-Max-Size", config.max_body_size.to_string()))
                     .add(("Tus-Version", "1.0.0")),
             )
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
@@ -176,6 +165,11 @@ async fn main() -> std::io::Result<()> {
     let notification_manager = NotificationManager::new(&app_conf).await?;
 
     // Creating actual server and running it.
-    let server = create_server(storage, info_storage, app_conf, notification_manager)?;
+    let server = create_server(State::new(
+        app_conf.clone(),
+        storage,
+        info_storage,
+        notification_manager,
+    ))?;
     server.await
 }
