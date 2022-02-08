@@ -19,10 +19,14 @@ impl AvailableStores {
     /// `config` - Rustus configuration.
     /// `info_storage` - Storage for information about files.
     ///
+    #[cfg_attr(coverage, no_coverage)]
     pub fn get(&self, config: &RustusConf) -> Box<dyn Storage + Send + Sync> {
         #[allow(clippy::single_match)]
         match self {
-            Self::FileStorage => Box::new(file_storage::FileStorage::new(config.clone())),
+            Self::FileStorage => Box::new(file_storage::FileStorage::new(
+                config.storage_opts.data_dir.clone(),
+                config.storage_opts.dir_structure.clone(),
+            )),
         }
     }
 }

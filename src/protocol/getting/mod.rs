@@ -1,7 +1,5 @@
 use actix_web::{guard, web};
 
-use crate::RustusConf;
-
 mod routes;
 
 /// Add getting extension.
@@ -10,10 +8,11 @@ mod routes;
 /// to get uploaded file.
 ///
 /// This is unofficial extension.
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
+#[cfg_attr(coverage, no_coverage)]
+pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app.service(
         // GET /base/file
-        web::resource(app_conf.file_url().as_str())
+        web::resource("{file_id}")
             .name("getting:get")
             .guard(guard::Get())
             .to(routes::get_file),

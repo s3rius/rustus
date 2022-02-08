@@ -32,13 +32,14 @@ impl AvailableInfoStores {
     /// # Params
     /// `config` - Rustus configuration.
     ///
+    #[cfg_attr(coverage, no_coverage)]
     pub async fn get(
         &self,
         config: &RustusConf,
     ) -> RustusResult<Box<dyn InfoStorage + Sync + Send>> {
         match self {
             Self::Files => Ok(Box::new(file_info_storage::FileInfoStorage::new(
-                config.clone(),
+                config.info_storage_opts.info_dir.clone(),
             ))),
             #[cfg(feature = "db_info_storage")]
             Self::DB => Ok(Box::new(

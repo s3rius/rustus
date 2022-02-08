@@ -1,12 +1,13 @@
-use actix_web::{web, HttpRequest, Responder};
+use actix_files::NamedFile;
+use actix_web::{web, HttpRequest};
 
 use crate::errors::RustusError;
-use crate::State;
+use crate::{RustusResult, State};
 
 /// Retrieve actual file.
 ///
 /// This method allows you to download files directly from storage.
-pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> impl Responder {
+pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusResult<NamedFile> {
     let file_id_opt = request.match_info().get("file_id").map(String::from);
     if let Some(file_id) = file_id_opt {
         let file_info = state.info_storage.get_info(file_id.as_str()).await?;
@@ -16,5 +17,69 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> impl Res
         state.data_storage.get_contents(&file_info).await
     } else {
         Err(RustusError::FileNotFound)
+    }
+}
+
+#[cfg(test)]
+#[cfg_attr(coverage, no_coverage)]
+mod test {
+    use crate::{rustus_service, State};
+    use actix_web::http::StatusCode;
+    use actix_web::test::{call_service, init_service, TestRequest};
+    use actix_web::{web, App};
+
+    #[actix_rt::test]
+    async fn success() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let file_info = state.create_test_file().await;
+        state
+            .data_storage
+            .add_bytes(&file_info, "data".as_bytes())
+            .await
+            .unwrap();
+        let request = TestRequest::get()
+            .uri(state.config.file_url(file_info.id.as_str()).as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_rt::test]
+    async fn unknown_file_id() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::get()
+            .uri(state.config.file_url("random_str").as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[actix_rt::test]
+    async fn unknown_storage() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let mut file_info = state.create_test_file().await;
+        file_info.storage = "unknown_storage".into();
+        state
+            .info_storage
+            .set_info(&file_info, false)
+            .await
+            .unwrap();
+        let request = TestRequest::get()
+            .uri(state.config.file_url(file_info.id.as_str()).as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 }
