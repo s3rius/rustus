@@ -28,6 +28,7 @@ impl HttpNotifier {
 
 #[async_trait]
 impl Notifier for HttpNotifier {
+    #[cfg_attr(coverage, no_coverage)]
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
@@ -60,5 +61,96 @@ impl Notifier for HttpNotifier {
             resp.error_for_status()?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::HttpNotifier;
+    use crate::notifiers::{Hook, Notifier};
+    use actix_web::http::header::{HeaderMap, HeaderName, HeaderValue};
+    use httptest::matchers::contains;
+    use httptest::responders::status_code;
+    use std::str::FromStr;
+    use std::time::Duration;
+
+    #[actix_rt::test]
+    async fn success_request() {
+        let server = httptest::Server::run();
+        server.expect(
+            httptest::Expectation::matching(httptest::matchers::request::method_path(
+                "POST", "/hook",
+            ))
+            .respond_with(httptest::responders::status_code(200)),
+        );
+        let hook_url = server.url_str("/hook");
+
+        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        notifier
+            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .await
+            .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn timeout_request() {
+        let server = httptest::Server::run();
+        server.expect(
+            httptest::Expectation::matching(httptest::matchers::request::method_path(
+                "POST", "/hook",
+            ))
+            .respond_with(httptest::responders::delay_and_then(
+                Duration::from_secs(3),
+                status_code(200),
+            )),
+        );
+        let hook_url = server.url_str("/hook");
+
+        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        let result = notifier
+            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn unknown_url() {
+        let server = httptest::Server::run();
+        server.expect(
+            httptest::Expectation::matching(httptest::matchers::request::method_path(
+                "POST", "/hook",
+            ))
+            .respond_with(httptest::responders::status_code(404)),
+        );
+        let hook_url = server.url_str("/hook");
+
+        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        let result = notifier
+            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .await;
+        assert!(result.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn forwarded_header() {
+        let server = httptest::Server::run();
+        server.expect(
+            httptest::Expectation::matching(httptest::matchers::all_of![
+                httptest::matchers::request::method_path("POST", "/hook",),
+                httptest::matchers::request::headers(contains(("x-test-header", "meme-value")))
+            ])
+            .respond_with(httptest::responders::status_code(200)),
+        );
+        let hook_url = server.url_str("/hook");
+        let notifier = HttpNotifier::new(vec![hook_url], vec!["X-TEST-HEADER".into()]);
+        let mut header_map = HeaderMap::new();
+        header_map.insert(
+            HeaderName::from_str("X-TEST-HEADER").unwrap(),
+            HeaderValue::from_str("meme-value").unwrap(),
+        );
+        notifier
+            .send_message("test_message".into(), Hook::PostCreate, &header_map)
+            .await
+            .unwrap();
     }
 }

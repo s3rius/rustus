@@ -226,7 +226,8 @@ Example of a single file hook:
 
 # Hook name would be "pre-create", "post-create" and so on.
 HOOK_NAME="$1"
-MEME="$(cat /dev/stdin | jq ".upload .metadata .meme" | xargs)"
+HOOK_INFO="$2"
+MEME="$(echo "$HOOK_INFO" | jq ".upload .metadata .meme" | xargs)"
 
 # Here we check if name in metadata is equal to pepe.
 if [[ $MEME = "pepe" ]]; then
@@ -271,7 +272,10 @@ rustus --hooks-dir "hooks"
 In this case rustus will append a hook name to the directory you pointed at and call it as
 an executable.
 
-Information about hook can be found in stdin.
+Information about hook is passed as a first parameter, as if you call script by running:
+```bash
+./hooks/pre-create '{"id": "someid", ...}'
+```
 
 ### Http Hooks
 

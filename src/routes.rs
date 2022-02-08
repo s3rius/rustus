@@ -6,6 +6,7 @@ use crate::errors::{RustusError, RustusResult};
 /// All protocol urls can be found
 /// at `crate::protocol::*`.
 #[allow(clippy::unused_async)]
+#[cfg_attr(coverage, no_coverage)]
 pub async fn not_found() -> RustusResult<HttpResponse> {
     Err(RustusError::FileNotFound)
 }
