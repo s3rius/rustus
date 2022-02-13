@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use actix_files::NamedFile;
 use async_std::fs::{remove_file, DirBuilder, File, OpenOptions};
-use async_std::io::copy;
+use async_std::io::{copy, SeekFrom};
 use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
@@ -88,7 +88,7 @@ impl Storage for FileStorage {
         // bytes to the end of a file.
         let mut file = OpenOptions::new()
             .write(true)
-            .append(true)
+            .append(false)
             .create(false)
             .open(info.path.as_ref().unwrap())
             .await
@@ -96,6 +96,7 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
+        file.seek(SeekFrom::Start(info.offset as u64));
         file.write_all(bytes).await.map_err(|err| {
             error!("{:?}", err);
             RustusError::UnableToWrite(info.path.clone().unwrap())
@@ -119,6 +120,14 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::FileAlreadyExists(file_info.id.clone())
             })?;
+
+        // Pre-allocate file on disk
+        if let Some(file_length) = file_info.length {
+            file.set_len(file_length as u64).await.map_err(|err| {
+                error!("{:?}", err);
+                RustusError::UnableToResize(file_info.id.clone())
+            })?;
+        }
 
         // Let's write an empty string to the beginning of the file.
         // Maybe remove it later.
@@ -214,9 +223,51 @@ mod tests {
     async fn adding_bytes() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileStorage::new(dir.into_path().clone(), "".into());
-        let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
-        let new_path = storage.create_file(&file_info).await.unwrap();
         let test_data = "MyTestData";
+        let mut file_info = FileInfo::new("test_id", None, None, storage.to_string(), None);
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        file_info.path = Some(new_path.clone());
+        storage
+            .add_bytes(&file_info, test_data.as_bytes())
+            .await
+            .unwrap();
+        let mut file = File::open(new_path).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        assert_eq!(contents, String::from(test_data))
+    }
+
+    #[actix_rt::test]
+    async fn adding_bytes_to_smaller_preallocated() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let test_data = "MyTestData";
+        let mut file_info = FileInfo::new("test_id", Some(1), None, storage.to_string(), None);
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        file_info.path = Some(new_path.clone());
+        storage
+            .add_bytes(&file_info, test_data.as_bytes())
+            .await
+            .unwrap();
+        let mut file = File::open(new_path).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        assert_eq!(contents, String::from(test_data))
+    }
+
+    #[actix_rt::test]
+    async fn adding_bytes_to_enough_preallocated() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let test_data = "MyTestData";
+        let mut file_info = FileInfo::new(
+            "test_id",
+            Some(test_data.len()),
+            None,
+            storage.to_string(),
+            None,
+        );
+        let new_path = storage.create_file(&file_info).await.unwrap();
         file_info.path = Some(new_path.clone());
         storage
             .add_bytes(&file_info, test_data.as_bytes())
@@ -232,14 +283,14 @@ mod tests {
     async fn adding_bytes_to_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let test_data = "MyTestData";
         let file_info = FileInfo::new(
             "test_id",
-            Some(5),
+            None,
             Some(String::from("some_file")),
             storage.to_string(),
             None,
         );
-        let test_data = "MyTestData";
         let result = storage.add_bytes(&file_info, test_data.as_bytes()).await;
         assert!(result.is_err())
     }
