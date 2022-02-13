@@ -39,6 +39,8 @@ pub enum RustusError {
     UnableToRemove(String),
     #[error("Unable to resize file {0}")]
     UnableToResize(String),
+    #[error("Unable to seek in file {0}")]
+    UnableToSeek(String),
     #[error("Unable to prepare info storage. Reason: {0}")]
     UnableToPrepareInfoStorage(String),
     #[error("Unable to prepare storage. Reason: {0}")]
