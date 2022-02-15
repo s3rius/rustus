@@ -85,13 +85,7 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let info_storage = get_storage().await;
-        let file_info = FileInfo::new(
-            uuid::Uuid::new_v4().to_string().as_str(),
-            Some(10),
-            None,
-            "some data storage".into(),
-            None,
-        );
+        let file_info = FileInfo::new_test();
         info_storage.set_info(&file_info, true).await.unwrap();
         let mut redis = get_redis().await;
         let value: Option<String> = redis.get(file_info.id.as_str()).await.unwrap();
@@ -107,13 +101,7 @@ mod tests {
     #[actix_rt::test]
     async fn no_connection() {
         let info_storage = RedisStorage::new("redis://unknonwn_url/0").await.unwrap();
-        let file_info = FileInfo::new(
-            uuid::Uuid::new_v4().to_string().as_str(),
-            Some(10),
-            Some("random_path".into()),
-            "random_storage".into(),
-            None,
-        );
+        let file_info = FileInfo::new_test();
         let res = info_storage.set_info(&file_info, true).await;
         assert!(res.is_err());
     }
@@ -133,13 +121,7 @@ mod tests {
         let mut redis = get_redis().await;
         let res = info_storage.remove_info("unknown").await;
         assert!(res.is_err());
-        let file_info = FileInfo::new(
-            uuid::Uuid::new_v4().to_string().as_str(),
-            Some(10),
-            Some("random_path".into()),
-            "random_storage".into(),
-            None,
-        );
+        let file_info = FileInfo::new_test();
         info_storage.set_info(&file_info, true).await.unwrap();
         assert!(redis
             .get::<&str, Option<String>>(file_info.id.as_str())

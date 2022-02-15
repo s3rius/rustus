@@ -60,6 +60,14 @@ jobs:
         image: redis:6.2-alpine3.15
         ports:
           - 6379/tcp
+      pg:
+        image: postgres:13.1
+        ports:
+          - 5432/tcp
+        env:
+          POSTGRES_PASSWORD: rustus
+          POSTGRES_USER: rustus
+          POSTGRES_DB: rustus
     steps:
       - uses: actions/checkout@v2
         with:
@@ -69,9 +77,10 @@ jobs:
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Generate code coverage
-        run: cargo llvm-cov --features=all,integration_tests --lcov --output-path lcov.info
+        run: cargo llvm-cov --features=all,integration_tests --lcov --output-path lcov.info -- --test-threads 1
         env:
           TEST_REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}/0
+          TEST_DB_URL: postgresql://rustus:rustus@localhost:${{ job.services.pg.ports['5432'] }}/rustus
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:

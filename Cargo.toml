@@ -108,7 +108,8 @@ redis_info_storage = ["mobc-redis"]
 
 ### For testing
 test_redis = []
-integration_tests = ["test_redis"]
+test_db = []
+integration_tests = ["test_redis", "test_db"]
 
 [dev-dependencies]
 tempdir = "0.3.7"

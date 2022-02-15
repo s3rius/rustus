@@ -6,17 +6,6 @@ repos:
   - repo: local
     hooks:
 
-      - id: build
-        types:
-          - rust
-        name: cargo build
-        language: system
-        entry: cargo
-        pass_filenames: false
-        args:
-          - build
-          - --features=all
-
       - id: fmt
         types:
           - rust
@@ -47,3 +36,14 @@ repos:
           - clippy::pedantic
           - -D
           - warnings
+
+      - id: build
+        types:
+          - rust
+        name: cargo build
+        language: system
+        entry: cargo
+        pass_filenames: false
+        args:
+          - build
+          - --features=all
