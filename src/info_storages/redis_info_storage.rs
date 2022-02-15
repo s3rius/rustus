@@ -6,15 +6,14 @@ use redis::aio::Connection;
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
-use crate::RustusConf;
 
 pub struct RedisStorage {
     pool: Pool<RedisConnectionManager>,
 }
 
 impl RedisStorage {
-    pub async fn new(app_conf: RustusConf) -> RustusResult<Self> {
-        let client = redis::Client::open(app_conf.info_storage_opts.info_db_dsn.unwrap().as_str())?;
+    pub async fn new(db_dsn: &str) -> RustusResult<Self> {
+        let client = redis::Client::open(db_dsn)?;
         let manager = RedisConnectionManager::new(client);
         let pool = Pool::builder().max_open(100).build(manager);
         Ok(Self { pool })
@@ -60,5 +59,101 @@ impl InfoStorage for RedisStorage {
             None | Some(0) => Err(RustusError::FileNotFound),
             _ => Ok(()),
         }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "test_redis")]
+mod tests {
+    use super::RedisStorage;
+    use crate::info_storages::FileInfo;
+    use crate::InfoStorage;
+    use mobc_redis::redis;
+    use mobc_redis::redis::AsyncCommands;
+
+    async fn get_storage() -> RedisStorage {
+        let redis_url = std::env::var("TEST_REDIS_URL").unwrap();
+        RedisStorage::new(redis_url.as_str()).await.unwrap()
+    }
+
+    async fn get_redis() -> redis::aio::Connection {
+        let redis_url = std::env::var("TEST_REDIS_URL").unwrap();
+        let redis = redis::Client::open(redis_url).unwrap();
+        redis.get_async_connection().await.unwrap()
+    }
+
+    #[actix_rt::test]
+    async fn success() {
+        let info_storage = get_storage().await;
+        let file_info = FileInfo::new(
+            uuid::Uuid::new_v4().to_string().as_str(),
+            Some(10),
+            None,
+            "some data storage".into(),
+            None,
+        );
+        info_storage.set_info(&file_info, true).await.unwrap();
+        let mut redis = get_redis().await;
+        let value: Option<String> = redis.get(file_info.id.as_str()).await.unwrap();
+        assert!(value.is_some());
+
+        let file_info_from_storage = info_storage.get_info(file_info.id.as_str()).await.unwrap();
+
+        assert_eq!(file_info.id, file_info_from_storage.id);
+        assert_eq!(file_info.path, file_info_from_storage.path);
+        assert_eq!(file_info.storage, file_info_from_storage.storage);
+    }
+
+    #[actix_rt::test]
+    async fn no_connection() {
+        let info_storage = RedisStorage::new("redis://unknonwn_url/0").await.unwrap();
+        let file_info = FileInfo::new(
+            uuid::Uuid::new_v4().to_string().as_str(),
+            Some(10),
+            Some("random_path".into()),
+            "random_storage".into(),
+            None,
+        );
+        let res = info_storage.set_info(&file_info, true).await;
+        assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn unknown_id() {
+        let info_storage = get_storage().await;
+        let res = info_storage
+            .get_info(uuid::Uuid::new_v4().to_string().as_str())
+            .await;
+        assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn deletion_success() {
+        let info_storage = get_storage().await;
+        let mut redis = get_redis().await;
+        let res = info_storage.remove_info("unknown").await;
+        assert!(res.is_err());
+        let file_info = FileInfo::new(
+            uuid::Uuid::new_v4().to_string().as_str(),
+            Some(10),
+            Some("random_path".into()),
+            "random_storage".into(),
+            None,
+        );
+        info_storage.set_info(&file_info, true).await.unwrap();
+        assert!(redis
+            .get::<&str, Option<String>>(file_info.id.as_str())
+            .await
+            .unwrap()
+            .is_some());
+        info_storage
+            .remove_info(file_info.id.as_str())
+            .await
+            .unwrap();
+        assert!(redis
+            .get::<&str, Option<String>>(file_info.id.as_str())
+            .await
+            .unwrap()
+            .is_none());
     }
 }

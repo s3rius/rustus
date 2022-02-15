@@ -47,7 +47,15 @@ impl AvailableInfoStores {
             )),
             #[cfg(feature = "redis_info_storage")]
             AvailableInfoStores::Redis => Ok(Box::new(
-                redis_info_storage::RedisStorage::new(config.clone()).await?,
+                redis_info_storage::RedisStorage::new(
+                    config
+                        .info_storage_opts
+                        .info_db_dsn
+                        .clone()
+                        .unwrap()
+                        .as_str(),
+                )
+                .await?,
             )),
         }
     }
