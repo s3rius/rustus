@@ -30,7 +30,7 @@ fn get_metadata(request: &HttpRequest) -> Option<HashMap<String, String>> {
         .map(|header_string| {
             let mut meta_map = HashMap::new();
             for meta_pair in header_string.split(',') {
-                let mut split = meta_pair.split(' ');
+                let mut split = meta_pair.trim().split(' ');
                 let key = split.next();
                 let b64val = split.next();
                 if key.is_none() || b64val.is_none() {
@@ -55,7 +55,7 @@ fn get_upload_parts(request: &HttpRequest) -> Vec<String> {
     let urls = header_str.strip_prefix("final;").unwrap();
 
     urls.split(' ')
-        .filter_map(|val: &str| val.split('/').last().map(String::from))
+        .filter_map(|val: &str| val.trim().split('/').last().map(String::from))
         .filter(|val| val.trim() != "")
         .collect()
 }
@@ -171,9 +171,6 @@ pub async fn create_file(
         }
     }
 
-    // Create upload URL for this file.
-    let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
-
     // Checking if creation-with-upload extension is enabled.
     let with_upload = state
         .config
@@ -181,15 +178,14 @@ pub async fn create_file(
         .contains(&Extensions::CreationWithUpload);
     if with_upload && !bytes.is_empty() && !(concat_ext && is_final) {
         let octet_stream = |val: &str| val == "application/offset+octet-stream";
-        if !check_header(&request, "Content-Type", octet_stream) {
-            return Ok(HttpResponse::BadRequest().finish());
+        if check_header(&request, "Content-Type", octet_stream) {
+            // Writing first bytes.
+            state
+                .data_storage
+                .add_bytes(&file_info, bytes.as_ref())
+                .await?;
+            file_info.offset += bytes.len();
         }
-        // Writing first bytes.
-        state
-            .data_storage
-            .add_bytes(&file_info, bytes.as_ref())
-            .await?;
-        file_info.offset += bytes.len();
     }
 
     state.info_storage.set_info(&file_info, true).await?;
@@ -211,8 +207,299 @@ pub async fn create_file(
         });
     }
 
+    // Create upload URL for this file.
+    let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
+
     Ok(HttpResponse::Created()
         .insert_header(("Location", upload_url.as_str()))
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
         .finish())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::server::rustus_service;
+    use crate::State;
+    use actix_web::http::StatusCode;
+    use actix_web::test::{call_service, init_service, TestRequest};
+    use actix_web::{web, App};
+
+    #[actix_rt::test]
+    async fn success() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert_eq!(file_info.offset, 0);
+    }
+
+    #[actix_rt::test]
+    async fn success_with_bytes() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let test_data = "memes";
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header(("Content-Type", "application/offset+octet-stream"))
+            .set_payload(web::Bytes::from(test_data))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert_eq!(file_info.offset, test_data.len());
+    }
+
+    #[actix_rt::test]
+    async fn with_bytes_wrong_content_type() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let test_data = "memes";
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header(("Content-Type", "random"))
+            .set_payload(web::Bytes::from(test_data))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert_eq!(file_info.offset, 0);
+    }
+
+    #[actix_rt::test]
+    async fn success_defer_size() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Defer-Length", "1"))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, None);
+        assert!(file_info.deferred_size);
+    }
+
+    #[actix_rt::test]
+    async fn success_partial_upload() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header(("Upload-Concat", "partial"))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert!(file_info.is_partial);
+        assert_eq!(file_info.is_final, false);
+    }
+
+    #[actix_rt::test]
+    async fn success_final_upload() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let mut part1 = state.create_test_file().await;
+        let mut part2 = state.create_test_file().await;
+        part1.is_partial = true;
+        part1.length = Some(100);
+        part1.offset = 100;
+
+        part2.is_partial = true;
+        part2.length = Some(100);
+        part2.offset = 100;
+
+        state.info_storage.set_info(&part1, false).await.unwrap();
+        state.info_storage.set_info(&part2, false).await.unwrap();
+
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header((
+                "Upload-Concat",
+                format!("final;/files/{} /files/{}", part1.id, part2.id),
+            ))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(200));
+        assert!(file_info.is_final);
+    }
+
+    #[actix_rt::test]
+    async fn success_with_metadata() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header((
+                "Upload-Metadata",
+                format!(
+                    "test {}, pest {}",
+                    base64::encode("data1"),
+                    base64::encode("data2")
+                ),
+            ))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert_eq!(file_info.metadata.get("test").unwrap(), "data1");
+        assert_eq!(file_info.metadata.get("pest").unwrap(), "data2");
+        assert_eq!(file_info.offset, 0);
+    }
+
+    #[actix_rt::test]
+    async fn success_with_metadata_wrong_encoding() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header((
+                "Upload-Metadata",
+                format!("test data1, pest {}", base64::encode("data")),
+            ))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
+        // Getting file from location header.
+        let item_id = resp
+            .headers()
+            .get("Location")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .split('/')
+            .last()
+            .unwrap();
+        let file_info = state.info_storage.get_info(item_id).await.unwrap();
+        assert_eq!(file_info.length, Some(100));
+        assert!(file_info.metadata.get("test").is_none());
+        assert_eq!(file_info.metadata.get("pest").unwrap(), "data");
+        assert_eq!(file_info.offset, 0);
+    }
+
+    #[actix_rt::test]
+    async fn no_length_header() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let request = TestRequest::post()
+            .uri(state.config.base_url().as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
 }

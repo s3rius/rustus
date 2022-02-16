@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-use std::env;
+use std::ffi::OsString;
 use std::path::PathBuf;
 
-use chrono::{Datelike, Timelike};
-use lazy_static::lazy_static;
-use log::error;
 use structopt::StructOpt;
 
 use crate::info_storages::AvailableInfoStores;
@@ -12,17 +8,6 @@ use crate::notifiers::{Format, Hook};
 use crate::protocol::extensions::Extensions;
 
 use crate::storages::AvailableStores;
-
-lazy_static! {
-    /// Freezing ENVS on startup.
-    static ref ENV_MAP: HashMap<String, String> = {
-        let mut m = HashMap::new();
-        for (key, value) in env::vars() {
-            m.insert(format!("env[{}]", key), value);
-        }
-        m
-    };
-}
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct StorageOptions {
@@ -124,11 +109,17 @@ pub struct NotificationsOptions {
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
 
-    #[cfg(feature = "file_notifiers")]
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
+        default_value = "rustus"
+    )]
+    pub hooks_amqp_queues_prefix: String,
+
     #[structopt(long, env = "RUSTUS_HOOKS_DIR")]
     pub hooks_dir: Option<PathBuf>,
 
-    #[cfg(feature = "file_notifiers")]
     #[structopt(long, env = "RUSTUS_HOOKS_FILE")]
     pub hooks_file: Option<String>,
 }
@@ -200,6 +191,7 @@ pub struct RustusConf {
     pub notification_opts: NotificationsOptions,
 }
 
+#[cfg_attr(coverage, no_coverage)]
 impl RustusConf {
     /// Function to parse CLI parametes.
     ///
@@ -207,6 +199,14 @@ impl RustusConf {
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
     pub fn from_args() -> RustusConf {
         <RustusConf as StructOpt>::from_args()
+    }
+
+    pub fn from_iter<I>(iter: I) -> RustusConf
+    where
+        I: IntoIterator,
+        I::Item: Into<OsString> + Clone,
+    {
+        <RustusConf as StructOpt>::from_iter(iter)
     }
 
     /// Base API url.
@@ -219,35 +219,22 @@ impl RustusConf {
         )
     }
 
-    /// URL for a particular file.
-    pub fn file_url(&self) -> String {
+    /// Helper for generating URI for test files.
+    #[cfg(test)]
+    pub fn file_url(&self, file_id: &str) -> String {
         let base_url = self.base_url();
         format!(
-            "{}/{{file_id}}",
+            "{}/{}",
             base_url
                 .strip_suffix('/')
-                .unwrap_or_else(|| base_url.as_str())
+                .unwrap_or_else(|| base_url.as_str()),
+            file_id
         )
     }
 
     /// Check if hook is enabled by user.
     pub fn hook_is_active(&self, hook: Hook) -> bool {
         self.notification_opts.hooks.contains(&hook)
-    }
-
-    /// Generate directory name with user template.
-    pub fn dir_struct(&self) -> String {
-        let now = chrono::Utc::now();
-        let mut vars: HashMap<String, String> = ENV_MAP.clone();
-        vars.insert("day".into(), now.day().to_string());
-        vars.insert("month".into(), now.month().to_string());
-        vars.insert("year".into(), now.year().to_string());
-        vars.insert("hour".into(), now.hour().to_string());
-        vars.insert("minute".into(), now.minute().to_string());
-        strfmt::strfmt(self.storage_opts.dir_structure.as_str(), &vars).unwrap_or_else(|err| {
-            error!("{}", err);
-            "".into()
-        })
     }
 
     /// List of extensions.

@@ -1,0 +1,97 @@
+on:
+  - pull_request
+
+name: Lint check
+jobs:
+  pre_job:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          # All of these options are optional, so you can remove them if you are happy with the defaults
+          concurrent_skipping: 'same_content'
+          skip_after_successful_duplicate: 'true'
+          paths_ignore: '["**/README.md"]'
+
+  fmt_check:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Adding component
+        run: rustup component add rustfmt
+      - name: Checking code format
+        run: cargo fmt -- --check
+
+  code_check:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features -p rustus -- -W clippy::all -W clippy::pedantic -D warnings
+
+  tests:
+    needs: pre_job
+    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:6.2-alpine3.15
+        ports:
+          - 6379/tcp
+      pg:
+        image: postgres:13.1
+        ports:
+          - 5432/tcp
+        env:
+          POSTGRES_PASSWORD: "rustus"
+          POSTGRES_USER: "rustus"
+          POSTGRES_DB: "rustus"
+      rabbit:
+        image: rabbitmq:3.8.27-alpine
+        ports:
+          - 5672/tcp
+        env:
+          RABBITMQ_DEFAULT_USER: "guest"
+          RABBITMQ_DEFAULT_PASS: "guest"
+          RABBITMQ_DEFAULT_VHOST: "/"
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install nightly toolchain
+        run: rustup toolchain install nightly --component llvm-tools-preview
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Generate code coverage
+        run: cargo llvm-cov --features=all,integration_tests --lcov --output-path lcov.info -- --test-threads 1
+        env:
+          TEST_REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}/0
+          TEST_DB_URL: postgresql://rustus:rustus@localhost:${{ job.services.pg.ports['5432'] }}/rustus
+          TEST_AMQP_URL: amqp://guest:guest@localhost:${{ job.services.rabbit.ports['5672'] }}
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: lcov.info

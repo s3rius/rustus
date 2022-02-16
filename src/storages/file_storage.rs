@@ -10,24 +10,26 @@ use log::error;
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::FileInfo;
 use crate::storages::Storage;
-use crate::RustusConf;
+use crate::utils::dir_struct::dir_struct;
 use derive_more::Display;
 
 #[derive(Display)]
 #[display(fmt = "file_storage")]
 pub struct FileStorage {
-    app_conf: RustusConf,
+    data_dir: PathBuf,
+    dir_struct: String,
 }
 
 impl FileStorage {
-    pub fn new(app_conf: RustusConf) -> FileStorage {
-        FileStorage { app_conf }
+    pub fn new(data_dir: PathBuf, dir_struct: String) -> FileStorage {
+        FileStorage {
+            data_dir,
+            dir_struct,
+        }
     }
 
     pub async fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
         let dir = self
-            .app_conf
-            .storage_opts
             .data_dir
             // We're working wit absolute paths, because tus.io says so.
             .canonicalize()
@@ -35,7 +37,7 @@ impl FileStorage {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?
-            .join(self.app_conf.dir_struct().as_str());
+            .join(dir_struct(self.dir_struct.as_str()));
         DirBuilder::new()
             .recursive(true)
             .create(dir.as_path())
@@ -44,7 +46,7 @@ impl FileStorage {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        Ok(dir.join(file_id.to_string()))
+        Ok(dir.join(file_id))
     }
 }
 
@@ -53,10 +55,10 @@ impl Storage for FileStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         // We're creating directory for new files
         // if it doesn't already exist.
-        if !self.app_conf.storage_opts.data_dir.exists() {
+        if !self.data_dir.exists() {
             DirBuilder::new()
                 .recursive(true)
-                .create(self.app_conf.storage_opts.data_dir.as_path())
+                .create(self.data_dir.as_path())
                 .await
                 .map_err(|err| RustusError::UnableToPrepareStorage(err.to_string()))?;
         }
@@ -137,8 +139,7 @@ impl Storage for FileStorage {
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
-            .create(false)
-            .create_new(false)
+            .create(true)
             .open(file_info.path.as_ref().unwrap().clone())
             .await
             .map_err(|err| {
@@ -167,5 +168,153 @@ impl Storage for FileStorage {
             RustusError::UnableToRemove(file_info.id.clone())
         })?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::FileStorage;
+    use crate::info_storages::FileInfo;
+    use crate::Storage;
+    use std::fs::File;
+    use std::io::{Read, Write};
+    use std::path::PathBuf;
+
+    #[actix_rt::test]
+    async fn preparation() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let target_path = dir.into_path().join("not_exist");
+        let mut storage = FileStorage::new(target_path.clone(), "".into());
+        assert_eq!(target_path.exists(), false);
+        storage.prepare().await.unwrap();
+        assert_eq!(target_path.exists(), true);
+    }
+
+    #[actix_rt::test]
+    async fn create_file() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        assert!(PathBuf::from(new_path).exists());
+    }
+
+    #[actix_rt::test]
+    async fn create_file_but_it_exists() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let base_path = dir.into_path().clone();
+        let storage = FileStorage::new(base_path.clone(), "".into());
+        let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        File::create(base_path.join("test_id")).unwrap();
+        let result = storage.create_file(&file_info).await;
+        assert!(result.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn adding_bytes() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        let test_data = "MyTestData";
+        file_info.path = Some(new_path.clone());
+        storage
+            .add_bytes(&file_info, test_data.as_bytes())
+            .await
+            .unwrap();
+        let mut file = File::open(new_path).unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
+        assert_eq!(contents, String::from(test_data))
+    }
+
+    #[actix_rt::test]
+    async fn adding_bytes_to_unknown_file() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let file_info = FileInfo::new(
+            "test_id",
+            Some(5),
+            Some(String::from("some_file")),
+            storage.to_string(),
+            None,
+        );
+        let test_data = "MyTestData";
+        let result = storage.add_bytes(&file_info, test_data.as_bytes()).await;
+        assert!(result.is_err())
+    }
+
+    #[actix_rt::test]
+    async fn get_contents_of_unknown_file() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let file_info = FileInfo::new(
+            "test_id",
+            Some(5),
+            Some(storage.data_dir.join("unknown").display().to_string()),
+            storage.to_string(),
+            None,
+        );
+        let file_info = storage.get_contents(&file_info).await;
+        assert!(file_info.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn remove_unknown_file() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let file_info = FileInfo::new(
+            "test_id",
+            Some(5),
+            Some(storage.data_dir.join("unknown").display().to_string()),
+            storage.to_string(),
+            None,
+        );
+        let file_info = storage.remove_file(&file_info).await;
+        assert!(file_info.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn success_concatenation() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+
+        let mut parts = Vec::new();
+        let part1_path = storage.data_dir.as_path().join("part1");
+        let mut part1 = File::create(part1_path.clone()).unwrap();
+        let size1 = part1.write("hello ".as_bytes()).unwrap();
+
+        parts.push(FileInfo::new(
+            "part_id1",
+            Some(size1),
+            Some(part1_path.display().to_string()),
+            storage.to_string(),
+            None,
+        ));
+
+        let part2_path = storage.data_dir.as_path().join("part2");
+        let mut part2 = File::create(part2_path.clone()).unwrap();
+        let size2 = part2.write("world".as_bytes()).unwrap();
+        parts.push(FileInfo::new(
+            "part_id2",
+            Some(size2),
+            Some(part2_path.display().to_string()),
+            storage.to_string(),
+            None,
+        ));
+
+        let final_info = FileInfo::new(
+            "final_id",
+            None,
+            Some(storage.data_dir.join("final_info").display().to_string()),
+            storage.to_string(),
+            None,
+        );
+        storage.concat_files(&final_info, parts).await.unwrap();
+        let mut final_file = File::open(final_info.path.unwrap()).unwrap();
+        let mut buffer = String::new();
+        final_file.read_to_string(&mut buffer).unwrap();
+
+        assert_eq!(buffer.as_str(), "hello world");
     }
 }

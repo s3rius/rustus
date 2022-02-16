@@ -87,4 +87,15 @@ impl FileInfo {
             Some(result.join(","))
         }
     }
+
+    #[cfg(test)]
+    pub fn new_test() -> Self {
+        FileInfo::new(
+            uuid::Uuid::new_v4().to_string().as_str(),
+            Some(10),
+            Some("random_path".into()),
+            "random_storage".into(),
+            None,
+        )
+    }
 }
