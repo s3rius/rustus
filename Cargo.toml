@@ -106,6 +106,12 @@ default = []
 http_notifier = ["reqwest"]
 redis_info_storage = ["mobc-redis"]
 
+### For testing
+test_redis = []
+test_db = []
+test_rmq = []
+integration_tests = ["test_redis", "test_db", "test_rmq"]
+
 [dev-dependencies]
 tempdir = "0.3.7"
 actix-rt = "2.6.0"

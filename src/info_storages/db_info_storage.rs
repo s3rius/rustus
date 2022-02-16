@@ -9,7 +9,6 @@ use rbatis::rbatis::Rbatis;
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
-use crate::RustusConf;
 
 #[crud_table]
 struct DbModel {
@@ -33,15 +32,11 @@ pub struct DBInfoStorage {
 }
 
 impl DBInfoStorage {
-    pub async fn new(app_conf: RustusConf) -> RustusResult<Self> {
+    pub async fn new(dsn: &str) -> RustusResult<Self> {
         let db = Rbatis::new();
         let mut opts = DBPoolOptions::new();
         opts.connect_timeout = Duration::new(2, 0);
-        db.link_opt(
-            app_conf.info_storage_opts.info_db_dsn.unwrap().as_str(),
-            opts,
-        )
-        .await?;
+        db.link_opt(dsn, opts).await?;
         Ok(Self { db })
     }
 }
@@ -82,5 +77,70 @@ impl InfoStorage for DBInfoStorage {
             .remove_by_column::<DbModel, &str>("id", file_id)
             .await?;
         Ok(())
+    }
+}
+
+#[cfg(feature = "test_db")]
+#[cfg(test)]
+mod tests {
+    use super::{DBInfoStorage, DbModel};
+    use crate::info_storages::FileInfo;
+    use crate::InfoStorage;
+    use rbatis::crud::CRUD;
+
+    async fn get_info_storage() -> DBInfoStorage {
+        let db_url = std::env::var("TEST_DB_URL").unwrap();
+        let mut storage = DBInfoStorage::new(db_url.as_str()).await.unwrap();
+        storage.prepare().await.unwrap();
+        storage
+    }
+
+    #[actix_rt::test]
+    async fn success() {
+        let info_storage = get_info_storage().await;
+        let file_info = FileInfo::new_test();
+        info_storage.set_info(&file_info, true).await.unwrap();
+        let info = info_storage
+            .db
+            .fetch_by_column::<Option<DbModel>, &str>("id", file_info.id.as_str())
+            .await
+            .unwrap();
+        assert!(info.is_some());
+        let info = info_storage.get_info(file_info.id.as_str()).await.unwrap();
+        assert_eq!(file_info.id, info.id);
+        assert_eq!(file_info.storage, info.storage);
+        assert_eq!(file_info.length, info.length);
+    }
+
+    #[actix_rt::test]
+    async fn success_deletion() {
+        let info_storage = get_info_storage().await;
+        let file_info = FileInfo::new_test();
+        info_storage.set_info(&file_info, true).await.unwrap();
+        info_storage
+            .remove_info(file_info.id.as_str())
+            .await
+            .unwrap();
+        let info = info_storage
+            .db
+            .fetch_by_column::<Option<DbModel>, &str>("id", file_info.id.as_str())
+            .await
+            .unwrap();
+        assert!(info.is_none());
+    }
+
+    #[actix_rt::test]
+    async fn deletion_not_found() {
+        let info_storage = get_info_storage().await;
+        let res = info_storage.remove_info("unknown").await;
+        // We don't care if it doesn't exist.
+        assert!(res.is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn getting_not_found() {
+        let info_storage = get_info_storage().await;
+        let res = info_storage.get_info("unknown").await;
+        assert!(res.is_err());
     }
 }
