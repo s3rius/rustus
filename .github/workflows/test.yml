@@ -65,9 +65,17 @@ jobs:
         ports:
           - 5432/tcp
         env:
-          POSTGRES_PASSWORD: rustus
-          POSTGRES_USER: rustus
-          POSTGRES_DB: rustus
+          POSTGRES_PASSWORD: "rustus"
+          POSTGRES_USER: "rustus"
+          POSTGRES_DB: "rustus"
+      rabbit:
+        image: rabbitmq:3.8.27-alpine
+        ports:
+          - 5672/tcp
+        env:
+          RABBITMQ_DEFAULT_USER: "guest"
+          RABBITMQ_DEFAULT_PASS: "guest"
+          RABBITMQ_DEFAULT_VHOST: "/"
     steps:
       - uses: actions/checkout@v2
         with:
@@ -81,6 +89,7 @@ jobs:
         env:
           TEST_REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}/0
           TEST_DB_URL: postgresql://rustus:rustus@localhost:${{ job.services.pg.ports['5432'] }}/rustus
+          TEST_AMQP_URL: amqp://guest:guest@localhost:${{ job.services.rabbit.ports['5672'] }}
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:

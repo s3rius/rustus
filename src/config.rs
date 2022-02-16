@@ -109,6 +109,14 @@ pub struct NotificationsOptions {
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
 
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
+        default_value = "rustus"
+    )]
+    pub hooks_amqp_queues_prefix: String,
+
     #[structopt(long, env = "RUSTUS_HOOKS_DIR")]
     pub hooks_dir: Option<PathBuf>,
 
