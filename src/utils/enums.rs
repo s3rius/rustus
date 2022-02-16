@@ -27,3 +27,32 @@ macro_rules! from_str {
         }
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::from_str;
+    use derive_more::{Display, From};
+    use strum::EnumIter;
+
+    #[derive(PartialEq, Debug, Display, EnumIter, From, Clone, Eq)]
+    pub enum TestEnum {
+        #[display(fmt = "test-val-1")]
+        TestVal1,
+        #[display(fmt = "test-val-2")]
+        TestVal2,
+    }
+
+    from_str!(TestEnum, "test-vals");
+
+    #[test]
+    fn test_from_str_unknown_val() {
+        let result = TestEnum::from_str("unknown");
+        assert!(result.is_err())
+    }
+
+    #[test]
+    fn test_from_str() {
+        let result = TestEnum::from_str("test-val-1");
+        assert_eq!(result.unwrap(), TestEnum::TestVal1)
+    }
+}

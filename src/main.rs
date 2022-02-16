@@ -1,3 +1,4 @@
+#![cfg_attr(coverage, feature(no_coverage))]
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -10,12 +11,13 @@ use fern::colors::{Color, ColoredLevelConfig};
 use fern::Dispatch;
 use log::LevelFilter;
 
+use config::RustusConf;
+
 use crate::errors::RustusResult;
 use crate::info_storages::InfoStorage;
 use crate::notifiers::models::notification_manager::NotificationManager;
+use crate::server::rustus_service;
 use crate::state::State;
-use config::RustusConf;
-
 use crate::storages::Storage;
 
 mod config;
@@ -24,10 +26,12 @@ mod info_storages;
 mod notifiers;
 mod protocol;
 mod routes;
+mod server;
 mod state;
 mod storages;
 mod utils;
 
+#[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
         .extensions_vec()
@@ -66,24 +70,15 @@ fn greeting(app_conf: &RustusConf) {
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
+#[cfg_attr(coverage, no_coverage)]
 pub fn create_server(state: State) -> Result<Server, std::io::Error> {
     let host = state.config.host.clone();
     let port = state.config.port;
-    let config = state.config.clone();
     let workers = state.config.workers;
     let state_data: web::Data<State> = web::Data::from(Arc::new(state));
     let mut server = HttpServer::new(move || {
         App::new()
-            .app_data(state_data.clone())
-            // Adds all routes.
-            .configure(protocol::setup(config.clone()))
-            // Main middleware that appends TUS headers.
-            .wrap(
-                middleware::DefaultHeaders::new()
-                    .add(("Tus-Resumable", "1.0.0"))
-                    .add(("Tus-Max-Size", config.max_body_size.to_string()))
-                    .add(("Tus-Version", "1.0.0")),
-            )
+            .configure(rustus_service(state_data.clone()))
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.
@@ -111,6 +106,7 @@ pub fn create_server(state: State) -> Result<Server, std::io::Error> {
     Ok(server.run())
 }
 
+#[cfg_attr(coverage, no_coverage)]
 fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
     let colors = ColoredLevelConfig::new()
         // use builder methods
@@ -137,6 +133,7 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 }
 
 /// Main program entrypoint.
+#[cfg_attr(coverage, no_coverage)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let app_conf = RustusConf::from_args();

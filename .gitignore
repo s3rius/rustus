@@ -1,3 +1,5 @@
 .idea/
 /target
 data/
+tarpaulin-report.html
+lcov.info

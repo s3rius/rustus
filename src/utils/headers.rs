@@ -41,3 +41,52 @@ pub fn check_header(request: &HttpRequest, header_name: &str, expr: fn(&str) -> 
         })
         .unwrap_or(false)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{check_header, parse_header};
+    use actix_web::test::TestRequest;
+
+    #[actix_rt::test]
+    async fn test_parse_header_unknown_header() {
+        let request = TestRequest::get().to_http_request();
+        let header = parse_header::<String>(&request, "unknown");
+        assert!(header.is_none());
+    }
+
+    #[actix_rt::test]
+    async fn test_parse_header_wrong_type() {
+        let request = TestRequest::get()
+            .insert_header(("test_header", String::from("test").as_bytes()))
+            .to_http_request();
+        let header = parse_header::<i32>(&request, "test_header");
+        assert!(header.is_none());
+    }
+
+    #[actix_rt::test]
+    async fn test_parse_header() {
+        let request = TestRequest::get()
+            .insert_header(("test_header", String::from("123").as_bytes()))
+            .to_http_request();
+        let header = parse_header::<usize>(&request, "test_header");
+        assert_eq!(header.unwrap(), 123);
+    }
+
+    #[actix_rt::test]
+    async fn test_check_header_unknown_header() {
+        let request = TestRequest::get().to_http_request();
+        let check = check_header(&request, "unknown", |value| value == "1");
+        assert_eq!(check, false);
+    }
+
+    #[actix_rt::test]
+    async fn test_check_header() {
+        let request = TestRequest::get()
+            .insert_header(("test_header", "1"))
+            .to_http_request();
+        let check = check_header(&request, "test_header", |value| value == "1");
+        assert!(check);
+        let check = check_header(&request, "test_header", |value| value == "2");
+        assert!(!check);
+    }
+}

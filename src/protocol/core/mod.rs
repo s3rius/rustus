@@ -1,9 +1,8 @@
-use actix_web::web::PayloadConfig;
 use actix_web::{guard, middleware, web};
 
-use crate::RustusConf;
-
-mod routes;
+mod get_info;
+mod server_info;
+mod write_bytes;
 
 /// Add core TUS protocol endpoints.
 ///
@@ -13,34 +12,33 @@ mod routes;
 /// OPTIONS /api    - to get info about the app.
 /// HEAD /api/file  - to get info about the file.
 /// PATCH /api/file - to add bytes to file.
-pub fn add_extension(web_app: &mut web::ServiceConfig, app_conf: &RustusConf) {
+#[cfg_attr(coverage, no_coverage)]
+pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app
         .service(
             // PATCH /base/{file_id}
             // Main URL for uploading files.
-            web::resource(app_conf.base_url().as_str())
+            web::resource("")
                 .name("core:server_info")
                 .guard(guard::Options())
-                .to(routes::server_info),
+                .to(server_info::server_info),
         )
         .service(
             // PATCH /base/{file_id}
             // Main URL for uploading files.
-            web::resource(app_conf.file_url().as_str())
-                // 10 MB chunks
-                .app_data(PayloadConfig::new(app_conf.max_body_size))
+            web::resource("{file_id}")
                 .name("core:write_bytes")
                 .guard(guard::Patch())
-                .to(routes::write_bytes),
+                .to(write_bytes::write_bytes),
         )
         .service(
             // HEAD /base/{file_id}
             // Main URL for getting info about files.
-            web::resource(app_conf.file_url().as_str())
+            web::resource("{file_id}")
                 .name("core:file_info")
                 .guard(guard::Head())
                 // Header to prevent the client and/or proxies from caching the response.
                 .wrap(middleware::DefaultHeaders::new().add(("Cache-Control", "no-store")))
-                .to(routes::get_file_info),
+                .to(get_info::get_file_info),
         );
 }

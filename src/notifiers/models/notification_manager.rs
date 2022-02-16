@@ -1,9 +1,7 @@
 use crate::errors::RustusResult;
 #[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
-#[cfg(feature = "file_notifiers")]
 use crate::notifiers::dir_notifier::DirNotifier;
-#[cfg(feature = "file_notifiers")]
 use crate::notifiers::file_notifier::FileNotifier;
 #[cfg(feature = "http_notifier")]
 use crate::notifiers::http_notifier;
@@ -17,45 +15,52 @@ pub struct NotificationManager {
 }
 
 impl NotificationManager {
-    pub async fn new(tus_config: &RustusConf) -> RustusResult<Self> {
+    pub async fn new(rustus_config: &RustusConf) -> RustusResult<Self> {
         let mut manager = Self {
             notifiers: Vec::new(),
         };
         debug!("Initializing notification manager.");
-        #[cfg(feature = "file_notifiers")]
-        if tus_config.notification_opts.hooks_file.is_some() {
+        if rustus_config.notification_opts.hooks_file.is_some() {
             debug!("Found hooks file");
             manager.notifiers.push(Box::new(FileNotifier::new(
-                tus_config.notification_opts.hooks_file.clone().unwrap(),
+                rustus_config.notification_opts.hooks_file.clone().unwrap(),
             )));
         }
-        #[cfg(feature = "file_notifiers")]
-        if tus_config.notification_opts.hooks_dir.is_some() {
+        if rustus_config.notification_opts.hooks_dir.is_some() {
             debug!("Found hooks directory");
             manager.notifiers.push(Box::new(DirNotifier::new(
-                tus_config.notification_opts.hooks_dir.clone().unwrap(),
+                rustus_config.notification_opts.hooks_dir.clone().unwrap(),
             )));
         }
         #[cfg(feature = "http_notifier")]
-        if !tus_config.notification_opts.hooks_http_urls.is_empty() {
+        if !rustus_config.notification_opts.hooks_http_urls.is_empty() {
             debug!("Found http hook urls.");
             manager
                 .notifiers
                 .push(Box::new(http_notifier::HttpNotifier::new(
-                    tus_config.notification_opts.hooks_http_urls.clone(),
-                    tus_config
+                    rustus_config.notification_opts.hooks_http_urls.clone(),
+                    rustus_config
                         .notification_opts
                         .hooks_http_proxy_headers
                         .clone(),
                 )));
         }
         #[cfg(feature = "amqp_notifier")]
-        if tus_config.notification_opts.hooks_amqp_url.is_some() {
+        if rustus_config.notification_opts.hooks_amqp_url.is_some() {
             debug!("Found AMQP notifier.");
             manager
                 .notifiers
                 .push(Box::new(amqp_notifier::AMQPNotifier::new(
-                    tus_config.clone(),
+                    rustus_config
+                        .notification_opts
+                        .hooks_amqp_url
+                        .as_ref()
+                        .unwrap(),
+                    rustus_config.notification_opts.hooks_amqp_exchange.as_str(),
+                    rustus_config
+                        .notification_opts
+                        .hooks_amqp_queues_prefix
+                        .as_str(),
                 )));
         }
         for notifier in &mut manager.notifiers.iter_mut() {
