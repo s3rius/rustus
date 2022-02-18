@@ -28,7 +28,7 @@ pub struct StorageOptions {
     #[structopt(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
     pub dir_structure: String,
 
-    #[structopt(long, env = "RUSTUS_PREALLOCATE")]
+    #[structopt(long, parse(from_flag))]
     pub preallocate: bool,
 }
 
