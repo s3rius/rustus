@@ -104,6 +104,7 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::UnableToSeek(info.path.clone().unwrap())
             })?;
+
         file.write_all(bytes).await.map_err(|err| {
             error!("{:?}", err);
             RustusError::UnableToWrite(info.path.clone().unwrap())
@@ -211,9 +212,45 @@ mod tests {
     async fn create_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
-        let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        let file_info = FileInfo::new("test_id", None, None, storage.to_string(), None);
         let new_path = storage.create_file(&file_info).await.unwrap();
         assert!(PathBuf::from(new_path).exists());
+    }
+
+    #[actix_rt::test]
+    async fn create_file_prealloc() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), true);
+        let prealloc_size = 32;
+        let file_info = FileInfo::new(
+            "test_id",
+            Some(prealloc_size),
+            None,
+            storage.to_string(),
+            None,
+        );
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        assert!(PathBuf::from(new_path).exists());
+    }
+
+    #[actix_rt::test]
+    async fn create_file_prealloc_correct_size() {
+        let dir = tempdir::TempDir::new("file_storage").unwrap();
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), true);
+        let prealloc_size = 32;
+        let file_info = FileInfo::new(
+            "test_id",
+            Some(prealloc_size),
+            None,
+            storage.to_string(),
+            None,
+        );
+        let new_path = storage.create_file(&file_info).await.unwrap();
+        let file_size = {
+            let file = std::fs::File::open(new_path).unwrap();
+            file.metadata().unwrap().len() as usize
+        };
+        assert_eq!(prealloc_size, file_size);
     }
 
     #[actix_rt::test]
