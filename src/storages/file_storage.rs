@@ -111,7 +111,12 @@ impl Storage for FileStorage {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str()).await?;
         // Creating new file.
-        async_std::fs::File::create(file_path.as_path())
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .create_new(true)
+            .open(file_path.as_path())
             .await
             .map_err(|err| {
                 error!("{:?}", err);
