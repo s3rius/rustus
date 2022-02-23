@@ -80,7 +80,7 @@ version = "0.23"
 
 [dependencies.tokio]
 features = ["time", "process"]
-version = "1.4.0"
+version = "1.17.0"
 
 [dependencies.tokio-amqp]
 optional = true
