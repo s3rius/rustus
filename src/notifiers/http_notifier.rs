@@ -4,7 +4,6 @@ use crate::notifiers::{Hook, Notifier};
 
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
-use futures::future::try_join_all;
 use log::debug;
 use reqwest::Client;
 use std::time::Duration;
@@ -56,9 +55,8 @@ impl Notifier for HttpNotifier {
             }
             request.body(message.clone()).send()
         });
-        let responses = try_join_all(requests_vec).await?;
-        for resp in responses {
-            resp.error_for_status()?;
+        for response in requests_vec {
+            response.await?.error_for_status()?;
         }
         Ok(())
     }
