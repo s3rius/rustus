@@ -1,10 +1,9 @@
 use std::path::PathBuf;
 
-use async_std::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
 use async_trait::async_trait;
-use futures::io::BufWriter;
-use futures::AsyncWriteExt;
 use log::error;
+use tokio::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
+use tokio::io::{AsyncWriteExt, BufWriter};
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
@@ -48,7 +47,7 @@ impl InfoStorage for FileInfoStorage {
             })?;
         let mut writer = BufWriter::new(file);
         writer
-            .write_all(
+            .write(
                 serde_json::to_string(&file_info)
                     .map_err(|err| {
                         error!("{:#?}", err);
