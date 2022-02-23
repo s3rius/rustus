@@ -1,18 +1,16 @@
 use std::path::PathBuf;
 
 use actix_files::NamedFile;
-use async_std::fs::{remove_file, DirBuilder, File, OpenOptions};
-use async_std::io::copy;
 use async_trait::async_trait;
 use log::error;
+use tokio::fs::{remove_file, DirBuilder, OpenOptions};
+use tokio::io::{copy, AsyncWriteExt, BufWriter};
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::FileInfo;
 use crate::storages::Storage;
 use crate::utils::dir_struct::dir_struct;
 use derive_more::Display;
-use futures::io::BufWriter;
-use futures::AsyncWriteExt;
 
 #[derive(Display)]
 #[display(fmt = "file_storage")]
@@ -98,12 +96,14 @@ impl Storage for FileStorage {
                 RustusError::UnableToWrite(err.to_string())
             })?;
         let mut writer = BufWriter::new(file);
-        writer.write_all(bytes).await.map_err(|err| {
+        writer.write(bytes).await.map_err(|err| {
             error!("{:?}", err);
             RustusError::UnableToWrite(info.path.clone().unwrap())
         })?;
-        // Updating information about file.
-        writer.flush().await?;
+        writer.flush().await.map_err(|err| {
+            error!("{:?}", err);
+            RustusError::UnableToWrite(info.path.clone().unwrap())
+        })?;
         Ok(())
     }
 
@@ -144,7 +144,10 @@ impl Storage for FileStorage {
             if part.path.is_none() {
                 return Err(RustusError::FileNotFound);
             }
-            let mut part_file = File::open(part.path.as_ref().unwrap()).await?;
+            let mut part_file = OpenOptions::new()
+                .read(true)
+                .open(part.path.as_ref().unwrap())
+                .await?;
             copy(&mut part_file, &mut file).await?;
         }
         file.sync_data().await?;

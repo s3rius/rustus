@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="./imgs/logo.svg" alt="logo" height="400">
+    <img src="./imgs/logo_horizontal.svg" alt="logo" width="500">
     <div>
         <p></p>
         <img alt="Docker Image Size (latest by date)" src="https://img.shields.io/docker/image-size/s3rius/rustus?sort=date&style=for-the-badge">

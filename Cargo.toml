@@ -1,6 +1,6 @@
 [package]
 name = "rustus"
-version = "0.4.2"
+version = "0.4.3"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 
@@ -31,10 +31,6 @@ version = "0.6.0-beta.13"
 [dependencies.actix-web]
 version = "^4.0.0-beta.20"
 
-[dependencies.async-std]
-features = ["tokio1"]
-version = "^1.10.0"
-
 [dependencies.chrono]
 features = ["serde"]
 version = "^0.4.19"
@@ -47,10 +43,6 @@ version = "^0.99.9"
 [dependencies.fern]
 features = ["colored"]
 version = "0.6.0"
-
-[dependencies.futures]
-features = ["executor"]
-version = "^0.3.19"
 
 [dependencies.lapin]
 optional = true
@@ -120,5 +112,6 @@ httptest = "0.15.4"
 [profile]
 [profile.release]
 lto = true
+panic = "abort"
 opt-level = "z"
 codegen-units = 1
