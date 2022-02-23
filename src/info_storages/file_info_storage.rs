@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
 use async_std::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
-use async_std::prelude::*;
 use async_trait::async_trait;
+use futures::io::BufWriter;
+use futures::AsyncWriteExt;
 use log::error;
 
 use crate::errors::{RustusError, RustusResult};
@@ -35,7 +36,7 @@ impl InfoStorage for FileInfoStorage {
     }
 
     async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .create(create)
             .truncate(true)
@@ -45,7 +46,16 @@ impl InfoStorage for FileInfoStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        file.write_all(serde_json::to_string(&file_info)?.as_bytes())
+        let mut writer = BufWriter::new(file);
+        writer
+            .write_all(
+                serde_json::to_string(&file_info)
+                    .map_err(|err| {
+                        error!("{:#?}", err);
+                        err
+                    })?
+                    .as_bytes(),
+            )
             .await
             .map_err(|err| {
                 error!("{:?}", err);
@@ -56,7 +66,7 @@ impl InfoStorage for FileInfoStorage {
                         .to_string(),
                 )
             })?;
-        file.sync_data().await?;
+        writer.flush().await?;
         Ok(())
     }
 

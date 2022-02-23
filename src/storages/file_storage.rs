@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use actix_files::NamedFile;
 use async_std::fs::{remove_file, DirBuilder, File, OpenOptions};
 use async_std::io::copy;
-use async_std::prelude::*;
 use async_trait::async_trait;
 use log::error;
 
@@ -12,6 +11,8 @@ use crate::info_storages::FileInfo;
 use crate::storages::Storage;
 use crate::utils::dir_struct::dir_struct;
 use derive_more::Display;
+use futures::io::BufWriter;
+use futures::AsyncWriteExt;
 
 #[derive(Display)]
 #[display(fmt = "file_storage")]
@@ -86,7 +87,7 @@ impl Storage for FileStorage {
         // Opening file in w+a mode.
         // It means that we're going to append some
         // bytes to the end of a file.
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .append(true)
             .create(false)
@@ -96,12 +97,13 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        file.write_all(bytes).await.map_err(|err| {
+        let mut writer = BufWriter::new(file);
+        writer.write_all(bytes).await.map_err(|err| {
             error!("{:?}", err);
             RustusError::UnableToWrite(info.path.clone().unwrap())
         })?;
-        file.sync_data().await?;
         // Updating information about file.
+        writer.flush().await?;
         Ok(())
     }
 
@@ -109,9 +111,10 @@ impl Storage for FileStorage {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str()).await?;
         // Creating new file.
-        let mut file = OpenOptions::new()
-            .write(true)
+        OpenOptions::new()
             .create(true)
+            .write(true)
+            .truncate(true)
             .create_new(true)
             .open(file_path.as_path())
             .await
@@ -119,15 +122,6 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::FileAlreadyExists(file_info.id.clone())
             })?;
-
-        // Let's write an empty string to the beginning of the file.
-        // Maybe remove it later.
-        file.write_all(b"").await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToWrite(file_path.display().to_string())
-        })?;
-        file.sync_all().await?;
-
         Ok(file_path.display().to_string())
     }
 
