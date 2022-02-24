@@ -1,4 +1,5 @@
 #![cfg_attr(coverage, feature(no_coverage))]
+
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -96,6 +97,7 @@ pub fn create_server(state: State) -> Result<Server, std::io::Error> {
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))
     })
+    .backlog(1024)
     .bind((host, port))?;
 
     // If custom workers count variable is provided.
