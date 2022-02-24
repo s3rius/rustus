@@ -97,6 +97,7 @@ impl Storage for FileStorage {
             })?;
         let mut reader = BufReader::new(bytes);
         copy(&mut reader, &mut file).await?;
+        file.sync_data().await?;
         Ok(())
     }
 
