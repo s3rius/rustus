@@ -1,6 +1,6 @@
 [package]
 name = "rustus"
-version = "0.4.3"
+version = "0.4.4"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 
@@ -113,5 +113,5 @@ httptest = "0.15.4"
 [profile.release]
 lto = true
 panic = "abort"
-opt-level = "z"
+opt-level = 2
 codegen-units = 1

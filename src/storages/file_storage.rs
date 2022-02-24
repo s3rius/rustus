@@ -4,7 +4,7 @@ use actix_files::NamedFile;
 use async_trait::async_trait;
 use log::error;
 use tokio::fs::{remove_file, DirBuilder, OpenOptions};
-use tokio::io::{copy, AsyncWriteExt, BufWriter};
+use tokio::io::{copy, BufReader};
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::FileInfo;
@@ -85,7 +85,7 @@ impl Storage for FileStorage {
         // Opening file in w+a mode.
         // It means that we're going to append some
         // bytes to the end of a file.
-        let file = OpenOptions::new()
+        let mut file = OpenOptions::new()
             .write(true)
             .append(true)
             .create(false)
@@ -95,15 +95,8 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        let mut writer = BufWriter::new(file);
-        writer.write(bytes).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToWrite(info.path.clone().unwrap())
-        })?;
-        writer.flush().await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToWrite(info.path.clone().unwrap())
-        })?;
+        let mut reader = BufReader::new(bytes);
+        copy(&mut reader, &mut file).await?;
         Ok(())
     }
 
