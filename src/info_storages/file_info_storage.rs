@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use async_trait::async_trait;
 use log::error;
 use tokio::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
-use tokio::io::{AsyncWriteExt, BufWriter};
+use tokio::io::copy;
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
@@ -35,7 +35,7 @@ impl InfoStorage for FileInfoStorage {
     }
 
     async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
-        let file = OpenOptions::new()
+        let mut file = OpenOptions::new()
             .write(true)
             .create(create)
             .truncate(true)
@@ -45,27 +45,11 @@ impl InfoStorage for FileInfoStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        let mut writer = BufWriter::new(file);
-        writer
-            .write(
-                serde_json::to_string(&file_info)
-                    .map_err(|err| {
-                        error!("{:#?}", err);
-                        err
-                    })?
-                    .as_bytes(),
-            )
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(
-                    self.info_file_path(file_info.id.as_str())
-                        .as_path()
-                        .display()
-                        .to_string(),
-                )
-            })?;
-        writer.flush().await?;
+        let data = serde_json::to_string(&file_info).map_err(|err| {
+            error!("{:#?}", err);
+            err
+        })?;
+        copy(&mut data.as_bytes(), &mut file).await?;
         Ok(())
     }
 
