@@ -50,6 +50,7 @@ impl InfoStorage for FileInfoStorage {
             err
         })?;
         copy(&mut data.as_bytes(), &mut file).await?;
+        file.sync_data().await?;
         Ok(())
     }
 
