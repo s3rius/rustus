@@ -213,9 +213,7 @@ impl RustusConf {
     pub fn base_url(&self) -> String {
         format!(
             "/{}",
-            self.url
-                .strip_prefix('/')
-                .unwrap_or_else(|| self.url.as_str())
+            self.url.strip_prefix('/').unwrap_or(self.url.as_str())
         )
     }
 
@@ -225,9 +223,7 @@ impl RustusConf {
         let base_url = self.base_url();
         format!(
             "{}/{}",
-            base_url
-                .strip_suffix('/')
-                .unwrap_or_else(|| base_url.as_str()),
+            base_url.strip_suffix('/').unwrap_or(base_url.as_str()),
             file_id
         )
     }
