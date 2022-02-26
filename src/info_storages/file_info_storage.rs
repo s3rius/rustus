@@ -45,12 +45,8 @@ impl InfoStorage for FileInfoStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        let data = serde_json::to_string(&file_info).map_err(|err| {
-            error!("{:#?}", err);
-            err
-        })?;
-        copy(&mut data.as_bytes(), &mut file).await?;
-        file.sync_data().await?;
+        copy(&mut file_info.json().await?.as_bytes(), &mut file).await?;
+        tokio::task::spawn(async move { file.sync_data().await });
         Ok(())
     }
 

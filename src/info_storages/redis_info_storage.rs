@@ -30,7 +30,7 @@ impl InfoStorage for RedisStorage {
         let mut conn = self.pool.get().await?;
         redis::cmd("SET")
             .arg(file_info.id.as_str())
-            .arg(serde_json::to_string(file_info)?.as_str())
+            .arg(file_info.json().await?.as_str())
             .query_async::<Connection, String>(&mut conn)
             .await
             .map_err(RustusError::from)?;
