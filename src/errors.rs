@@ -58,6 +58,8 @@ pub enum RustusError {
     AMQPPoolError(#[from] mobc_lapin::mobc::Error<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
+    #[error("Can't spawn task: {0}")]
+    TokioSpawnError(#[from] tokio::task::JoinError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

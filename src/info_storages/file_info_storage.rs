@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use async_trait::async_trait;
 use log::error;
-use tokio::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
-use tokio::io::copy;
+use tokio::fs::{remove_file, DirBuilder, File, OpenOptions};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter};
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::{FileInfo, InfoStorage};
@@ -35,18 +35,22 @@ impl InfoStorage for FileInfoStorage {
     }
 
     async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .create(create)
             .truncate(true)
-            .open(self.info_file_path(file_info.id.as_str()).as_path())
+            .open(self.info_file_path(file_info.id.as_str()))
             .await
             .map_err(|err| {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        copy(&mut file_info.json().await?.as_bytes(), &mut file).await?;
-        tokio::task::spawn(async move { file.sync_data().await });
+        let data = file_info.json().await?;
+        {
+            let mut writer = BufWriter::new(file);
+            writer.write_all(data.as_bytes()).await?;
+            writer.flush().await?;
+        }
         Ok(())
     }
 
@@ -55,11 +59,11 @@ impl InfoStorage for FileInfoStorage {
         if !info_path.exists() {
             return Err(RustusError::FileNotFound);
         }
-        let contents = read_to_string(info_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToReadInfo
-        })?;
-        serde_json::from_str::<FileInfo>(contents.as_str()).map_err(RustusError::from)
+        let info = File::open(info_path).await?;
+        let mut contents = String::new();
+        let mut reader = BufReader::new(info);
+        reader.read_to_string(&mut contents).await?;
+        FileInfo::from_json(contents).await
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {

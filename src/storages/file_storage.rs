@@ -2,15 +2,17 @@ use std::path::PathBuf;
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
+use bytes::Bytes;
 use log::error;
 use tokio::fs::{remove_file, DirBuilder, OpenOptions};
-use tokio::io::copy;
+use tokio::io::{copy, BufReader, BufWriter};
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::FileInfo;
 use crate::storages::Storage;
 use crate::utils::dir_struct::dir_struct;
 use derive_more::Display;
+use tokio::io::AsyncWriteExt;
 
 #[derive(Display)]
 #[display(fmt = "file_storage")]
@@ -76,7 +78,7 @@ impl Storage for FileStorage {
             })
     }
 
-    async fn add_bytes(&self, info: &FileInfo, bytes: &[u8]) -> RustusResult<()> {
+    async fn add_bytes(&self, info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if info.path.is_none() {
@@ -85,20 +87,23 @@ impl Storage for FileStorage {
         // Opening file in w+a mode.
         // It means that we're going to append some
         // bytes to the end of a file.
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .write(true)
             .append(true)
             .create(false)
+            .read(false)
+            .truncate(false)
             .open(info.path.as_ref().unwrap())
             .await
             .map_err(|err| {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        #[allow(clippy::clone_double_ref)]
-        let mut buffer = bytes.clone();
-        copy(&mut buffer, &mut file).await?;
-        tokio::task::spawn(async move { file.sync_data().await });
+        {
+            let mut writer = BufWriter::new(file);
+            writer.write_all(bytes.as_ref()).await?;
+            writer.flush().await?;
+        }
         Ok(())
     }
 
@@ -139,11 +144,12 @@ impl Storage for FileStorage {
             if part.path.is_none() {
                 return Err(RustusError::FileNotFound);
             }
-            let mut part_file = OpenOptions::new()
+            let part_file = OpenOptions::new()
                 .read(true)
                 .open(part.path.as_ref().unwrap())
                 .await?;
-            copy(&mut part_file, &mut file).await?;
+            let mut reader = BufReader::new(part_file);
+            copy(&mut reader, &mut file).await?;
         }
         file.sync_data().await?;
         Ok(())
@@ -168,6 +174,7 @@ mod tests {
     use super::FileStorage;
     use crate::info_storages::FileInfo;
     use crate::Storage;
+    use bytes::Bytes;
     use std::fs::File;
     use std::io::{Read, Write};
     use std::path::PathBuf;
@@ -211,7 +218,7 @@ mod tests {
         let test_data = "MyTestData";
         file_info.path = Some(new_path.clone());
         storage
-            .add_bytes(&file_info, test_data.as_bytes())
+            .add_bytes(&file_info, Bytes::from(test_data))
             .await
             .unwrap();
         let mut file = File::open(new_path).unwrap();
@@ -232,7 +239,7 @@ mod tests {
             None,
         );
         let test_data = "MyTestData";
-        let result = storage.add_bytes(&file_info, test_data.as_bytes()).await;
+        let result = storage.add_bytes(&file_info, Bytes::from(test_data)).await;
         assert!(result.is_err())
     }
 
