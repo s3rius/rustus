@@ -82,7 +82,7 @@ features = ["derive"]
 version = "0.23"
 
 [dependencies.tokio]
-features = ["time", "process"]
+features = ["time", "process", "fs"]
 version = "1.4.0"
 
 [dependencies.tokio-amqp]
