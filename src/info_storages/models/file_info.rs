@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
+use crate::errors::RustusError;
+use crate::RustusResult;
 use chrono::serde::ts_seconds;
 use chrono::{DateTime, Utc};
+use log::error;
 use serde::{Deserialize, Serialize};
 
 /// Information about file.
@@ -86,6 +89,17 @@ impl FileInfo {
             // Merging the metadata.
             Some(result.join(","))
         }
+    }
+
+    pub async fn json(&self) -> RustusResult<String> {
+        let info_clone = self.clone();
+        let data = tokio::task::spawn_blocking(move || serde_json::to_string(&info_clone))
+            .await
+            .map_err(|err| {
+                error!("{}", err);
+                RustusError::UnableToWrite("Can't serialize info".into())
+            })??;
+        Ok(data)
     }
 
     #[cfg(test)]

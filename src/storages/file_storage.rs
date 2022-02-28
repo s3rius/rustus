@@ -4,7 +4,7 @@ use actix_files::NamedFile;
 use async_trait::async_trait;
 use log::error;
 use tokio::fs::{remove_file, DirBuilder, OpenOptions};
-use tokio::io::{copy, BufReader};
+use tokio::io::copy;
 
 use crate::errors::{RustusError, RustusResult};
 use crate::info_storages::FileInfo;
@@ -95,9 +95,10 @@ impl Storage for FileStorage {
                 error!("{:?}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?;
-        let mut reader = BufReader::new(bytes);
-        copy(&mut reader, &mut file).await?;
-        file.sync_data().await?;
+        #[allow(clippy::clone_double_ref)]
+        let mut buffer = bytes.clone();
+        copy(&mut buffer, &mut file).await?;
+        tokio::task::spawn(async move { file.sync_data().await });
         Ok(())
     }
 
