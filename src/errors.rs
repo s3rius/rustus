@@ -1,7 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, HttpResponseBuilder, ResponseError};
+use actix_web::{http::StatusCode, HttpResponse, HttpResponseBuilder, ResponseError};
 use log::error;
 
 pub type RustusResult<T> = Result<T, RustusError>;
@@ -58,6 +57,8 @@ pub enum RustusError {
     AMQPPoolError(#[from] mobc_lapin::mobc::Error<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
+    #[error("Can't spawn task: {0}")]
+    TokioSpawnError(#[from] tokio::task::JoinError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

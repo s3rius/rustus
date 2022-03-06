@@ -1,7 +1,6 @@
 use derive_more::{Display, From};
 
-use crate::errors::RustusResult;
-use crate::{from_str, RustusConf};
+use crate::{errors::RustusResult, from_str, RustusConf};
 
 use crate::info_storages::{file_info_storage, InfoStorage};
 use strum::EnumIter;

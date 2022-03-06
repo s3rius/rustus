@@ -1,11 +1,12 @@
-use std::ffi::OsString;
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 use structopt::StructOpt;
 
-use crate::info_storages::AvailableInfoStores;
-use crate::notifiers::{Format, Hook};
-use crate::protocol::extensions::Extensions;
+use crate::{
+    info_storages::AvailableInfoStores,
+    notifiers::{Format, Hook},
+    protocol::extensions::Extensions,
+};
 
 use crate::storages::AvailableStores;
 
@@ -25,8 +26,23 @@ pub struct StorageOptions {
     #[structopt(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
+    /// Storage directory structure.
+    /// This template shows inner directory structure.
+    /// You can use following variables:
+    /// day, month, year or even environment variables.
+    /// Example: "/year/month/day/env[HOSTNAME]/".
+    ///
     #[structopt(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
     pub dir_structure: String,
+
+    /// Forces fsync call after writing chunk to filesystem.
+    /// This parameter can help you when working with
+    /// Network file systems. It guarantees that
+    /// everything is written on disk correctly.
+    ///
+    /// In most cases this parameter is redundant.
+    #[structopt(long, parse(from_flag))]
+    pub force_fsync: bool,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -109,6 +125,7 @@ pub struct NotificationsOptions {
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
 
+    /// Prefix for all AMQP queues.
     #[cfg(feature = "amqp_notifier")]
     #[structopt(
         long,
@@ -117,9 +134,13 @@ pub struct NotificationsOptions {
     )]
     pub hooks_amqp_queues_prefix: String,
 
+    /// Directory for executable hook files.
+    /// This parameter is used to call executables from dir.
     #[structopt(long, env = "RUSTUS_HOOKS_DIR")]
     pub hooks_dir: Option<PathBuf>,
 
+    /// Executable file which must be called for
+    /// notifying about upload status.
     #[structopt(long, env = "RUSTUS_HOOKS_FILE")]
     pub hooks_file: Option<String>,
 }
@@ -213,9 +234,7 @@ impl RustusConf {
     pub fn base_url(&self) -> String {
         format!(
             "/{}",
-            self.url
-                .strip_prefix('/')
-                .unwrap_or_else(|| self.url.as_str())
+            self.url.strip_prefix('/').unwrap_or(self.url.as_str())
         )
     }
 
@@ -225,9 +244,7 @@ impl RustusConf {
         let base_url = self.base_url();
         format!(
             "{}/{}",
-            base_url
-                .strip_suffix('/')
-                .unwrap_or_else(|| base_url.as_str()),
+            base_url.strip_suffix('/').unwrap_or(base_url.as_str()),
             file_id
         )
     }

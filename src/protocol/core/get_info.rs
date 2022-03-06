@@ -1,6 +1,6 @@
-use actix_web::{web, HttpRequest, HttpResponse};
-
 use crate::errors::RustusError;
+use actix_web::{web, HttpRequest, HttpResponse};
+use futures::stream::empty;
 
 use crate::{RustusResult, State};
 
@@ -47,18 +47,20 @@ pub async fn get_file_info(
     }
     builder
         .no_chunking(file_info.offset as u64)
-        .insert_header(("Upload-Offset", file_info.offset.to_string()))
-        .insert_header(("Content-Length", file_info.offset.to_string()));
+        .insert_header(("Upload-Offset", file_info.offset.to_string()));
     // Upload length is known.
     if let Some(upload_len) = file_info.length {
-        builder.insert_header(("Upload-Length", upload_len.to_string()));
+        builder
+            .no_chunking(upload_len as u64)
+            .insert_header(("Content-Length", file_info.offset.to_string()))
+            .insert_header(("Upload-Length", upload_len.to_string()));
     } else {
         builder.insert_header(("Upload-Defer-Length", "1"));
     }
     if let Some(meta) = file_info.get_metadata_string() {
         builder.insert_header(("Upload-Metadata", meta));
     }
-    Ok(builder.finish())
+    Ok(builder.streaming(empty::<RustusResult<web::Bytes>>()))
 }
 
 #[cfg(test)]
@@ -66,8 +68,10 @@ mod tests {
     use actix_web::http::{Method, StatusCode};
 
     use crate::{rustus_service, State};
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     async fn success() {

@@ -1,8 +1,7 @@
 use actix_files::NamedFile;
 use actix_web::{web, HttpRequest};
 
-use crate::errors::RustusError;
-use crate::{RustusResult, State};
+use crate::{errors::RustusError, RustusResult, State};
 
 /// Retrieve actual file.
 ///
@@ -21,12 +20,14 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusRe
 }
 
 #[cfg(test)]
-#[cfg_attr(coverage, no_coverage)]
 mod test {
     use crate::{rustus_service, State};
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
+    use bytes::Bytes;
 
     #[actix_rt::test]
     async fn success() {
@@ -38,7 +39,7 @@ mod test {
         let file_info = state.create_test_file().await;
         state
             .data_storage
-            .add_bytes(&file_info, "data".as_bytes())
+            .add_bytes(&file_info, Bytes::from("testing"))
             .await
             .unwrap();
         let request = TestRequest::get()

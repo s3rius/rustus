@@ -15,6 +15,9 @@ repos:
         pass_filenames: false
         args:
           - fmt
+          - --
+          - --config
+          - use_try_shorthand=true,imports_granularity=Crate
 
       - id: clippy
         types:

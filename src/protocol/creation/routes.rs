@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use actix_web::web::Bytes;
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 
-use crate::info_storages::FileInfo;
-use crate::notifiers::Hook;
-use crate::protocol::extensions::Extensions;
-use crate::utils::headers::{check_header, parse_header};
-use crate::State;
+use crate::{
+    info_storages::FileInfo,
+    notifiers::Hook,
+    protocol::extensions::Extensions,
+    utils::headers::{check_header, parse_header},
+    State,
+};
 
 /// Get metadata info from request.
 ///
@@ -180,11 +181,11 @@ pub async fn create_file(
         let octet_stream = |val: &str| val == "application/offset+octet-stream";
         if check_header(&request, "Content-Type", octet_stream) {
             // Writing first bytes.
-            state
-                .data_storage
-                .add_bytes(&file_info, bytes.as_ref())
-                .await?;
-            file_info.offset += bytes.len();
+            let chunk_len = bytes.len();
+            // Appending bytes to file.
+            state.data_storage.add_bytes(&file_info, bytes).await?;
+            // Updating offset.
+            file_info.offset += chunk_len;
         }
     }
 
@@ -199,7 +200,7 @@ pub async fn create_file(
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
-        tokio::spawn(async move {
+        actix_web::rt::spawn(async move {
             state
                 .notification_manager
                 .send_message(message, Hook::PostCreate, &headers)
@@ -218,11 +219,12 @@ pub async fn create_file(
 
 #[cfg(test)]
 mod tests {
-    use crate::server::rustus_service;
-    use crate::State;
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use crate::{server::rustus_service, State};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     async fn success() {

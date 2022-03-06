@@ -32,7 +32,7 @@ jobs:
       - name: Adding component
         run: rustup component add rustfmt
       - name: Checking code format
-        run: cargo fmt -- --check
+        run: cargo fmt -- --check --config use_try_shorthand=true,imports_granularity=Crate
 
   code_check:
     needs: pre_job

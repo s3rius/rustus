@@ -7,6 +7,6 @@ pub mod redis_info_storage;
 
 pub mod models;
 
-pub use models::available_info_storages::AvailableInfoStores;
-pub use models::file_info::FileInfo;
-pub use models::info_store::InfoStorage;
+pub use models::{
+    available_info_storages::AvailableInfoStores, file_info::FileInfo, info_store::InfoStorage,
+};
