@@ -2,6 +2,7 @@ use crate::errors::RustusResult;
 use crate::info_storages::FileInfo;
 use actix_files::NamedFile;
 use async_trait::async_trait;
+use bytes::Bytes;
 use std::fmt::Display;
 
 #[async_trait]
@@ -41,7 +42,7 @@ pub trait Storage: Display {
     /// # Params
     /// `file_info` - info about current file.
     /// `bytes` - bytes to append to the file.
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: &[u8]) -> RustusResult<()>;
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()>;
 
     /// Create file in storage.
     ///

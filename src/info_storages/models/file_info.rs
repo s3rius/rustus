@@ -93,13 +93,25 @@ impl FileInfo {
 
     pub async fn json(&self) -> RustusResult<String> {
         let info_clone = self.clone();
-        let data = tokio::task::spawn_blocking(move || serde_json::to_string(&info_clone))
-            .await
-            .map_err(|err| {
-                error!("{}", err);
-                RustusError::UnableToWrite("Can't serialize info".into())
-            })??;
-        Ok(data)
+        actix_web::rt::task::spawn_blocking(move || {
+            serde_json::to_string(&info_clone).map_err(RustusError::from)
+        })
+        .await
+        .map_err(|err| {
+            error!("{}", err);
+            RustusError::UnableToWrite("Can't serialize info".into())
+        })?
+    }
+
+    pub async fn from_json(data: String) -> RustusResult<Self> {
+        actix_web::rt::task::spawn_blocking(move || {
+            serde_json::from_str::<Self>(data.as_str()).map_err(RustusError::from)
+        })
+        .await
+        .map_err(|err| {
+            error!("{}", err);
+            RustusError::UnableToWrite("Can't serialize info".into())
+        })?
     }
 
     #[cfg(test)]

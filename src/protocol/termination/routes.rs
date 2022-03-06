@@ -27,7 +27,7 @@ pub async fn terminate(
                 .hooks_format
                 .format(&request, &file_info)?;
             let headers = request.headers().clone();
-            tokio::spawn(async move {
+            actix_web::rt::spawn(async move {
                 state
                     .notification_manager
                     .send_message(message, Hook::PostTerminate, &headers)

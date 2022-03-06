@@ -3,9 +3,9 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
-use actix_web::http::Method;
 use actix_web::{
     dev::{Server, Service},
+    http::Method,
     middleware, web, App, HttpServer,
 };
 use fern::colors::{Color, ColoredLevelConfig};

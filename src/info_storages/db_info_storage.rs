@@ -66,7 +66,7 @@ impl InfoStorage for DBInfoStorage {
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let model: Option<DbModel> = self.db.fetch_by_column("id", file_id).await?;
         if let Some(info) = model {
-            serde_json::from_str(info.info.as_str()).map_err(RustusError::from)
+            FileInfo::from_json(info.info.to_string()).await
         } else {
             Err(RustusError::FileNotFound)
         }

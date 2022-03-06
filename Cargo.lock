@@ -2398,6 +2398,7 @@ dependencies = [
  "actix-web",
  "async-trait",
  "base64",
+ "bytes",
  "chrono",
  "derive_more",
  "fern",

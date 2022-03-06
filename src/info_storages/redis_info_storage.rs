@@ -46,7 +46,7 @@ impl InfoStorage for RedisStorage {
         if res.is_none() {
             return Err(RustusError::FileNotFound);
         }
-        serde_json::from_str(res.unwrap().as_str()).map_err(RustusError::from)
+        FileInfo::from_json(res.unwrap()).await
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
