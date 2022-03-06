@@ -1,10 +1,8 @@
-use crate::errors::RustusResult;
-use crate::info_storages::FileInfo;
+use crate::{errors::RustusResult, info_storages::FileInfo};
 use actix_web::HttpRequest;
 use derive_more::{Display, From};
 use serde::Serialize;
-use serde_json::Map;
-use serde_json::Value;
+use serde_json::{Map, Value};
 use std::collections::HashMap;
 
 use crate::from_str;

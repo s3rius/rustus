@@ -1,5 +1,4 @@
-use crate::errors::RustusResult;
-use crate::info_storages::FileInfo;
+use crate::{errors::RustusResult, info_storages::FileInfo};
 use async_trait::async_trait;
 
 /// Trait for every info storage.

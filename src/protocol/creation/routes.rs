@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 
-use actix_web::web::Bytes;
-use actix_web::{web, HttpRequest, HttpResponse};
+use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 
-use crate::info_storages::FileInfo;
-use crate::notifiers::Hook;
-use crate::protocol::extensions::Extensions;
-use crate::utils::headers::{check_header, parse_header};
-use crate::State;
+use crate::{
+    info_storages::FileInfo,
+    notifiers::Hook,
+    protocol::extensions::Extensions,
+    utils::headers::{check_header, parse_header},
+    State,
+};
 
 /// Get metadata info from request.
 ///
@@ -218,11 +219,12 @@ pub async fn create_file(
 
 #[cfg(test)]
 mod tests {
-    use crate::server::rustus_service;
-    use crate::State;
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use crate::{server::rustus_service, State};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     async fn success() {

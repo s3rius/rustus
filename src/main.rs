@@ -1,25 +1,25 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use actix_web::{
     dev::{Server, Service},
     http::Method,
     middleware, web, App, HttpServer,
 };
-use fern::colors::{Color, ColoredLevelConfig};
-use fern::Dispatch;
+use fern::{
+    colors::{Color, ColoredLevelConfig},
+    Dispatch,
+};
 use log::LevelFilter;
 
 use config::RustusConf;
 
-use crate::errors::RustusResult;
-use crate::info_storages::InfoStorage;
-use crate::notifiers::models::notification_manager::NotificationManager;
-use crate::server::rustus_service;
-use crate::state::State;
-use crate::storages::Storage;
+use crate::{
+    errors::RustusResult, info_storages::InfoStorage,
+    notifiers::models::notification_manager::NotificationManager, server::rustus_service,
+    state::State, storages::Storage,
+};
 
 mod config;
 mod errors;

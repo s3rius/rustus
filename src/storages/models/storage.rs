@@ -1,5 +1,4 @@
-use crate::errors::RustusResult;
-use crate::info_storages::FileInfo;
+use crate::{errors::RustusResult, info_storages::FileInfo};
 use actix_files::NamedFile;
 use async_trait::async_trait;
 use bytes::Bytes;

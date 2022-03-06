@@ -1,8 +1,7 @@
 use chrono::{Datelike, Timelike};
 use lazy_static::lazy_static;
 use log::error;
-use std::collections::HashMap;
-use std::env;
+use std::{collections::HashMap, env};
 
 lazy_static! {
     /// Freezing ENVS on startup.

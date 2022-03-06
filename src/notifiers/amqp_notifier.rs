@@ -1,14 +1,15 @@
-use crate::notifiers::{Hook, Notifier};
-use crate::RustusResult;
+use crate::{
+    notifiers::{Hook, Notifier},
+    RustusResult,
+};
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
-use lapin::options::{
-    BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions,
+use lapin::{
+    options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
+    types::FieldTable,
+    BasicProperties, ConnectionProperties, ExchangeKind,
 };
-use lapin::types::FieldTable;
-use lapin::{BasicProperties, ConnectionProperties, ExchangeKind};
-use mobc_lapin::mobc::Pool;
-use mobc_lapin::RMQConnectionManager;
+use mobc_lapin::{mobc::Pool, RMQConnectionManager};
 use strum::IntoEnumIterator;
 use tokio_amqp::LapinTokioExt;
 
