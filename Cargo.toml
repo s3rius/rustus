@@ -50,7 +50,7 @@ version = "0.6.0"
 
 [dependencies.lapin]
 optional = true
-version = "^1.9.0"
+version = "^2.0.3"
 
 [dependencies.mobc-lapin]
 optional = true
