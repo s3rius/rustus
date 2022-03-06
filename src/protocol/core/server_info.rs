@@ -19,12 +19,10 @@ pub async fn server_info(state: web::Data<State>) -> HttpResponse {
 
 #[cfg(test)]
 mod tests {
-    use crate::protocol::extensions::Extensions;
-    use crate::{rustus_service, State};
+    use crate::{protocol::extensions::Extensions, rustus_service, State};
     use actix_web::test::{call_service, init_service, TestRequest};
 
-    use actix_web::http::Method;
-    use actix_web::{web, App};
+    use actix_web::{http::Method, web, App};
 
     #[actix_rt::test]
     async fn test_server_info() {

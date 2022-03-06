@@ -1,11 +1,11 @@
 use async_trait::async_trait;
-use mobc_redis::mobc::Pool;
-use mobc_redis::redis;
-use mobc_redis::RedisConnectionManager;
+use mobc_redis::{mobc::Pool, redis, RedisConnectionManager};
 use redis::aio::Connection;
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::{FileInfo, InfoStorage};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::{FileInfo, InfoStorage},
+};
 
 pub struct RedisStorage {
     pool: Pool<RedisConnectionManager>,
@@ -66,10 +66,8 @@ impl InfoStorage for RedisStorage {
 #[cfg(feature = "test_redis")]
 mod tests {
     use super::RedisStorage;
-    use crate::info_storages::FileInfo;
-    use crate::InfoStorage;
-    use mobc_redis::redis;
-    use mobc_redis::redis::AsyncCommands;
+    use crate::{info_storages::FileInfo, InfoStorage};
+    use mobc_redis::{redis, redis::AsyncCommands};
 
     async fn get_storage() -> RedisStorage {
         let redis_url = std::env::var("TEST_REDIS_URL").unwrap();

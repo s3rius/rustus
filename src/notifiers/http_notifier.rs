@@ -67,10 +67,8 @@ mod tests {
     use super::HttpNotifier;
     use crate::notifiers::{Hook, Notifier};
     use actix_web::http::header::{HeaderMap, HeaderName, HeaderValue};
-    use httptest::matchers::contains;
-    use httptest::responders::status_code;
-    use std::str::FromStr;
-    use std::time::Duration;
+    use httptest::{matchers::contains, responders::status_code};
+    use std::{str::FromStr, time::Duration};
 
     #[actix_rt::test]
     async fn success_request() {

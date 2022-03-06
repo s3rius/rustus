@@ -1,8 +1,10 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::errors::{RustusError, RustusResult};
-use crate::notifiers::Hook;
-use crate::State;
+use crate::{
+    errors::{RustusError, RustusResult},
+    notifiers::Hook,
+    State,
+};
 
 /// Terminate uploading.
 ///
@@ -41,9 +43,11 @@ pub async fn terminate(
 #[cfg(test)]
 mod tests {
     use crate::{rustus_service, State};
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
     use std::path::PathBuf;
 
     #[actix_rt::test]

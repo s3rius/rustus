@@ -68,8 +68,10 @@ mod tests {
     use actix_web::http::{Method, StatusCode};
 
     use crate::{rustus_service, State};
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     async fn success() {

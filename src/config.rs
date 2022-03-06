@@ -1,11 +1,12 @@
-use std::ffi::OsString;
-use std::path::PathBuf;
+use std::{ffi::OsString, path::PathBuf};
 
 use structopt::StructOpt;
 
-use crate::info_storages::AvailableInfoStores;
-use crate::notifiers::{Format, Hook};
-use crate::protocol::extensions::Extensions;
+use crate::{
+    info_storages::AvailableInfoStores,
+    notifiers::{Format, Hook},
+    protocol::extensions::Extensions,
+};
 
 use crate::storages::AvailableStores;
 

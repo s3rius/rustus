@@ -1,17 +1,20 @@
-use std::io::Write;
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
 use bytes::Bytes;
 use log::error;
-use std::fs::{remove_file, DirBuilder, OpenOptions};
-use std::io::{copy, BufReader, BufWriter};
+use std::{
+    fs::{remove_file, DirBuilder, OpenOptions},
+    io::{copy, BufReader, BufWriter},
+};
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::FileInfo;
-use crate::storages::Storage;
-use crate::utils::dir_struct::dir_struct;
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::FileInfo,
+    storages::Storage,
+    utils::dir_struct::dir_struct,
+};
 use derive_more::Display;
 
 #[derive(Display)]
@@ -188,12 +191,13 @@ impl Storage for FileStorage {
 #[cfg(test)]
 mod tests {
     use super::FileStorage;
-    use crate::info_storages::FileInfo;
-    use crate::Storage;
+    use crate::{info_storages::FileInfo, Storage};
     use bytes::Bytes;
-    use std::fs::File;
-    use std::io::{Read, Write};
-    use std::path::PathBuf;
+    use std::{
+        fs::File,
+        io::{Read, Write},
+        path::PathBuf,
+    };
 
     #[actix_rt::test]
     async fn preparation() {

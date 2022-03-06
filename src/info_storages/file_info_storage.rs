@@ -1,14 +1,20 @@
-use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::{
+    io::{Read, Write},
+    path::PathBuf,
+};
 
 use async_trait::async_trait;
 use log::error;
-use std::fs::{remove_file, File, OpenOptions};
-use std::io::{BufReader, BufWriter};
+use std::{
+    fs::{remove_file, File, OpenOptions},
+    io::{BufReader, BufWriter},
+};
 use tokio::fs::DirBuilder;
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::{FileInfo, InfoStorage};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::{FileInfo, InfoStorage},
+};
 
 pub struct FileInfoStorage {
     info_dir: PathBuf,
@@ -94,11 +100,12 @@ impl InfoStorage for FileInfoStorage {
 #[cfg(test)]
 mod tests {
     use super::FileInfoStorage;
-    use crate::info_storages::FileInfo;
-    use crate::InfoStorage;
-    use std::collections::HashMap;
-    use std::fs::File;
-    use std::io::{Read, Write};
+    use crate::{info_storages::FileInfo, InfoStorage};
+    use std::{
+        collections::HashMap,
+        fs::File,
+        io::{Read, Write},
+    };
 
     #[actix_rt::test]
     async fn preparation() {

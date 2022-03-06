@@ -1,5 +1,4 @@
-use crate::storages::file_storage;
-use crate::{from_str, RustusConf, Storage};
+use crate::{from_str, storages::file_storage, RustusConf, Storage};
 use derive_more::{Display, From};
 use strum::EnumIter;
 
