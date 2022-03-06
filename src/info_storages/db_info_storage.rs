@@ -1,14 +1,12 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rbatis::crud::CRUD;
-use rbatis::crud_table;
-use rbatis::db::DBPoolOptions;
-use rbatis::executor::Executor;
-use rbatis::rbatis::Rbatis;
+use rbatis::{crud::CRUD, crud_table, db::DBPoolOptions, executor::Executor, rbatis::Rbatis};
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::{FileInfo, InfoStorage};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::{FileInfo, InfoStorage},
+};
 
 #[crud_table]
 struct DbModel {
@@ -66,7 +64,7 @@ impl InfoStorage for DBInfoStorage {
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let model: Option<DbModel> = self.db.fetch_by_column("id", file_id).await?;
         if let Some(info) = model {
-            serde_json::from_str(info.info.as_str()).map_err(RustusError::from)
+            FileInfo::from_json(info.info.to_string()).await
         } else {
             Err(RustusError::FileNotFound)
         }
@@ -84,8 +82,7 @@ impl InfoStorage for DBInfoStorage {
 #[cfg(test)]
 mod tests {
     use super::{DBInfoStorage, DbModel};
-    use crate::info_storages::FileInfo;
-    use crate::InfoStorage;
+    use crate::{info_storages::FileInfo, InfoStorage};
     use rbatis::crud::CRUD;
 
     async fn get_info_storage() -> DBInfoStorage {

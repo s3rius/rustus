@@ -1,12 +1,12 @@
-use crate::errors::RustusResult;
 #[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
-use crate::notifiers::dir_notifier::DirNotifier;
-use crate::notifiers::file_notifier::FileNotifier;
 #[cfg(feature = "http_notifier")]
 use crate::notifiers::http_notifier;
-use crate::notifiers::{Hook, Notifier};
-use crate::RustusConf;
+use crate::{
+    errors::RustusResult,
+    notifiers::{dir_notifier::DirNotifier, file_notifier::FileNotifier, Hook, Notifier},
+    RustusConf,
+};
 use actix_web::http::header::HeaderMap;
 use log::debug;
 

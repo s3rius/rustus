@@ -1,5 +1,4 @@
-use crate::storages::file_storage;
-use crate::{from_str, RustusConf, Storage};
+use crate::{from_str, storages::file_storage, RustusConf, Storage};
 use derive_more::{Display, From};
 use strum::EnumIter;
 
@@ -26,6 +25,7 @@ impl AvailableStores {
             Self::FileStorage => Box::new(file_storage::FileStorage::new(
                 config.storage_opts.data_dir.clone(),
                 config.storage_opts.dir_structure.clone(),
+                config.storage_opts.force_fsync,
             )),
         }
     }

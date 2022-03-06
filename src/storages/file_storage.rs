@@ -1,15 +1,20 @@
-use std::path::PathBuf;
+use std::{io::Write, path::PathBuf};
 
 use actix_files::NamedFile;
 use async_trait::async_trait;
+use bytes::Bytes;
 use log::error;
-use tokio::fs::{remove_file, DirBuilder, OpenOptions};
-use tokio::io::{copy, BufReader};
+use std::{
+    fs::{remove_file, DirBuilder, OpenOptions},
+    io::{copy, BufReader, BufWriter},
+};
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::FileInfo;
-use crate::storages::Storage;
-use crate::utils::dir_struct::dir_struct;
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::FileInfo,
+    storages::Storage,
+    utils::dir_struct::dir_struct,
+};
 use derive_more::Display;
 
 #[derive(Display)]
@@ -17,17 +22,19 @@ use derive_more::Display;
 pub struct FileStorage {
     data_dir: PathBuf,
     dir_struct: String,
+    force_fsync: bool,
 }
 
 impl FileStorage {
-    pub fn new(data_dir: PathBuf, dir_struct: String) -> FileStorage {
+    pub fn new(data_dir: PathBuf, dir_struct: String, force_fsync: bool) -> FileStorage {
         FileStorage {
             data_dir,
             dir_struct,
+            force_fsync,
         }
     }
 
-    pub async fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
+    pub fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
         let dir = self
             .data_dir
             // We're working wit absolute paths, because tus.io says so.
@@ -40,7 +47,6 @@ impl FileStorage {
         DirBuilder::new()
             .recursive(true)
             .create(dir.as_path())
-            .await
             .map_err(|err| {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
@@ -58,7 +64,6 @@ impl Storage for FileStorage {
             DirBuilder::new()
                 .recursive(true)
                 .create(self.data_dir.as_path())
-                .await
                 .map_err(|err| RustusError::UnableToPrepareStorage(err.to_string()))?;
         }
         Ok(())
@@ -76,47 +81,61 @@ impl Storage for FileStorage {
             })
     }
 
-    async fn add_bytes(&self, info: &FileInfo, bytes: &[u8]) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
-        if info.path.is_none() {
+        if file_info.path.is_none() {
             return Err(RustusError::FileNotFound);
         }
-        // Opening file in w+a mode.
-        // It means that we're going to append some
-        // bytes to the end of a file.
-        let mut file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create(false)
-            .open(info.path.as_ref().unwrap())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(err.to_string())
-            })?;
-        let mut reader = BufReader::new(bytes);
-        copy(&mut reader, &mut file).await?;
-        file.sync_data().await?;
-        Ok(())
+        let path = String::from(file_info.path.as_ref().unwrap());
+        let force_sync = self.force_fsync;
+        actix_web::rt::task::spawn_blocking(move || {
+            // Opening file in w+a mode.
+            // It means that we're going to append some
+            // bytes to the end of a file.
+            let file = OpenOptions::new()
+                .write(true)
+                .append(true)
+                .create(false)
+                .read(false)
+                .truncate(false)
+                .open(path.as_str())
+                .map_err(|err| {
+                    error!("{:?}", err);
+                    RustusError::UnableToWrite(err.to_string())
+                })?;
+            {
+                let mut writer = BufWriter::new(file);
+                writer.write_all(bytes.as_ref())?;
+                writer.flush()?;
+                if force_sync {
+                    writer.get_ref().sync_data()?;
+                }
+            }
+            Ok(())
+        })
+        .await?
     }
 
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
+        let info = file_info.clone();
         // New path to file.
-        let file_path = self.data_file_path(file_info.id.as_str()).await?;
-        // Creating new file.
-        OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .create_new(true)
-            .open(file_path.as_path())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::FileAlreadyExists(file_info.id.clone())
-            })?;
-        Ok(file_path.display().to_string())
+        let file_path = self.data_file_path(info.id.as_str())?;
+        actix_web::rt::task::spawn_blocking(move || {
+            // Creating new file.
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .create_new(true)
+                .open(file_path.as_path())
+                .map_err(|err| {
+                    error!("{:?}", err);
+                    RustusError::FileAlreadyExists(info.id.clone())
+                })?;
+            Ok(file_path.display().to_string())
+        })
+        .await?
     }
 
     async fn concat_files(
@@ -124,58 +143,67 @@ impl Storage for FileStorage {
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .append(true)
-            .create(true)
-            .open(file_info.path.as_ref().unwrap().clone())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(err.to_string())
-            })?;
-        for part in parts_info {
-            if part.path.is_none() {
-                return Err(RustusError::FileNotFound);
+        let info = file_info.clone();
+        actix_web::rt::task::spawn_blocking(move || {
+            let mut file = OpenOptions::new()
+                .write(true)
+                .append(true)
+                .create(true)
+                .open(info.path.as_ref().unwrap().clone())
+                .map_err(|err| {
+                    error!("{:?}", err);
+                    RustusError::UnableToWrite(err.to_string())
+                })?;
+            for part in parts_info {
+                if part.path.is_none() {
+                    return Err(RustusError::FileNotFound);
+                }
+                let part_file = OpenOptions::new()
+                    .read(true)
+                    .open(part.path.as_ref().unwrap())?;
+                let mut reader = BufReader::new(part_file);
+                copy(&mut reader, &mut file)?;
             }
-            let mut part_file = OpenOptions::new()
-                .read(true)
-                .open(part.path.as_ref().unwrap())
-                .await?;
-            copy(&mut part_file, &mut file).await?;
-        }
-        file.sync_data().await?;
-        Ok(())
+            file.sync_data()?;
+            Ok(())
+        })
+        .await?
     }
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
-        // Let's remove the file itself.
-        let data_path = PathBuf::from(file_info.path.as_ref().unwrap().clone());
-        if !data_path.exists() {
-            return Err(RustusError::FileNotFound);
-        }
-        remove_file(data_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToRemove(file_info.id.clone())
-        })?;
-        Ok(())
+        let info = file_info.clone();
+        actix_web::rt::task::spawn_blocking(move || {
+            // Let's remove the file itself.
+            let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
+            if !data_path.exists() {
+                return Err(RustusError::FileNotFound);
+            }
+            remove_file(data_path).map_err(|err| {
+                error!("{:?}", err);
+                RustusError::UnableToRemove(info.id.clone())
+            })?;
+            Ok(())
+        })
+        .await?
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::FileStorage;
-    use crate::info_storages::FileInfo;
-    use crate::Storage;
-    use std::fs::File;
-    use std::io::{Read, Write};
-    use std::path::PathBuf;
+    use crate::{info_storages::FileInfo, Storage};
+    use bytes::Bytes;
+    use std::{
+        fs::File,
+        io::{Read, Write},
+        path::PathBuf,
+    };
 
     #[actix_rt::test]
     async fn preparation() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let target_path = dir.into_path().join("not_exist");
-        let mut storage = FileStorage::new(target_path.clone(), "".into());
+        let mut storage = FileStorage::new(target_path.clone(), "".into(), false);
         assert_eq!(target_path.exists(), false);
         storage.prepare().await.unwrap();
         assert_eq!(target_path.exists(), true);
@@ -184,7 +212,7 @@ mod tests {
     #[actix_rt::test]
     async fn create_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
         let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         let new_path = storage.create_file(&file_info).await.unwrap();
         assert!(PathBuf::from(new_path).exists());
@@ -194,7 +222,7 @@ mod tests {
     async fn create_file_but_it_exists() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let base_path = dir.into_path().clone();
-        let storage = FileStorage::new(base_path.clone(), "".into());
+        let storage = FileStorage::new(base_path.clone(), "".into(), false);
         let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         File::create(base_path.join("test_id")).unwrap();
         let result = storage.create_file(&file_info).await;
@@ -204,13 +232,13 @@ mod tests {
     #[actix_rt::test]
     async fn adding_bytes() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
         let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         let new_path = storage.create_file(&file_info).await.unwrap();
         let test_data = "MyTestData";
         file_info.path = Some(new_path.clone());
         storage
-            .add_bytes(&file_info, test_data.as_bytes())
+            .add_bytes(&file_info, Bytes::from(test_data))
             .await
             .unwrap();
         let mut file = File::open(new_path).unwrap();
@@ -222,7 +250,7 @@ mod tests {
     #[actix_rt::test]
     async fn adding_bytes_to_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -231,14 +259,14 @@ mod tests {
             None,
         );
         let test_data = "MyTestData";
-        let result = storage.add_bytes(&file_info, test_data.as_bytes()).await;
+        let result = storage.add_bytes(&file_info, Bytes::from(test_data)).await;
         assert!(result.is_err())
     }
 
     #[actix_rt::test]
     async fn get_contents_of_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -253,7 +281,7 @@ mod tests {
     #[actix_rt::test]
     async fn remove_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -268,7 +296,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_concatenation() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileStorage::new(dir.into_path().clone(), "".into());
+        let storage = FileStorage::new(dir.into_path().clone(), "".into(), false);
 
         let mut parts = Vec::new();
         let part1_path = storage.data_dir.as_path().join("part1");

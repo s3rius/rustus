@@ -1,12 +1,20 @@
-use std::path::PathBuf;
+use std::{
+    io::{Read, Write},
+    path::PathBuf,
+};
 
 use async_trait::async_trait;
 use log::error;
-use tokio::fs::{read_to_string, remove_file, DirBuilder, OpenOptions};
-use tokio::io::copy;
+use std::{
+    fs::{remove_file, File, OpenOptions},
+    io::{BufReader, BufWriter},
+};
+use tokio::fs::DirBuilder;
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::{FileInfo, InfoStorage};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::{FileInfo, InfoStorage},
+};
 
 pub struct FileInfoStorage {
     info_dir: PathBuf,
@@ -35,57 +43,69 @@ impl InfoStorage for FileInfoStorage {
     }
 
     async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
-        let mut file = OpenOptions::new()
-            .write(true)
-            .create(create)
-            .truncate(true)
-            .open(self.info_file_path(file_info.id.as_str()).as_path())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToWrite(err.to_string())
-            })?;
-        let data = serde_json::to_string(&file_info).map_err(|err| {
-            error!("{:#?}", err);
-            err
-        })?;
-        copy(&mut data.as_bytes(), &mut file).await?;
-        file.sync_data().await?;
-        Ok(())
+        let info = file_info.clone();
+        let path = self.info_file_path(info.id.as_str());
+        actix_web::rt::task::spawn_blocking(move || {
+            let file = OpenOptions::new()
+                .write(true)
+                .create(create)
+                .truncate(true)
+                .open(path)
+                .map_err(|err| {
+                    error!("{:?}", err);
+                    RustusError::UnableToWrite(err.to_string())
+                })?;
+            let data = serde_json::to_string(&info).map_err(RustusError::from)?;
+            {
+                let mut writer = BufWriter::new(file);
+                writer.write_all(data.as_bytes())?;
+                writer.flush()?;
+            }
+            Ok(())
+        })
+        .await?
     }
 
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
-        if !info_path.exists() {
-            return Err(RustusError::FileNotFound);
-        }
-        let contents = read_to_string(info_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToReadInfo
-        })?;
-        serde_json::from_str::<FileInfo>(contents.as_str()).map_err(RustusError::from)
+        actix_web::rt::task::spawn_blocking(move || {
+            if !info_path.exists() {
+                return Err(RustusError::FileNotFound);
+            }
+            let info = File::open(info_path)?;
+            let mut contents = String::new();
+            let mut reader = BufReader::new(info);
+            reader.read_to_string(&mut contents)?;
+            serde_json::from_str::<FileInfo>(contents.as_str()).map_err(RustusError::from)
+        })
+        .await?
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
-        let info_path = self.info_file_path(file_id);
-        if !info_path.exists() {
-            return Err(RustusError::FileNotFound);
-        }
-        remove_file(info_path).await.map_err(|err| {
-            error!("{:?}", err);
-            RustusError::UnableToRemove(String::from(file_id))
+        let id = String::from(file_id);
+        let info_path = self.info_file_path(id.as_str());
+        actix_web::rt::task::spawn_blocking(move || {
+            if !info_path.exists() {
+                return Err(RustusError::FileNotFound);
+            }
+            remove_file(info_path).map_err(|err| {
+                error!("{:?}", err);
+                RustusError::UnableToRemove(id)
+            })
         })
+        .await?
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::FileInfoStorage;
-    use crate::info_storages::FileInfo;
-    use crate::InfoStorage;
-    use std::collections::HashMap;
-    use std::fs::File;
-    use std::io::{Read, Write};
+    use crate::{info_storages::FileInfo, InfoStorage};
+    use std::{
+        collections::HashMap,
+        fs::File,
+        io::{Read, Write},
+    };
 
     #[actix_rt::test]
     async fn preparation() {

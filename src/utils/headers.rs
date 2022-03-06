@@ -17,7 +17,7 @@ pub fn parse_header<T: FromStr>(request: &HttpRequest, header_name: &str) -> Opt
         .and_then(|value|
             // Parsing it to string.
             match value.to_str() {
-                Ok(header_str) => Some(String::from(header_str)),
+                Ok(header_str) => Some(header_str),
                 Err(_) => None,
             })
         .and_then(|val|

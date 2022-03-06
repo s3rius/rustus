@@ -1,10 +1,12 @@
 use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 
-use crate::errors::RustusError;
-use crate::notifiers::Hook;
-use crate::protocol::extensions::Extensions;
-use crate::utils::headers::{check_header, parse_header};
-use crate::{RustusResult, State};
+use crate::{
+    errors::RustusError,
+    notifiers::Hook,
+    protocol::extensions::Extensions,
+    utils::headers::{check_header, parse_header},
+    RustusResult, State,
+};
 
 pub async fn write_bytes(
     request: HttpRequest,
@@ -31,7 +33,7 @@ pub async fn write_bytes(
     // Parses header `Upload-Length` only if the creation-defer-length extension is enabled.
     let updated_len = if state
         .config
-        .extensions_vec()
+        .tus_extensions
         .contains(&Extensions::CreationDeferLength)
     {
         parse_header(&request, "Upload-Length")
@@ -82,20 +84,19 @@ pub async fn write_bytes(
     if Some(file_info.offset) == file_info.length {
         return Err(RustusError::FrozenFile);
     }
-
+    let chunk_len = bytes.len();
     // Appending bytes to file.
-    state
-        .data_storage
-        .add_bytes(&file_info, bytes.as_ref())
-        .await?;
+    state.data_storage.add_bytes(&file_info, bytes).await?;
     // Updating offset.
-    file_info.offset += bytes.len();
+    file_info.offset += chunk_len;
     // Saving info to info storage.
     state.info_storage.set_info(&file_info, false).await?;
 
     let mut hook = Hook::PostReceive;
+    let mut keep_alive = true;
     if file_info.length == Some(file_info.offset) {
         hook = Hook::PostFinish;
+        keep_alive = false;
     }
     if state.config.hook_is_active(hook) {
         let message = state
@@ -104,24 +105,33 @@ pub async fn write_bytes(
             .hooks_format
             .format(&request, &file_info)?;
         let headers = request.headers().clone();
-        tokio::spawn(async move {
+        actix_web::rt::spawn(async move {
             state
                 .notification_manager
                 .send_message(message, hook, &headers)
                 .await
         });
     }
-    Ok(HttpResponse::NoContent()
-        .insert_header(("Upload-Offset", file_info.offset.to_string()))
-        .finish())
+    if keep_alive {
+        Ok(HttpResponse::NoContent()
+            .insert_header(("Upload-Offset", file_info.offset.to_string()))
+            .keep_alive()
+            .finish())
+    } else {
+        Ok(HttpResponse::NoContent()
+            .insert_header(("Upload-Offset", file_info.offset.to_string()))
+            .finish())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{rustus_service, State};
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     /// Success test for writing bytes.
