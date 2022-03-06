@@ -27,6 +27,9 @@ pub struct StorageOptions {
 
     #[structopt(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
     pub dir_structure: String,
+
+    #[structopt(long, parse(from_flag))]
+    pub force_fsync: bool,
 }
 
 #[derive(StructOpt, Debug, Clone)]

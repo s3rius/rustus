@@ -26,6 +26,7 @@ impl AvailableStores {
             Self::FileStorage => Box::new(file_storage::FileStorage::new(
                 config.storage_opts.data_dir.clone(),
                 config.storage_opts.dir_structure.clone(),
+                config.storage_opts.force_fsync,
             )),
         }
     }

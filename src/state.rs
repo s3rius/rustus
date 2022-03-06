@@ -31,6 +31,7 @@ impl State {
             data_storage: Box::new(crate::storages::file_storage::FileStorage::new(
                 config.storage_opts.data_dir.clone(),
                 config.storage_opts.dir_structure.clone(),
+                config.storage_opts.force_fsync,
             )),
             info_storage: Box::new(
                 crate::info_storages::file_info_storage::FileInfoStorage::new(
