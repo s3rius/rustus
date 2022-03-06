@@ -1,6 +1,5 @@
 use crate::{protocol, State};
-use actix_web::web::PayloadConfig;
-use actix_web::{middleware, web};
+use actix_web::{middleware, web, web::PayloadConfig};
 
 pub fn rustus_service(state: web::Data<State>) -> Box<dyn Fn(&mut web::ServiceConfig)> {
     Box::new(move |web_app| {

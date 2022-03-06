@@ -1,10 +1,12 @@
 use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 
-use crate::errors::RustusError;
-use crate::notifiers::Hook;
-use crate::protocol::extensions::Extensions;
-use crate::utils::headers::{check_header, parse_header};
-use crate::{RustusResult, State};
+use crate::{
+    errors::RustusError,
+    notifiers::Hook,
+    protocol::extensions::Extensions,
+    utils::headers::{check_header, parse_header},
+    RustusResult, State,
+};
 
 pub async fn write_bytes(
     request: HttpRequest,
@@ -125,9 +127,11 @@ pub async fn write_bytes(
 #[cfg(test)]
 mod tests {
     use crate::{rustus_service, State};
-    use actix_web::http::StatusCode;
-    use actix_web::test::{call_service, init_service, TestRequest};
-    use actix_web::{web, App};
+    use actix_web::{
+        http::StatusCode,
+        test::{call_service, init_service, TestRequest},
+        web, App,
+    };
 
     #[actix_rt::test]
     /// Success test for writing bytes.

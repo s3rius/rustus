@@ -1,14 +1,12 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rbatis::crud::CRUD;
-use rbatis::crud_table;
-use rbatis::db::DBPoolOptions;
-use rbatis::executor::Executor;
-use rbatis::rbatis::Rbatis;
+use rbatis::{crud::CRUD, crud_table, db::DBPoolOptions, executor::Executor, rbatis::Rbatis};
 
-use crate::errors::{RustusError, RustusResult};
-use crate::info_storages::{FileInfo, InfoStorage};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::{FileInfo, InfoStorage},
+};
 
 #[crud_table]
 struct DbModel {
@@ -84,8 +82,7 @@ impl InfoStorage for DBInfoStorage {
 #[cfg(test)]
 mod tests {
     use super::{DBInfoStorage, DbModel};
-    use crate::info_storages::FileInfo;
-    use crate::InfoStorage;
+    use crate::{info_storages::FileInfo, InfoStorage};
     use rbatis::crud::CRUD;
 
     async fn get_info_storage() -> DBInfoStorage {

@@ -1,7 +1,6 @@
 use std::io::{Error, ErrorKind};
 
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, HttpResponseBuilder, ResponseError};
+use actix_web::{http::StatusCode, HttpResponse, HttpResponseBuilder, ResponseError};
 use log::error;
 
 pub type RustusResult<T> = Result<T, RustusError>;

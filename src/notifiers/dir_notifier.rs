@@ -1,6 +1,8 @@
-use crate::errors::RustusError;
-use crate::notifiers::{Hook, Notifier};
-use crate::RustusResult;
+use crate::{
+    errors::RustusError,
+    notifiers::{Hook, Notifier},
+    RustusResult,
+};
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
 use log::debug;
@@ -53,10 +55,12 @@ mod tests {
     use super::DirNotifier;
     use crate::notifiers::{Hook, Notifier};
     use actix_web::http::header::HeaderMap;
-    use std::fs::File;
-    use std::io::{Read, Write};
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
+    use std::{
+        fs::File,
+        io::{Read, Write},
+    };
     use tempdir::TempDir;
 
     #[actix_rt::test]

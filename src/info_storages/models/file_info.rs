@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use crate::errors::RustusError;
-use crate::RustusResult;
-use chrono::serde::ts_seconds;
-use chrono::{DateTime, Utc};
+use crate::{errors::RustusError, RustusResult};
+use chrono::{serde::ts_seconds, DateTime, Utc};
 use log::error;
 use serde::{Deserialize, Serialize};
 
