@@ -89,7 +89,7 @@ impl Storage for FileStorage {
         }
         let path = String::from(file_info.path.as_ref().unwrap());
         let force_sync = self.force_fsync;
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             // Opening file in w+a mode.
             // It means that we're going to append some
             // bytes to the end of a file.
@@ -121,7 +121,7 @@ impl Storage for FileStorage {
         let info = file_info.clone();
         // New path to file.
         let file_path = self.data_file_path(info.id.as_str())?;
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             // Creating new file.
             OpenOptions::new()
                 .create(true)
@@ -144,7 +144,7 @@ impl Storage for FileStorage {
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
         let info = file_info.clone();
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             let mut file = OpenOptions::new()
                 .write(true)
                 .append(true)
@@ -172,7 +172,7 @@ impl Storage for FileStorage {
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         let info = file_info.clone();
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             // Let's remove the file itself.
             let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
             if !data_path.exists() {
