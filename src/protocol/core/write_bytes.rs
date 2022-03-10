@@ -105,7 +105,7 @@ pub async fn write_bytes(
             .hooks_format
             .format(&request, &file_info)?;
         let headers = request.headers().clone();
-        actix_web::rt::spawn(async move {
+        tokio::task::spawn_local(async move {
             state
                 .notification_manager
                 .send_message(message, hook, &headers)

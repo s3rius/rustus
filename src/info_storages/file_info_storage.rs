@@ -45,7 +45,7 @@ impl InfoStorage for FileInfoStorage {
     async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
         let info = file_info.clone();
         let path = self.info_file_path(info.id.as_str());
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
                 .write(true)
                 .create(create)
@@ -68,7 +68,7 @@ impl InfoStorage for FileInfoStorage {
 
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             if !info_path.exists() {
                 return Err(RustusError::FileNotFound);
             }
@@ -84,7 +84,7 @@ impl InfoStorage for FileInfoStorage {
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         let id = String::from(file_id);
         let info_path = self.info_file_path(id.as_str());
-        actix_web::rt::task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             if !info_path.exists() {
                 return Err(RustusError::FileNotFound);
             }
