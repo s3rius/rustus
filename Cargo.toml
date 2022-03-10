@@ -3,6 +3,19 @@ name = "rustus"
 version = "0.4.7"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
+keywords = [
+    "tus",
+    "server",
+    "actix-web",
+]
+license-file = "LICENSE"
+authors = [
+    "Pavel Kirilin <win10@list.ru>",
+    "Maxim Naumov <overlordin777@gmail.com>",
+]
+homepage = "https://github.com/s3rius/rustus"
+readme = "README.md"
+
 
 [[bin]]
 name = "rustus"
