@@ -8,29 +8,29 @@ description = "TUS protocol implementation written in Rust."
 name = "rustus"
 
 [dependencies]
-async-trait = "0.1.52"
+async-trait = "^0.1.52"
 base64 = "^0.13.0"
-lazy_static = "1.4.0"
+lazy_static = "^1.4.0"
 log = "^0.4.14"
-serde_json = "1"
+serde_json = "^1"
 strfmt = "^0.1.6"
 thiserror = "^1.0"
-url = "2.2.2"
-bytes = "1.1.0"
+url = "^2.2.2"
+bytes = "^1.1.0"
 
 [dependencies.futures]
-version = "0.3.21"
+version = "^0.3.21"
 
 [dependencies.serde]
-version = "1"
+version = "^1"
 features = ["derive"]
 
 [dependencies.openssl]
-version = "0.10.38"
+version = "^0.10.38"
 features = ["vendored"]
 
 [dependencies.actix-files]
-version = "0.6.0-beta.13"
+version = "^0.6.0-beta.13"
 
 [dependencies.actix-web]
 version = "^4.0.0-rc.3"
@@ -46,15 +46,15 @@ version = "^0.99.9"
 
 [dependencies.fern]
 features = ["colored"]
-version = "0.6.0"
+version = "^0.6.0"
 
 [dependencies.lapin]
 optional = true
-version = "^1.9.0"
+version = "^1.0.0"
 
 [dependencies.mobc-lapin]
 optional = true
-version = "0.7.0"
+version = "^0.7.0"
 
 [dependencies.mobc-redis]
 optional = true
@@ -68,7 +68,7 @@ version = "^3.0"
 
 [dependencies.rbson]
 optional = true
-version = "2.0"
+version = "^2.0"
 
 [dependencies.reqwest]
 features = ["json"]
@@ -80,15 +80,15 @@ version = "^0.3"
 
 [dependencies.strum]
 features = ["derive"]
-version = "0.23"
+version = "^0.23"
 
 [dependencies.tokio]
 features = ["time", "process", "fs", "io-std", "io-util", "rt-multi-thread", "bytes", "rt", "macros"]
-version = "1.4.0"
+version = "^1.4.0"
 
 [dependencies.tokio-amqp]
 optional = true
-version = "1.0.0"
+version = "^1.0.0"
 
 [dependencies.uuid]
 features = ["v4"]
