@@ -135,7 +135,7 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 
 /// Main program entrypoint.
 #[cfg_attr(coverage, no_coverage)]
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     let app_conf = RustusConf::from_args();
     // Configuring logging.

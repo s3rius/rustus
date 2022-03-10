@@ -62,7 +62,7 @@ version = "^0.7.0"
 
 [dependencies.rbatis]
 default-features = false
-features = ["runtime-actix-rustls", "all-database"]
+features = ["runtime-tokio-rustls", "all-database"]
 optional = true
 version = "^3.0"
 
@@ -83,7 +83,7 @@ features = ["derive"]
 version = "0.23"
 
 [dependencies.tokio]
-features = ["time", "process", "fs", "io-std", "io-util", "rt-multi-thread", "bytes"]
+features = ["time", "process", "fs", "io-std", "io-util", "rt-multi-thread", "bytes", "rt", "macros"]
 version = "1.4.0"
 
 [dependencies.tokio-amqp]

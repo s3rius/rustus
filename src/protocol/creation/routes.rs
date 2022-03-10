@@ -200,7 +200,7 @@ pub async fn create_file(
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
-        actix_web::rt::spawn(async move {
+        tokio::task::spawn_local(async move {
             state
                 .notification_manager
                 .send_message(message, Hook::PostCreate, &headers)
