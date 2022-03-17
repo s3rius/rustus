@@ -59,6 +59,12 @@ pub enum RustusError {
     StdError(#[from] std::io::Error),
     #[error("Can't spawn task: {0}")]
     TokioSpawnError(#[from] tokio::task::JoinError),
+    #[error("Unknown hashsum algorithm")]
+    UnknownHashAlgorithm,
+    #[error("Wrong checksum")]
+    WrongChecksum,
+    #[error("The header value is incorrect")]
+    WrongHeaderValue,
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
@@ -83,9 +89,12 @@ impl ResponseError for RustusError {
         match self {
             RustusError::FileNotFound => StatusCode::NOT_FOUND,
             RustusError::WrongOffset => StatusCode::CONFLICT,
-            RustusError::FrozenFile | RustusError::SizeAlreadyKnown | RustusError::HookError(_) => {
-                StatusCode::BAD_REQUEST
-            }
+            RustusError::FrozenFile
+            | RustusError::SizeAlreadyKnown
+            | RustusError::HookError(_)
+            | RustusError::UnknownHashAlgorithm
+            | RustusError::WrongHeaderValue => StatusCode::BAD_REQUEST,
+            RustusError::WrongChecksum => StatusCode::EXPECTATION_FAILED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

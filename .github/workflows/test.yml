@@ -80,18 +80,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Install nightly toolchain
-        run: rustup toolchain install nightly --component llvm-tools-preview
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-      - name: Generate code coverage
-        run: cargo llvm-cov --features=all,integration_tests --lcov --output-path lcov.info -- --test-threads 1
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Run tests
+        run: cargo test --features=all,integration_tests -- --test-threads 1
         env:
           TEST_REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}/0
           TEST_DB_URL: postgresql://rustus:rustus@localhost:${{ job.services.pg.ports['5432'] }}/rustus
           TEST_AMQP_URL: amqp://guest:guest@localhost:${{ job.services.rabbit.ports['5672'] }}
-      - name: Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: lcov.info

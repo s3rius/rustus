@@ -18,6 +18,8 @@ pub enum Extensions {
     Concatenation,
     #[display(fmt = "getting")]
     Getting,
+    #[display(fmt = "checksum")]
+    Checksum,
 }
 
 from_str!(Extensions, "extension");
