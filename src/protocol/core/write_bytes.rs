@@ -1,5 +1,7 @@
 use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 
+#[cfg(feature = "hashers")]
+use crate::utils::hashes::verify_chunk_checksum;
 use crate::{
     errors::RustusError,
     notifiers::Hook,
@@ -27,6 +29,20 @@ pub async fn write_bytes(
 
     if request.match_info().get("file_id").is_none() {
         return Err(RustusError::FileNotFound);
+    }
+
+    #[cfg(feature = "hashers")]
+    if state.config.tus_extensions.contains(&Extensions::Checksum) {
+        if let Some(header) = request.headers().get("Upload-Checksum").cloned() {
+            let cloned_bytes = bytes.clone();
+            if !tokio::task::spawn_blocking(move || {
+                verify_chunk_checksum(&header, cloned_bytes.as_ref())
+            })
+            .await??
+            {
+                return Err(RustusError::WrongChecksum);
+            }
+        }
     }
 
     // New upload length.
@@ -151,6 +167,7 @@ mod tests {
         let request = TestRequest::patch()
             .uri(state.config.file_url(file.id.as_str()).as_str())
             .insert_header(("Content-Type", "application/offset+octet-stream"))
+            .insert_header(("Upload-Checksum", "md5 xIwpFX4rNYzBRAJ/Pi2MtA=="))
             .insert_header(("Upload-Offset", file.offset))
             .set_payload(test_data)
             .to_request();
@@ -417,5 +434,28 @@ mod tests {
             .to_request();
         let resp = call_service(&mut rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+
+    #[actix_rt::test]
+    /// Tests checksum validation.
+    async fn wrong_checksum() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(
+            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
+        )
+        .await;
+        let mut file = state.create_test_file().await;
+        file.offset = 0;
+        file.length = Some(10);
+        state.info_storage.set_info(&file, false).await.unwrap();
+        let request = TestRequest::patch()
+            .uri(state.config.file_url(file.id.as_str()).as_str())
+            .insert_header(("Upload-Offset", "0"))
+            .insert_header(("Upload-Checksum", "md5 K9opmNmw7hl9oUKgRH9nJQ=="))
+            .insert_header(("Content-Type", "application/offset+octet-stream"))
+            .set_payload("memes")
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::EXPECTATION_FAILED);
     }
 }
