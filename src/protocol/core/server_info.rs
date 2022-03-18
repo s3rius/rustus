@@ -1,4 +1,6 @@
-use actix_web::{web, HttpResponse};
+#[cfg(feature = "hashers")]
+use crate::protocol::extensions::Extensions;
+use actix_web::{http::StatusCode, web, HttpResponse, HttpResponseBuilder};
 
 use crate::State;
 
@@ -12,9 +14,13 @@ pub async fn server_info(state: web::Data<State>) -> HttpResponse {
         .map(|x| x.to_string())
         .collect::<Vec<String>>()
         .join(",");
-    HttpResponse::Ok()
-        .insert_header(("Tus-Extension", ext_str.as_str()))
-        .finish()
+    let mut response_builder = HttpResponseBuilder::new(StatusCode::OK);
+    response_builder.insert_header(("Tus-Extension", ext_str.as_str()));
+    #[cfg(feature = "hashers")]
+    if state.config.tus_extensions.contains(&Extensions::Checksum) {
+        response_builder.insert_header(("Tus-Checksum-Algorithm", "md5,sha1,sha256,sha512"));
+    }
+    response_builder.finish()
 }
 
 #[cfg(test)]
