@@ -1,0 +1,29 @@
+apiVersion: v1
+entries:
+  rustus:
+  - apiVersion: v2
+    appVersion: 0.4.9
+    created: "2022-03-26T15:18:53.657484657Z"
+    dependencies:
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: ^16.0
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: ^11.0
+    - condition: mysql.enabled
+      name: mysql
+      repository: https://charts.bitnami.com/bitnami
+      version: ^8.0
+    description: A Helm chart for rustus
+    digest: 1ed901516e098689454a2faf8ac113a4a610ad27648aeebb745061f34fe4e230
+    home: https://github.com/s3rius/rustus/
+    icon: https://raw.githubusercontent.com/s3rius/rustus/master/imgs/logo.svg
+    name: rustus
+    type: application
+    urls:
+    - https://s3rius.github.io/rustus/helm_releases/rustus-0.1.0.tgz
+    version: 0.1.0
+generated: "2022-03-26T15:18:53.641152948Z"
