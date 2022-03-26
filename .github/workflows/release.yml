@@ -126,25 +126,19 @@ jobs:
           file: deploy/Dockerfile
           tags: s3rius/rustus:latest,s3rius/rustus:${{env.APP_VERSION}}
 
-  release_helm:
+  upload_helm:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-      - name: Install Helm
-        uses: azure/setup-helm@v1
+      - uses: actions/checkout@v2
+      - name: Export version
+        run: echo "APP_VERSION=$(head -n 5 Cargo.toml | grep version | cut -d '"' -f2)" >> $GITHUB_ENV
+      - name: Publish Helm charts
+        uses: stefanprodan/helm-gh-pages@master
         with:
-          version: v3.7.1
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.3.0
-        with:
-          charts_dir: ./deploy
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          charts_dir: deploy
+          target_dir: helm_releases
+          app_version: ${{env.APP_VERSION}}
 
   publish_crate:
     runs-on: ubuntu-latest
