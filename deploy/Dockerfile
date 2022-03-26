@@ -14,6 +14,6 @@ COPY . .
 RUN cargo build --release --bin rustus --features=all
 
 FROM debian:bullseye-20211201-slim AS runtime
-WORKDIR app
+WORKDIR /app
 COPY --from=builder /app/target/release/rustus /usr/local/bin/
 ENTRYPOINT ["/usr/local/bin/rustus"]
