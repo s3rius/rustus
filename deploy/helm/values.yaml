@@ -1,0 +1,180 @@
+# Default values for rustus.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: s3rius/rustus
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+  command: []
+  # command:
+  #   - rustus
+
+env:
+  RUSTUS_PORT: 1081
+  RUSTUS_DATA_DIR: /data
+  RUSTUS_INFO_DIR: /data
+  RUSTUS_DIR_STRUCTURE: "{year}/{month}/{day}"
+
+#  For redis info storage
+#  RUSTUS_INFO_STORAGE: redis-info-storage
+#  RUSTUS_INFO_DB_DSN: redis://:pass@rustus-redis-master/0
+
+#  For postgresql info storage
+#  RUSTUS_INFO_STORAGE: db-info-storage
+#  RUSTUS_INFO_DB_DSN: postgresql://rustus:rustus@rustus-postgresql/rustus
+
+#  For MySQL info storage
+#  RUSTUS_INFO_STORAGE: db-info-storage
+#  RUSTUS_INFO_DB_DSN: mysql://rustus:rustus@rustus-mysql/rustus
+
+persistence:
+  enabled: false
+
+  # Existing pvc to use
+  existingClaim: ""
+
+  # Options for creating pvc
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  storageClass: local-path
+  mountOptions: {}
+  selector: {}
+  annotations: {}
+  dataSource: {}
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: rustus.localhost
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Configuration for redis sub-chart
+redis:
+  # After enabling this parameter
+  # you should set info-storage to redis-info-storage
+  # and provide valid connection string.
+  # You can do it using following env variables:
+  #  RUSTUS_INFO_STORAGE: redis-info-storage
+  #  RUSTUS_INFO_DB_DSN: redis://:pass@rustus-redis-master/0
+
+  enabled: false
+
+  global:
+    redis:
+      # ! Override values for production use
+      password: "pass"
+
+  master:
+    persistence:
+      # ! Override values for production use
+      enabled: false
+
+    service:
+      type: ClusterIP
+
+# Configuration for postgresql sub-chart
+postgresql:
+  # After enabling this parameter
+  # you should set info-storage to db-info-storage
+  # and provide valid connection string.
+  # You can do it using following env variables:
+  #  RUSTUS_INFO_STORAGE: db-info-storage
+  #  RUSTUS_INFO_DB_DSN: postgresql://rustus:rustus@rustus-postgresql/rustus
+
+  enabled: false
+
+  global:
+    postgresql:
+      auth:
+        # ! Override values for production use
+        username: rustus
+        password: rustus
+        database: rustus
+
+mysql:
+  # After enabling this parameter
+  # you should set info-storage to db-info-storage
+  # and provide valid connection string.
+  # You can do it using following env variables:
+  #  RUSTUS_INFO_STORAGE: db-info-storage
+  #  RUSTUS_INFO_DB_DSN: mysql://rustus:rustus@rustus-mysql/rustus
+
+  enabled: false
+
+  auth:
+    # ! Override values for production use
+    database: rustus
+    username: rustus
+    password: rustus

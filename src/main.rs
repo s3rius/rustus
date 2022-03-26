@@ -93,6 +93,7 @@ pub fn create_server(state: State) -> Result<Server, std::io::Error> {
                 }
                 srv.call(req)
             })
+            .route("/health", web::get().to(routes::health_check))
             // Default response for unknown requests.
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))

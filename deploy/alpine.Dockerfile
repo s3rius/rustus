@@ -7,5 +7,6 @@ ADD "https://github.com/s3rius/rustus/releases/download/${app_version}/rustus-${
 RUN tar xvf *.tar.gz
 RUN rm *.tar.gz
 RUN mv rustus /bin
+WORKDIR /app
 
 ENTRYPOINT ["/bin/rustus"]
