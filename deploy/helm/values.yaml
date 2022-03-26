@@ -9,6 +9,9 @@ image:
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+  command: []
+  # command:
+  #   - rustus
 
 env:
   RUSTUS_PORT: 1081
