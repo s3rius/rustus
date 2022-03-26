@@ -1457,6 +1457,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "md-5"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "658646b21e0b72f7866c7038ab086d3d5e1cd6271f060fd37defb241949d0582"
+dependencies = [
+ "digest 0.10.3",
+]
+
+[[package]]
 name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2192,7 +2201,7 @@ dependencies = [
  "itoa 0.4.8",
  "percent-encoding",
  "pin-project-lite",
- "sha1",
+ "sha1 0.6.1",
  "tokio",
  "tokio-util 0.6.9",
  "url",
@@ -2375,7 +2384,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
  "actix-files",
  "actix-rt",
@@ -2385,12 +2394,14 @@ dependencies = [
  "bytes",
  "chrono",
  "derive_more",
+ "digest 0.10.3",
  "fern",
  "futures",
  "httptest",
  "lapin",
  "lazy_static",
  "log",
+ "md-5 0.10.1",
  "mobc-lapin",
  "mobc-redis",
  "openssl",
@@ -2399,6 +2410,8 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "sha1 0.10.1",
+ "sha2 0.10.2",
  "strfmt",
  "structopt",
  "strum",
@@ -2591,6 +2604,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c77f4e7f65455545c2153c1253d25056825e77ee2533f0e41deb65a93a34852f"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.3",
+]
+
+[[package]]
 name = "sha1_smol"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2607,6 +2631,17 @@ dependencies = [
  "cpufeatures",
  "digest 0.9.0",
  "opaque-debug 0.3.0",
+]
+
+[[package]]
+name = "sha2"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55deaec60f81eefe3cce0dc50bda92d6d8e88f2a27df7c5033b42afeb1ed2676"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.3",
 ]
 
 [[package]]
@@ -2711,7 +2746,7 @@ dependencies = [
  "libc",
  "libsqlite3-sys",
  "log",
- "md-5",
+ "md-5 0.9.1",
  "memchr",
  "num-bigint",
  "once_cell",
@@ -2725,7 +2760,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha-1 0.9.8",
- "sha2",
+ "sha2 0.9.9",
  "smallvec",
  "sqlformat",
  "sqlx-rt",
@@ -2799,7 +2834,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "sha1",
+ "sha1 0.6.1",
  "syn",
 ]
 

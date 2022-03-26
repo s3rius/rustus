@@ -144,8 +144,9 @@ impl Storage for FileStorage {
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
         let info = file_info.clone();
+        let force_fsync = self.force_fsync;
         tokio::task::spawn_blocking(move || {
-            let mut file = OpenOptions::new()
+            let file = OpenOptions::new()
                 .write(true)
                 .append(true)
                 .create(true)
@@ -154,6 +155,7 @@ impl Storage for FileStorage {
                     error!("{:?}", err);
                     RustusError::UnableToWrite(err.to_string())
                 })?;
+            let mut writer = BufWriter::new(file);
             for part in parts_info {
                 if part.path.is_none() {
                     return Err(RustusError::FileNotFound);
@@ -162,9 +164,12 @@ impl Storage for FileStorage {
                     .read(true)
                     .open(part.path.as_ref().unwrap())?;
                 let mut reader = BufReader::new(part_file);
-                copy(&mut reader, &mut file)?;
+                copy(&mut reader, &mut writer)?;
             }
-            file.sync_data()?;
+            writer.flush()?;
+            if force_fsync {
+                writer.get_ref().sync_data()?;
+            }
             Ok(())
         })
         .await?

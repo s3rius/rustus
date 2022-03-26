@@ -1,6 +1,6 @@
 [package]
 name = "rustus"
-version = "0.4.7"
+version = "0.4.8"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 keywords = [
@@ -30,6 +30,24 @@ strfmt = "^0.1.6"
 thiserror = "^1.0"
 url = "^2.2.2"
 bytes = "^1.1.0"
+
+[dependencies.digest]
+version = "0.10.3"
+optional = true
+
+[dependencies.sha1]
+version = "^0.10.1"
+features = ["compress"]
+optional = true
+
+[dependencies.sha2]
+version = "^0.10.1"
+features = ["compress"]
+optional = true
+
+[dependencies.md-5]
+version = "^0.10.1"
+optional = true
 
 [dependencies.futures]
 version = "^0.3.21"
@@ -108,12 +126,13 @@ features = ["v4"]
 version = "^1.0.0-alpha.1"
 
 [features]
-all = ["redis_info_storage", "db_info_storage", "http_notifier", "amqp_notifier"]
+all = ["redis_info_storage", "db_info_storage", "http_notifier", "amqp_notifier", "hashers"]
 amqp_notifier = ["lapin", "tokio-amqp", "mobc-lapin"]
 db_info_storage = ["rbatis", "rbson"]
 default = []
 http_notifier = ["reqwest"]
 redis_info_storage = ["mobc-redis"]
+hashers = ["md-5", "sha1", "sha2", "digest"]
 
 ### For testing
 test_redis = []
