@@ -1,25 +1,22 @@
-<div align="center">
-    <img src="./imgs/logo_horizontal.svg" alt="logo" width="500">
+---
+title: "Welcome page"
+description: Rustus docs
+---
+
+<div align="left">
+    <img src="https://raw.githubusercontent.com/s3rius/rustus/master/imgs/logo_horizontal.svg" alt="logo" width="500">
     <div>
         <p></p>
         <img alt="Docker Image Size (latest by date)" src="https://img.shields.io/docker/image-size/s3rius/rustus?sort=date&style=for-the-badge">
         <img alt="Docker Image Version (latest semver)" src="https://img.shields.io/docker/v/s3rius/rustus?style=for-the-badge">
         <img alt="GitHub" src="https://img.shields.io/github/license/s3rius/rustus?style=for-the-badge">
     </div>
-    <p><a href="https://tus.io/">TUS</a> protocol implementation written in Rust.</p>
 </div>
 
-## Features
+Rustus is a [TUS](https://tus.io) protocol implementation that helps you handle file uploads.
 
-This implementation has several features to make usage as simple as possible.
+This project has many features that makes it easy to integrate in your service.
 
-* Rustus is robust, since it uses asynchronous Rust;
-* It can store information about files in databases;
-* You can specify directory structure to organize your uploads;
-* It has a lot of hooks options, and hooks can be combined.
-* Highly configurable;
-
-Please check out [docs](https://s3rius.github.io/rustus/) for more information about configuration and deploy.
 
 ## Installation
 
