@@ -6,6 +6,8 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="How to configure Rusts">
+      
       
       
         <link rel="canonical" href="https://s3rius.github.io/rustus/configuration/">
@@ -65,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#configuring-data-storage" class="md-skip">
+        <a href="#configuring-server" class="md-skip">
           Skip to content
         </a>
       
@@ -275,6 +277,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#configuring-server" class="md-nav__link">
+    Configuring server
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-data-storage" class="md-nav__link">
     Configuring data storage
   </a>
@@ -286,12 +295,32 @@
     Configuring info storage
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-hooks-storage" class="md-nav__link">
-    Configuring hooks storage
+    <nav class="md-nav" aria-label="Configuring info storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-info-storage" class="md-nav__link">
+    File info storage
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-info-storage" class="md-nav__link">
+    Redis info storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db-info-storage" class="md-nav__link">
+    DB info storage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -334,7 +363,7 @@
   
     <li class="md-nav__item">
       <a href="../hooks/" class="md-nav__link">
-        Hooks
+        Setting up hooks
       </a>
     </li>
   
@@ -365,6 +394,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#configuring-server" class="md-nav__link">
+    Configuring server
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuring-data-storage" class="md-nav__link">
     Configuring data storage
   </a>
@@ -376,12 +412,32 @@
     Configuring info storage
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuring-hooks-storage" class="md-nav__link">
-    Configuring hooks storage
+    <nav class="md-nav" aria-label="Configuring info storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-info-storage" class="md-nav__link">
+    File info storage
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#redis-info-storage" class="md-nav__link">
+    Redis info storage
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db-info-storage" class="md-nav__link">
+    DB info storage
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -413,10 +469,212 @@
 <p class="admonition-title">Info</p>
 <p>Some options can be passed only through as CLI parameters</p>
 </div>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Information about hooks you can find on <a href="../hooks">Hooks page</a>.</p>
+</div>
+<h2 id="configuring-server">Configuring server</h2>
+<p>We use actix to run server.
+You can configure on wich <code>host</code> and <code>port</code> rustus is listenging.
+Also you can configure number of actix <code>workers</code> that handle connections.</p>
+<p><code>--max-body-size</code> is the max number of bytes that users can send in request body.</p>
+<p><code>--url</code> is a base URL for all tus requests.</p>
+<p><code>--workers</code> by default is euqal to number of physical CPU cores. Edit it carefully.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">CLI</label><label for="__tabbed_1_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rustus --host <span class="s2">&quot;0.0.0.0&quot;</span> <span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    --port <span class="m">1081</span> <span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    --workers <span class="m">8</span> <span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    --max-body-size <span class="m">1000000</span> <span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    --url <span class="s2">&quot;/files&quot;</span> <span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    --log-level <span class="s2">&quot;INFO&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_HOST</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_PORT</span><span class="o">=</span><span class="s2">&quot;1081&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_WORKERS</span><span class="o">=</span><span class="s2">&quot;8&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">export</span> <span class="nv">RUSTUS_MAX_BODY_SIZE</span><span class="o">=</span><span class="s2">&quot;1000000&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">export</span> <span class="nv">RUSTUS_URL</span><span class="o">=</span><span class="s2">&quot;/files&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nb">export</span> <span class="nv">RUSTUS_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="configuring-data-storage">Configuring data storage</h2>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Currently only file storage is available,
+so if you pass to <code>--storage</code> parameter other than <code>file-storage</code> you will get an error.</p>
+<p>Also you <strong>can not</strong> pass <code>--force-fsync</code> through environment variables.</p>
+</div>
+<p><code>--storage</code> is a type of data storage to be used.</p>
+<p><code>--data-dir</code> is a path to the directory where all files are stored.</p>
+<p><code>--dir-structure</code> is a pattern of a directory structure inside data dir.
+You can use variables within the pattern.</p>
+<p>Available variables:</p>
+<ul>
+<li><code>{year}</code> - current year;</li>
+<li><code>{month}</code> - current month number from 1 to 12;</li>
+<li><code>{day}</code> - current day number from 1 to 31;</li>
+<li><code>{hour}</code> - hour number from 0 to 23;</li>
+<li><code>{minute}</code> - minute number from 0 to 59;</li>
+<li><code>{env[ENV_NAME]}</code> - environment variable where <code>ENV_NAME</code> is name of your variable.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All environment variables are saved in memory during rustus startup.
+So you cannot change variable dynamically. Even if you change env used in
+structure pattern it won't change.</p>
+</div>
+<p>For example if you use <code>{env[HOSTNAME]}/{year}/{month}/{day}</code> as your dir-structure, rustus stores files like:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ tree data
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>data
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── rtus-68cb5b8746-5mgw9
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    └── <span class="m">2022</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        └── <span class="m">1</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>            └── <span class="m">8</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>                ├── 0bd911d4054d41c6a3ad54be67ee3e66
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>                └── 5bc9c62384494c439e2a064b82a39cc6
+</code></pre></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">CLI</label><label for="__tabbed_2_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>rustus --force-fsync <span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    --storage <span class="s2">&quot;file-storage&quot;</span> <span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    --data-dir <span class="s2">&quot;./data/&quot;</span> <span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    --dir-structure <span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-storage&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">export</span> <span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>rustus --force-fsync
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="configuring-info-storage">Configuring info storage</h2>
-<h2 id="configuring-hooks-storage">Configuring hooks storage</h2>
+<p>Info storages are used to store information
+about file uploads. These storages <strong>must</strong> be persistent,
+because every time chunk is uploaded rustus updates information
+about upload. And when someone wants to download file, information
+about it requested from storage to get actual path of an upload.</p>
+<p>Available info storages:</p>
+<ul>
+<li><code>file-info-storage</code> - stores information in files on disk;</li>
+<li><code>redis-info-storage</code> - information is stored in redis;</li>
+<li><code>db-info-storage</code> - information is stored in database;</li>
+</ul>
+<h3 id="file-info-storage">File info storage</h3>
+<p>file info storage stores information in files on disk.
+It's default info storage. Every download has it's own associated file.
+All .info files stored in flat structure so it's the least preferable way of
+storing information about uploads. But if you don't plan to have many uploads, it may fit well.</p>
+<p><code>--info-dir</code> - directory where all .info file will be stored (default is <code>./data</code>).</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">CLI</label><label for="__tabbed_3_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>rustus --force-fsync <span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    --storage <span class="s2">&quot;file-info-storage&quot;</span> <span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    --info-dir <span class="s2">&quot;./data&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-info-storage&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DIR</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="redis-info-storage">Redis info storage</h3>
+<p>Redis db is a good way to store information.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you're using redis as a cluster
+you must provide connection string for master redis server.
+Since rustus need to have latest information and it writes a lot.</p>
+</div>
+<p><code>--info-db-dsn</code> - connection string for your redis database.
+It's required if redis-info-storage is chosen.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">CLI</label><label for="__tabbed_4_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>rustus --force-fsync <span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    --storage <span class="s2">&quot;redis-info-storage&quot;</span> <span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    --info-db-dsn <span class="s2">&quot;redis://localhost/0&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;redis://localhost&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="db-info-storage">DB info storage</h3>
+<p>Rustus can store information about upload in database.</p>
+<p>It's a good and reliable option. But rustus can't work
+with replicas since it requires most recent information
+about uploads.</p>
+<p>You can use <code>postgresql</code>, <code>mysql</code> or even <code>sqlite</code> schemas to
+connect to database.</p>
+<p><code>--info-db-dsn</code> - connection string for your database.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">CLI</label><label for="__tabbed_5_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>rustus --force-fsync <span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    --storage <span class="s2">&quot;db-info-storage&quot;</span> <span class="se">\</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    --info-db-dsn <span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
 <h2 id="configuring-tus">Configuring TUS</h2>
+<p>Since tus protocol offers extensibility you can turn off some protocol extensions.</p>
+<p>Available extensions:</p>
+<ul>
+<li><code>getting</code> - rustus specific extension that helps you download uploaded files with get request;</li>
+<li><code>creation</code> - helps you to create files (It's like a core feature you better have this enabled);</li>
+<li><code>termination</code> - allows you to delete uploads with DELETE request;</li>
+<li><code>creation-with-upload</code> - allows you to write first bytes of a file while creating;</li>
+<li><code>creation-defer-length</code> - allows you to create file without specifying file length;</li>
+<li><code>concatenation</code> - allows you to concatenate finished partial uploads.</li>
+<li><code>checksum</code> - allows you to verify checksum of every batch.</li>
+</ul>
+<p>You can read more about extensions on <a href="https://tus.io/protocols/resumable-upload.html#protocol-extensions">official web-site</a>.</p>
+<p><code>--tus-extensions</code> - a list of enabled extensions.</p>
+<p>By default all extensions are enabled.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">CLI</label><label for="__tabbed_6_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>rustus --tus-extensions <span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_TUS_EXTENSIONS</span><span class="o">=</span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
 
               
             </article>
