@@ -6,6 +6,8 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="How to deploy rustus">
+      
       
       
         <link rel="canonical" href="https://s3rius.github.io/rustus/deploy/">
@@ -294,22 +296,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#f" class="md-nav__link">
-    F
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#binary" class="md-nav__link">
-    Binary
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    Docker
+  <a href="#docker-compose" class="md-nav__link">
+    Docker compose
   </a>
   
 </li>
@@ -325,6 +313,33 @@
   <a href="#helm" class="md-nav__link">
     Helm
   </a>
+  
+    <nav class="md-nav" aria-label="Helm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persistence" class="md-nav__link">
+    Persistence
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subcharts" class="md-nav__link">
+    Subcharts
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -378,22 +393,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#f" class="md-nav__link">
-    F
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#binary" class="md-nav__link">
-    Binary
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#docker" class="md-nav__link">
-    Docker
+  <a href="#docker-compose" class="md-nav__link">
+    Docker compose
   </a>
   
 </li>
@@ -409,6 +410,33 @@
   <a href="#helm" class="md-nav__link">
     Helm
   </a>
+  
+    <nav class="md-nav" aria-label="Helm">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persistence" class="md-nav__link">
+    Persistence
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subcharts" class="md-nav__link">
+    Subcharts
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -427,12 +455,123 @@
 
 
 <h1 id="deployment">Deployment</h1>
-<p>Deploying application is lways a challenge. Rustus was made to</p>
-<h2 id="f">F</h2>
-<h2 id="binary">Binary</h2>
-<h2 id="docker">Docker</h2>
+<p>Deploying an application is always a challenge. Rustus was made to make deployment as easy as possible.
+Since this application works with files so if you want to scale number of rustus instances you
+have to somehow make different rustus instances to work with the same data or info directory.</p>
+<h2 id="docker-compose">Docker compose</h2>
+<div class="highlight"><span class="filename">docker-compose.yml</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># This is super simple configuration</span><span class="w"></span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.7&quot;</span><span class="w"></span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">services</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">rustus</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3rius/rustus</span><span class="w"></span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="c1"># Volume mouted to default data directory</span><span class="w"></span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="c1"># So it&#39;s available across multiple containers.</span><span class="w"></span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rustus_data_volume:/app/data</span><span class="w"></span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="nt">rustus_data_volume</span><span class="p">:</span><span class="w"></span>
+</code></pre></div>
+<p>After running <code>docker compose up</code> you will see rustus startup logs.</p>
+<p>If you want to deploy multiple rustus instances you can simply
+use config as this one:</p>
+<div class="highlight"><span class="filename">docker-compose.yml</span><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.7&quot;</span><span class="w"></span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">services</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">proxy</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jwilder/nginx-proxy:alpine</span><span class="w"></span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span><span class="w"></span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="c1"># Actual proxy ports.</span><span class="w"></span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080:80</span><span class="w"></span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="c1"># This thing helps to locate containers</span><span class="w"></span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="c1"># within this composition to generate nginx config.</span><span class="w"></span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/tmp/docker.sock:ro</span><span class="w"></span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="nt">rustus</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">s3rius/rustus</span><span class="w"></span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="c1"># Ports definition</span><span class="w"></span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="c1"># To generate correct nginx config.</span><span class="w"></span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1081</span><span class="w"></span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="c1"># Volume mouted to default data directory</span><span class="w"></span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="c1"># So it&#39;s available across multiple containers.</span><span class="w"></span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rustus_data_volume:/app/data</span><span class="w"></span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">        </span><span class="c1"># Idk why but without this variable</span><span class="w"></span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="c1"># load balancing with jwilder/nginx-proxy doesn&#39;t work.</span><span class="w"></span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">        </span><span class="nt">VIRTUAL_HOST</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span><span class="w"></span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="nt">volumes</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">  </span><span class="nt">rustus_data_volume</span><span class="p">:</span><span class="w"> </span><span class="c1"># This is named volume</span><span class="w"></span>
+</code></pre></div>
+<p>The main idea is that traffic that comes into nginx-proxy
+is routed in one of multiple rustus containers.
+Here I used <code>jwilder/nginx-proxy</code> but you can use other
+reverse-proxies such as raw <code>nginx proxy</code> or <code>traefik</code>.</p>
+<p>Now you can run multiple rustus instnaces like this.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker compose up --scale <span class="nv">rustus</span><span class="o">=</span><span class="m">3</span>
+</code></pre></div>
+<p>After that you can upload files to <code>http://localhost:8080/files</code></p>
 <h2 id="kubernetes">Kubernetes</h2>
+<p>Configuration for kubernetes is almost the same as docker.
+But the most preferable way is an official helm chart.</p>
+<p>Load balancing is done by kubernetes so you just have to
+create volume to mount data and info directories.</p>
 <h2 id="helm">Helm</h2>
+<p>You can install rustus by running this set of commands:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>helm repo add <span class="s2">&quot;rustus&quot;</span> <span class="s2">&quot;https://s3rius.github.io/rustus/helm_releases&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>helm repo update
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>helm repo install <span class="s2">&quot;rustus/rustus&quot;</span>
+</code></pre></div></p>
+<h3 id="configuration">Configuration</h3>
+<p>But of course it can be configured.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># You can download basic configuration by running</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>helm show values <span class="s2">&quot;rustus/rustus&quot;</span> &gt; values.yml
+</code></pre></div>
+<p>By editing values.yml you can configure many different options.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>For production use you must provide and mount PersistentVolumeClaim
+in order to scale rustus.</p>
+<p>This helm chart has only one replica by default.</p>
+</div>
+<h3 id="persistence">Persistence</h3>
+<p>You can add pvc mount by editing <code>persistence</code> section.
+The most preferable way is to create <code>PersistentVolume</code> and <code>PersistentVolumeClaim</code>
+before installing this chart.</p>
+<p>After you created claim you can apply this values file to mount your claim into rustus.
+<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">persistence</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">existingClaim</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rustus-pvc&quot;</span><span class="w"></span>
+</code></pre></div></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Currently there's no ability to create multiple mounts
+and if you use file info storage you must specify the same direcotry
+as you specified for data storage.</p>
+<p>But it would be better to use other type of info-storage.</p>
+</div>
+<h3 id="subcharts">Subcharts</h3>
+<p>For example if you want to use redis as your info storage.</p>
+<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">env</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_STORAGE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis-info-storage</span><span class="w"></span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_DB_DSN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://:pass@rustus-redis-master/0</span><span class="w"></span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nt">redis</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+</code></pre></div>
+<p><code>redis</code>, <code>postgersql</code> and <code>mysql</code> are subcharts.</p>
+<p>You can find information about configuration these subcharts here:</p>
+<ul>
+<li><a href="https://github.com/bitnami/charts/tree/master/bitnami/redis">Repo</a> for redis;</li>
+<li><a href="https://github.com/bitnami/charts/tree/master/bitnami/mysql">Repo</a> for mysql;</li>
+<li><a href="https://github.com/bitnami/charts/tree/master/bitnami/postgresql">Repo</a> for postgresql.</li>
+</ul>
+<p>In production you may ignore these subcharts to deploy your own redis or mysql or postgresql.</p>
 
               
             </article>
