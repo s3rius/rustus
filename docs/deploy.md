@@ -6,8 +6,8 @@ description: "How to deploy rustus"
 # Deployment
 
 Deploying an application is always a challenge. Rustus was made to make deployment as easy as possible.
-Since this application works with files so if you want to scale number of rustus instances you
-have to somehow make different rustus instances to work with the same data or info directory.
+Since Rustus works with files you have to be careful while scaling it. All rustus instances
+must have access to the same data and info storages.
 
 ## Docker compose
 
@@ -69,7 +69,7 @@ volumes:
 The main idea is that traffic that comes into nginx-proxy
 is routed in one of multiple rustus containers.
 Here I used `jwilder/nginx-proxy` but you can use other
-reverse-proxies such as raw `nginx proxy` or `traefik`.
+reverse-proxies such as [Nginx proxy](https://www.nginx.com/), [Traefik](https://traefik.io/) or [Envoy proxy](https://www.envoyproxy.io/).
 
 Now you can run multiple rustus instnaces like this.
 
@@ -81,11 +81,11 @@ After that you can upload files to `http://localhost:8080/files`
 
 ## Kubernetes
 
-Configuration for kubernetes is almost the same as docker.
+Configuration for Kubernetes is almost the same as for Docker.
 But the most preferable way is an official helm chart.
 
-Load balancing is done by kubernetes so you just have to
-create volume to mount data and info directories.
+Load balancing is done by Kubernetes, so you just have to
+create a volume to mount data and info directories.
 
 ## Helm
 
@@ -93,18 +93,22 @@ You can install rustus by running this set of commands:
 ``` bash
 helm repo add "rustus" "https://s3rius.github.io/rustus/helm_releases"
 helm repo update
-helm repo install "rustus/rustus"
+helm install "rustus" "rustus/rustus"
 ```
 
 ### Configuration
-But of course it can be configured.
+
+Since default deplyment may not fit you.
+You can adjust it to satisfy your needs.
+You can do it easily with helm.
+
+
+At first you need to save default values on disk.
 
 ``` bash
 # You can download basic configuration by running
 helm show values "rustus/rustus" > values.yml
 ```
-
-By editing values.yml you can configure many different options.
 
 !!! warning
 
@@ -113,9 +117,24 @@ By editing values.yml you can configure many different options.
 
     This helm chart has only one replica by default.
 
+You can read more about configuration below.
+
+After you done editing `values.yml`, you can apply the configuration like this:
+
+``` bash
+helm upgrade \
+--install \ # Install chart if it's not installed
+--namespace rustus \ # k8s namespace
+--create-namespace \ # Creates namespace if it doesn't exist
+--atomic \ # Ensures that everything is deployed correctly
+--values "values.yml" \ # Link to values.yml file
+"rustus" \ # name of a release
+"rustus/rustus" # Name of the chart
+```
+
 ### Persistence
 
-You can add pvc mount by editing `persistence` section.
+You can add PVC mount by editing `persistence` section.
 The most preferable way is to create `PersistentVolume` and `PersistentVolumeClaim`
 before installing this chart.
 
@@ -156,16 +175,3 @@ You can find information about configuration these subcharts here:
 * [Repo](https://github.com/bitnami/charts/tree/master/bitnami/postgresql) for postgresql.
 
 In production you may ignore these subcharts to deploy your own redis or mysql or postgresql.
-
-After you done editing `values.yml` you can apply the configuration like this:
-
-``` bash
-helm upgrade \
---install \ # Install chart if it's not installed
---namespace rustus \ # k8s namespace
---create-namespace \ # Creates namespace if it doesn't exist
---atomic \ # Ensures that everything is deployed correctly
---values "values.yml" \ # Link to values.yml file
-"rustus" \ # name of a release
-"rustus/rustus" # Name of the chart
-```
