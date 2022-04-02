@@ -9,6 +9,11 @@ Deploying an application is always a challenge. Rustus was made to make deployme
 Since Rustus works with files you have to be careful while scaling it. All rustus instances
 must have access to the same data and info storages.
 
+!!! info
+
+    If you want to track you rustus instances with **prometheus** you can
+    always get metrics at `/metrics` endpoint.
+
 ## Docker compose
 
 ``` yaml title="docker-compose.yml"

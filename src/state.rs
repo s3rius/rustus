@@ -25,7 +25,7 @@ impl State {
     }
 
     #[cfg(test)]
-    pub async fn from_config(config: RustusConf) -> Self {
+    pub async fn from_config_test(config: RustusConf) -> Self {
         Self {
             config: config.clone(),
             data_storage: Box::new(crate::storages::file_storage::FileStorage::new(
@@ -56,13 +56,13 @@ impl State {
             ]
             .into_iter(),
         );
-        Self::from_config(config).await
+        Self::from_config_test(config).await
     }
 
     #[cfg(test)]
     pub async fn test_clone(&self) -> Self {
         let config = self.config.clone();
-        Self::from_config(config).await
+        Self::from_config_test(config).await
     }
 
     #[cfg(test)]
