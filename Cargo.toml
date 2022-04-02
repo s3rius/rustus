@@ -113,7 +113,7 @@ version = "^0.3"
 
 [dependencies.strum]
 features = ["derive"]
-version = "^0.23"
+version = "^0.24"
 
 [dependencies.tokio]
 features = ["time", "process", "fs", "io-std", "io-util", "rt-multi-thread", "bytes", "rt", "macros"]
