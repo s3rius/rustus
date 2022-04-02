@@ -456,8 +456,13 @@
 
 <h1 id="deployment">Deployment</h1>
 <p>Deploying an application is always a challenge. Rustus was made to make deployment as easy as possible.
-Since this application works with files so if you want to scale number of rustus instances you
-have to somehow make different rustus instances to work with the same data or info directory.</p>
+Since Rustus works with files you have to be careful while scaling it. All rustus instances
+must have access to the same data and info storages.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>If you want to track you rustus instances with <strong>prometheus</strong> you can
+always get metrics at <code>/metrics</code> endpoint.</p>
+</div>
 <h2 id="docker-compose">Docker compose</h2>
 <div class="highlight"><span class="filename">docker-compose.yml</span><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># This is super simple configuration</span><span class="w"></span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.7&quot;</span><span class="w"></span>
@@ -511,42 +516,55 @@ use config as this one:</p>
 <p>The main idea is that traffic that comes into nginx-proxy
 is routed in one of multiple rustus containers.
 Here I used <code>jwilder/nginx-proxy</code> but you can use other
-reverse-proxies such as raw <code>nginx proxy</code> or <code>traefik</code>.</p>
+reverse-proxies such as <a href="https://www.nginx.com/">Nginx proxy</a>, <a href="https://traefik.io/">Traefik</a> or <a href="https://www.envoyproxy.io/">Envoy proxy</a>.</p>
 <p>Now you can run multiple rustus instnaces like this.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker compose up --scale <span class="nv">rustus</span><span class="o">=</span><span class="m">3</span>
 </code></pre></div>
 <p>After that you can upload files to <code>http://localhost:8080/files</code></p>
 <h2 id="kubernetes">Kubernetes</h2>
-<p>Configuration for kubernetes is almost the same as docker.
+<p>Configuration for Kubernetes is almost the same as for Docker.
 But the most preferable way is an official helm chart.</p>
-<p>Load balancing is done by kubernetes so you just have to
-create volume to mount data and info directories.</p>
+<p>Load balancing is done by Kubernetes, so you just have to
+create a volume to mount data and info directories.</p>
 <h2 id="helm">Helm</h2>
 <p>You can install rustus by running this set of commands:
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>helm repo add <span class="s2">&quot;rustus&quot;</span> <span class="s2">&quot;https://s3rius.github.io/rustus/helm_releases&quot;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>helm repo update
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>helm repo install <span class="s2">&quot;rustus/rustus&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>helm install <span class="s2">&quot;rustus&quot;</span> <span class="s2">&quot;rustus/rustus&quot;</span>
 </code></pre></div></p>
 <h3 id="configuration">Configuration</h3>
-<p>But of course it can be configured.</p>
+<p>Since default deplyment may not fit you.
+You can adjust it to satisfy your needs.
+You can do it easily with helm.</p>
+<p>At first you need to save default values on disk.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># You can download basic configuration by running</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>helm show values <span class="s2">&quot;rustus/rustus&quot;</span> &gt; values.yml
 </code></pre></div>
-<p>By editing values.yml you can configure many different options.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>For production use you must provide and mount PersistentVolumeClaim
 in order to scale rustus.</p>
 <p>This helm chart has only one replica by default.</p>
 </div>
+<p>You can read more about configuration below.</p>
+<p>After you done editing <code>values.yml</code>, you can apply the configuration like this:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>helm upgrade <span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>--install <span class="se">\ </span><span class="c1"># Install chart if it&#39;s not installed</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>--namespace rustus <span class="se">\ </span><span class="c1"># k8s namespace</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>--create-namespace <span class="se">\ </span><span class="c1"># Creates namespace if it doesn&#39;t exist</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>--atomic <span class="se">\ </span><span class="c1"># Ensures that everything is deployed correctly</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>--values <span class="s2">&quot;values.yml&quot;</span> <span class="se">\ </span><span class="c1"># Link to values.yml file</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s2">&quot;rustus&quot;</span> <span class="se">\ </span><span class="c1"># name of a release</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s2">&quot;rustus/rustus&quot;</span> <span class="c1"># Name of the chart</span>
+</code></pre></div>
 <h3 id="persistence">Persistence</h3>
-<p>You can add pvc mount by editing <code>persistence</code> section.
+<p>You can add PVC mount by editing <code>persistence</code> section.
 The most preferable way is to create <code>PersistentVolume</code> and <code>PersistentVolumeClaim</code>
 before installing this chart.</p>
 <p>After you created claim you can apply this values file to mount your claim into rustus.
-<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">persistence</span><span class="p">:</span><span class="w"></span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nt">existingClaim</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rustus-pvc&quot;</span><span class="w"></span>
+<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">persistence</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">existingClaim</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rustus-pvc&quot;</span><span class="w"></span>
 </code></pre></div></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -557,12 +575,12 @@ as you specified for data storage.</p>
 </div>
 <h3 id="subcharts">Subcharts</h3>
 <p>For example if you want to use redis as your info storage.</p>
-<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">env</span><span class="p">:</span><span class="w"></span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_STORAGE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis-info-storage</span><span class="w"></span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_DB_DSN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://:pass@rustus-redis-master/0</span><span class="w"></span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nt">redis</span><span class="p">:</span><span class="w"></span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
+<div class="highlight"><span class="filename">values.yml</span><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">env</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_STORAGE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis-info-storage</span><span class="w"></span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">RUSTUS_INFO_DB_DSN</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis://:pass@rustus-redis-master/0</span><span class="w"></span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="nt">redis</span><span class="p">:</span><span class="w"></span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"></span>
 </code></pre></div>
 <p><code>redis</code>, <code>postgersql</code> and <code>mysql</code> are subcharts.</p>
 <p>You can find information about configuration these subcharts here:</p>
@@ -572,16 +590,6 @@ as you specified for data storage.</p>
 <li><a href="https://github.com/bitnami/charts/tree/master/bitnami/postgresql">Repo</a> for postgresql.</li>
 </ul>
 <p>In production you may ignore these subcharts to deploy your own redis or mysql or postgresql.</p>
-<p>After you done editing <code>values.yml</code> you can apply the configuration like this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>helm upgrade <span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>--install <span class="se">\ </span><span class="c1"># Install chart if it&#39;s not installed</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>--namespace rustus <span class="se">\ </span><span class="c1"># k8s namespace</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>--create-namespace <span class="se">\ </span><span class="c1"># Creates namespace if it doesn&#39;t exist</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>--atomic <span class="se">\ </span><span class="c1"># Ensures that everything is deployed correctly</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>--values <span class="s2">&quot;values.yml&quot;</span> <span class="se">\ </span><span class="c1"># Link to values.yml file</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s2">&quot;rustus&quot;</span> <span class="se">\ </span><span class="c1"># name of a release</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s2">&quot;rustus/rustus&quot;</span> <span class="c1"># Name of the chart</span>
-</code></pre></div>
 
               
             </article>
