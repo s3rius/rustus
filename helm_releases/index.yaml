@@ -2,8 +2,8 @@ apiVersion: v1
 entries:
   rustus:
   - apiVersion: v2
-    appVersion: 0.4.10
-    created: "2022-03-28T22:55:34.674523387Z"
+    appVersion: 0.4.11
+    created: "2022-04-02T16:47:39.236348948Z"
     dependencies:
     - condition: redis.enabled
       name: redis
@@ -18,7 +18,7 @@ entries:
       repository: https://charts.bitnami.com/bitnami
       version: ^8.0
     description: A Helm chart for rustus
-    digest: 1886675a08293561ad9b4b62803ed49f267677631fb059360d816c0367d9a593
+    digest: 58078201293959eb0cf5846954d13908c1b6e8fdec42ae7b0642ccbc23dfa06f
     home: https://github.com/s3rius/rustus/
     icon: https://raw.githubusercontent.com/s3rius/rustus/master/imgs/logo.svg
     name: rustus
@@ -26,4 +26,4 @@ entries:
     urls:
     - https://s3rius.github.io/rustus/helm_releases/rustus-0.1.0.tgz
     version: 0.1.0
-generated: "2022-03-28T22:55:34.658187664Z"
+generated: "2022-04-02T16:47:39.219774341Z"
