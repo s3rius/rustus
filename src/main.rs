@@ -11,14 +11,17 @@ use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
-use log::LevelFilter;
+use log::{error, LevelFilter};
 
 use config::RustusConf;
 
 use crate::{
-    errors::RustusResult, info_storages::InfoStorage,
-    notifiers::models::notification_manager::NotificationManager, server::rustus_service,
-    state::State, storages::Storage,
+    errors::{RustusError, RustusResult},
+    info_storages::InfoStorage,
+    notifiers::models::notification_manager::NotificationManager,
+    server::rustus_service,
+    state::State,
+    storages::Storage,
 };
 
 mod config;
@@ -72,14 +75,37 @@ fn greeting(app_conf: &RustusConf) {
 /// if the server can't be bound to the
 /// given address.
 #[cfg_attr(coverage, no_coverage)]
-pub fn create_server(state: State) -> Result<Server, std::io::Error> {
+pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
     let port = state.config.port;
     let workers = state.config.workers;
     let state_data: web::Data<State> = web::Data::from(Arc::new(state));
+    let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
+        .endpoint("/metrics")
+        .build()
+        .map_err(|err| {
+            error!("{}", err);
+            RustusError::Unknown
+        })?;
+    let active_uploads =
+        prometheus::IntGauge::new("active_uploads", "Number of active file uploads")?;
+    let file_sizes = prometheus::Histogram::with_opts(
+        prometheus::HistogramOpts::new("uploads_sizes", "Size of uploaded files in bytes")
+            .buckets(prometheus::exponential_buckets(2., 2., 40)?),
+    )?;
+    #[cfg(feature = "metrics")]
+    {
+        metrics
+            .registry
+            .register(Box::new(active_uploads.clone()))?;
+        metrics.registry.register(Box::new(file_sizes.clone()))?;
+    }
     let mut server = HttpServer::new(move || {
         App::new()
+            .app_data(web::Data::new(active_uploads.clone()))
+            .app_data(web::Data::new(file_sizes.clone()))
             .configure(rustus_service(state_data.clone()))
+            .wrap(metrics.clone())
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.

@@ -15,12 +15,12 @@ description: Rustus docs
 
 Rustus is a [TUS](https://tus.io) protocol implementation that helps you handle file uploads.
 
-This project has many features that makes it easy to integrate in your service.
+This project has many features that makes it easy to integrate with your application.
 
 
 ## Installation
 
-You can install rustus by 4 different ways.
+You can install rustus in four different ways.
 
 ### From source
 
@@ -30,24 +30,26 @@ Preferred version is 1.59.0.
 ```bash
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all
+cargo install --path . --features=all,metrics
 ```
-Also you can speedup build by disabling some features.
+
+Also, you can speedup build by disabling some features.
 
 Available features:
 
-* `amqp_notifier` - adds amqp protocol support for notifying about upload status;
-* `db_info_storage` - adds support for storing information about upload in different databases (Postgres, MySQL, SQLite);
-* `http_notifier` - adds support for notifying about upload status via http protocol;
-* `redis_info_storage` - adds support for storing information about upload in redis database;
+* `amqp_notifier` - adds `AMQP` protocol support for notifying about upload status;
+* `db_info_storage` - adds support for storing information about upload in different databases (`Postgres`, `MySQL`, `SQLite`);
+* `http_notifier` - adds support for notifying about upload status via `HTTP` protocol;
+* `redis_info_storage` - adds support for storing information about upload in `Redis` database;
 * `hashers` - adds support for checksum verification;
-* `all` - enables all rustus features.
+* `metrics` - adds rustus specific metrics to prometheus endpoint;
+* `all` - enables all rustus features except `metrics`.
 
 All precompiled binaries have all features enabled.
 
 ### With cargo
 
-If you have cargo installed maybe it would be easier to
+If you have cargo installed, it might be easier to
 install it directly from crates.io.
 
 ```bash
@@ -56,27 +58,29 @@ cargo install rustus --features=all
 
 ### Binaries
 
-All precompiled binaries available on github releases page.
+All precompiled binaries available on Github releases page.
 You can download binaries from [here](https://github.com/s3rius/rustus/releases), unpack it and run.
 
 ```bash
 ./rustus
 ```
 
-Make sure that you download version for your cpu and os.
+Make sure you download right version for your CPU architecture and OS.
 
-### Using docker
+### Using Docker
 
-One of the most simple ways to run rustus is docker.
+One of the most simple ways to run rustus is `Docker`.
 
 Rustus has two containers for each version.
-1. debian based image
-2. alpine based image
+1. Debian based image
+2. Alpine based image
 
-Alpine based images are more lightweight than debian
+Alpine based images are more lightweight than Debian
 
-To run rustus you just need to run this command
+To run Rustus with Docker you just need to run this command
 
 ```bash
 docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"
 ```
+
+More information about Rustus docker images you can find on [Docker hub page](https://hub.docker.com/r/s3rius/rustus/).

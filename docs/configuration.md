@@ -3,13 +3,12 @@ title: Configuration
 description: "How to configure Rusts"
 ---
 
-Rustus is highly configurable you can configure rustus with CLI or you can use environment variables.
+Rustus is highly configurable. You can adjust it with CLI or you can use environment variables.
 
-!!! info
+!!! warning
     Some options can be passed only through as CLI parameters
 
 !!! info
-
     Information about hooks you can find on [Hooks page](../hooks).
 
 
@@ -126,7 +125,7 @@ about it requested from storage to get actual path of an upload.
 Available info storages:
 
 * `file-info-storage` - stores information in files on disk;
-* `redis-info-storage` - information is stored in redis;
+* `redis-info-storage` - information is stored in Redis;
 * `db-info-storage` - information is stored in database;
 
 ### File info storage
@@ -142,8 +141,7 @@ storing information about uploads. But if you don't plan to have many uploads, i
 === "CLI"
 
     ``` bash
-    rustus --force-fsync \
-        --storage "file-info-storage" \
+    rustus --info-storage "file-info-storage" \
         --info-dir "./data"
     ```
 
@@ -162,18 +160,17 @@ Redis db is a good way to store information.
 
 !!! note
 
-    If you're using redis as a cluster
-    you must provide connection string for master redis server.
+    If you're using Redis as a cluster
+    you must provide connection string for master Redis server.
     Since rustus need to have latest information and it writes a lot.
 
-`--info-db-dsn` - connection string for your redis database.
-It's required if redis-info-storage is chosen.
+`--info-db-dsn` - connection string for your Redis database.
+It's required if `redis-info-storage` is chosen.
 
 === "CLI"
 
     ``` bash
-    rustus --force-fsync \
-        --storage "redis-info-storage" \
+    rustus --info-storage "redis-info-storage" \
         --info-db-dsn "redis://localhost/0"
     ```
 
@@ -189,10 +186,10 @@ It's required if redis-info-storage is chosen.
 
 ### DB info storage
 
-Rustus can store information about upload in database.
+Rustus can store information about upload in a database.
 
-It's a good and reliable option. But rustus can't work
-with replicas since it requires most recent information
+It's a good and reliable option. But Rustus can't work
+with replicas, since it requires the most recent information
 about uploads.
 
 You can use `postgresql`, `mysql` or even `sqlite` schemas to
@@ -203,8 +200,7 @@ connect to database.
 === "CLI"
 
     ``` bash
-    rustus --force-fsync \
-        --storage "db-info-storage" \
+    rustus --info-storage "db-info-storage" \
         --info-db-dsn "postgresql://user:password@localhost/db"
     ```
 
@@ -219,11 +215,11 @@ connect to database.
 
 ## Configuring TUS
 
-Since tus protocol offers extensibility you can turn off some protocol extensions.
+Since TUS protocol offers extensibility you can turn off some protocol extensions.
 
 Available extensions:
 
-* `getting` - rustus specific extension that helps you download uploaded files with get request;
+* `getting` - Rustus specific extension that helps you download uploaded files with get request;
 * `creation` - helps you to create files (It's like a core feature you better have this enabled);
 * `termination` - allows you to delete uploads with DELETE request;
 * `creation-with-upload` - allows you to write first bytes of a file while creating;
@@ -234,13 +230,15 @@ Available extensions:
 You can read more about extensions on [official web-site](https://tus.io/protocols/resumable-upload.html#protocol-extensions).
 
 `--tus-extensions` - a list of enabled extensions.
+`--remove-parts` - remove parts files after successfull concatentation (disabled by default).
 
 By default all extensions are enabled.
 
 === "CLI"
 
     ``` bash
-    rustus --tus-extensions "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
+    rustus --remove-parts \
+        --tus-extensions "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
     ```
 
 === "ENV"
@@ -248,5 +246,5 @@ By default all extensions are enabled.
     ``` bash
     export RUSTUS_TUS_EXTENSIONS="getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
 
-    rustus
+    rustus --remove-parts
     ```

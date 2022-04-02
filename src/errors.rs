@@ -65,6 +65,8 @@ pub enum RustusError {
     WrongChecksum,
     #[error("The header value is incorrect")]
     WrongHeaderValue,
+    #[error("Metrics error: {0}")]
+    PrometheusError(#[from] prometheus::Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

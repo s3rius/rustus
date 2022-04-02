@@ -14,7 +14,7 @@
 This implementation has several features to make usage as simple as possible.
 
 * Rustus is robust, since it uses asynchronous Rust;
-* It can store information about files in databases;
+* It can store information about uploads in databases;
 * You can specify directory structure to organize your uploads;
 * It has a lot of hooks options, and hooks can be combined.
 * Highly configurable;
@@ -33,7 +33,7 @@ Preferred version is 1.59.0.
 ```bash
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all
+cargo install --path . --features=all,metrics
 ```
 Also you can speedup build by disabling some features.
 
@@ -44,7 +44,8 @@ Available features:
 * `http_notifier` - adds support for notifying about upload status via http protocol;
 * `redis_info_storage` - adds support for storing information about upload in redis database;
 * `hashers` - adds support for checksum verification;
-* `all` - enables all rustus features.
+* `metrics` - adds rustus specific metrics to prometheus endpoint;
+* `all` - enables all rustus features except `metrics`.
 
 All precompiled binaries have all features enabled.
 

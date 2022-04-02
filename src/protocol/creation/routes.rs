@@ -71,6 +71,8 @@ fn get_upload_parts(request: &HttpRequest) -> Vec<String> {
 /// extension is enabled.
 #[allow(clippy::too_many_lines)]
 pub async fn create_file(
+    #[cfg(feature = "metrics")] active_uploads: web::Data<prometheus::IntGauge>,
+    #[cfg(feature = "metrics")] file_sizes: web::Data<prometheus::Histogram>,
     state: web::Data<State>,
     request: HttpRequest,
     bytes: Bytes,
@@ -139,6 +141,16 @@ pub async fn create_file(
 
     // Create file and get the it's path.
     file_info.path = Some(state.data_storage.create_file(&file_info).await?);
+
+    // Incrementing number of active uploads
+    #[cfg(feature = "metrics")]
+    active_uploads.inc();
+
+    #[cfg(feature = "metrics")]
+    if let Some(length) = file_info.length {
+        #[allow(clippy::cast_precision_loss)]
+        file_sizes.observe(length as f64);
+    }
 
     if file_info.is_final {
         let mut final_size = 0;

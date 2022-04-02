@@ -60,7 +60,7 @@ jobs:
           command: build
           use-cross: ${{ matrix.job.use-cross }}
           toolchain: ${{ matrix.rust }}
-          args: --release --features=all --target ${{ matrix.job.target }}
+          args: --release --features=all,metrics --target ${{ matrix.job.target }}
 
       - name: install strip command
         shell: bash
