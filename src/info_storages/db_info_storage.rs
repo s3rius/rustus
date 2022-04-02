@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rbatis::{crud::CRUD, crud_table, db::DBPoolOptions, executor::Executor, rbatis::Rbatis};
+use rbatis::{crud::CRUD, crud_table, db::DBPoolOptions, rbatis::Rbatis};
 
 use crate::{
     errors::{RustusError, RustusResult},

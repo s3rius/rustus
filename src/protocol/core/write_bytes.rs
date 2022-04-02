@@ -110,6 +110,7 @@ pub async fn write_bytes(
     state.info_storage.set_info(&file_info, false).await?;
 
     let mut hook = Hook::PostReceive;
+
     if file_info.length == Some(file_info.offset) {
         hook = Hook::PostFinish;
     }

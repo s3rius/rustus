@@ -14,7 +14,7 @@
 This implementation has several features to make usage as simple as possible.
 
 * Rustus is robust, since it uses asynchronous Rust;
-* It can store information about files in databases;
+* It can store information about uploads in databases;
 * You can specify directory structure to organize your uploads;
 * It has a lot of hooks options, and hooks can be combined.
 * Highly configurable;
