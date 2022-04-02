@@ -14,6 +14,7 @@ pub async fn write_bytes(
     request: HttpRequest,
     bytes: Bytes,
     state: web::Data<State>,
+    #[cfg(feature = "metrics")] active_uploads: web::Data<prometheus::IntGauge>,
 ) -> RustusResult<HttpResponse> {
     // Checking if request has required headers.
     let check_content_type = |val: &str| val == "application/offset+octet-stream";
@@ -109,10 +110,8 @@ pub async fn write_bytes(
     state.info_storage.set_info(&file_info, false).await?;
 
     let mut hook = Hook::PostReceive;
-    let mut keep_alive = true;
     if file_info.length == Some(file_info.offset) {
         hook = Hook::PostFinish;
-        keep_alive = false;
     }
     if state.config.hook_is_active(hook) {
         let message = state
@@ -128,16 +127,15 @@ pub async fn write_bytes(
                 .await
         });
     }
-    if keep_alive {
-        Ok(HttpResponse::NoContent()
-            .insert_header(("Upload-Offset", file_info.offset.to_string()))
-            .keep_alive()
-            .finish())
-    } else {
-        Ok(HttpResponse::NoContent()
-            .insert_header(("Upload-Offset", file_info.offset.to_string()))
-            .finish())
+
+    #[cfg(feature = "metrics")]
+    if hook == Hook::PostFinish {
+        active_uploads.dec();
     }
+
+    Ok(HttpResponse::NoContent()
+        .insert_header(("Upload-Offset", file_info.offset.to_string()))
+        .finish())
 }
 
 #[cfg(test)]
