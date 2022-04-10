@@ -15,7 +15,7 @@ description: Rustus docs
 
 Rustus is a [TUS](https://tus.io) protocol implementation that helps you handle file uploads.
 
-This project has many features that makes it easy to integrate with your application.
+This project has many features that make it easy to integrate with your application.
 
 
 ## Installation

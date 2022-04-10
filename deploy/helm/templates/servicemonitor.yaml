@@ -1,0 +1,34 @@
+{{- if .Values.service_monitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "rustus.fullname" . }}-monitor
+  labels:
+    {{- include "rustus.labels" . | nindent 4 }}
+    {{- if .Values.service_monitor.additionalLabels }}
+      {{- .Values.service_monitor.additionalLabels | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+    - port: http
+      {{- if .Values.service_monitor.interval }}
+      interval: {{ .Values.service_monitor.interval }}
+      {{- end }}
+      {{- if .Values.service_monitor.scrapeTimeout }}
+      scrapeTimeout: {{ .Values.service_monitor.scrapeTimeout }}
+      {{- end }}
+      {{- if .Values.service_monitor.honorLabels }}
+      honorLabels: {{ .Values.service_monitor.honorLabels }}
+      {{- end }}
+      {{- if .Values.service_monitor.relabellings }}
+      relabelings: {{- toYaml .Values.service_monitor.relabellings | nindent 6 }}
+      {{- end }}
+      {{- if .Values.service_monitor.metricRelabelings }}
+      metricRelabelings: {{- toYaml .Values.service_monitor.metricRelabelings | nindent 6 }}
+      {{- end }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels: {{- include "rustus.selectorLabels" . | nindent 6 }}
+{{- end }}
