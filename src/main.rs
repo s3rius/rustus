@@ -170,7 +170,7 @@ async fn main() -> std::io::Result<()> {
     setup_logging(&app_conf)?;
     // Printing cool message.
     greeting(&app_conf);
-    println!("{:#?}", app_conf);
+
     // Creating info storage.
     // It's used to store info about files.
     let mut info_storage = app_conf

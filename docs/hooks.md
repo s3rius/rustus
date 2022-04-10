@@ -410,11 +410,11 @@ Now we can run our celery worker to start executing tasks.
 celery -A rustus_celery
 ```
 
-After starting celery worker you can rus Rustus with these
-parameters. These parameters are default for celery (Except amqp url).
+After starting celery worker you can run Rustus with these
+parameters.
 
 The most important parameter is `--hooks-amqp-celery`, because it
-adds to every message headers required by Celery.
+adds required by Celery headers to every message.
 
 === "CLI"
 
