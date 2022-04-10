@@ -124,7 +124,16 @@ jobs:
           context: .
           push: true
           file: deploy/Dockerfile
+          target: base
           tags: s3rius/rustus:latest,s3rius/rustus:${{env.APP_VERSION}}
+      - name: Build and push rootless
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          file: deploy/Dockerfile
+          target: rootless
+          tags: s3rius/rustus:${{env.APP_VERSION}}-rootless
 
   upload_helm:
     runs-on: ubuntu-latest
@@ -208,6 +217,17 @@ jobs:
           context: .
           push: true
           file: deploy/alpine.Dockerfile
-          tags: s3rius/rustus:${{env.APP_VERSION}}-alpine
+          target: base
+          tags: s3rius/rustus:latest-alpine,s3rius/rustus:${{env.APP_VERSION}}-alpine
+          build-args: |
+            app_version=${{env.APP_VERSION}}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          file: deploy/alpine.Dockerfile
+          target: rootless
+          tags: s3rius/rustus:${{env.APP_VERSION}}-rootless-alpine
           build-args: |
             app_version=${{env.APP_VERSION}}

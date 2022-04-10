@@ -5,9 +5,6 @@ description: "How to configure Rusts"
 
 Rustus is highly configurable. You can adjust it with CLI or you can use environment variables.
 
-!!! warning
-    Some options can be passed only through as CLI parameters
-
 !!! info
     Information about hooks you can find on [Hooks page](../hooks).
 
@@ -57,14 +54,13 @@ Also you can configure number of actix `workers` that handle connections.
     Currently only file storage is available,
     so if you pass to `--storage` parameter other than `file-storage` you will get an error.
 
-    Also you **can not** pass `--force-fsync` through environment variables.
+Available parameters:
 
-
-`--storage` is a type of data storage to be used.
-
-`--data-dir` is a path to the directory where all files are stored.
-
-`--dir-structure` is a pattern of a directory structure inside data dir.
+* `--storage` - type of data storage to be used;
+* `--data-dir` - path to the directory where all files are stored;
+* `--dir-structure` - pattern of a directory structure inside data dir;
+* `--force-fsync` - calls fsync system call after every write to disk.
+``
 You can use variables within the pattern.
 
 Available variables:
@@ -98,7 +94,7 @@ data
 === "CLI"
 
     ``` bash
-    rustus --force-fsync \
+    rustus --force-fsync "yes" \
         --storage "file-storage" \
         --data-dir "./data/" \
         --dir-structure "{year}/{month}/{day}"
@@ -110,8 +106,9 @@ data
     export RUSTUS_STORAGE="file-storage"
     export RUSTUS_DATA_DIR="./data/"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
+    export RUSTUS_FORCE_FSYNC="yes"
 
-    rustus --force-fsync
+    rustus
     ```
 
 ## Configuring info storage
@@ -237,7 +234,7 @@ By default all extensions are enabled.
 === "CLI"
 
     ``` bash
-    rustus --remove-parts \
+    rustus --remove-parts "yes" \
         --tus-extensions "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
     ```
 
@@ -245,6 +242,7 @@ By default all extensions are enabled.
 
     ``` bash
     export RUSTUS_TUS_EXTENSIONS="getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
+    export RUSTUS_REMOVE_PARTS="yes"
 
-    rustus --remove-parts
+    rustus
     ```

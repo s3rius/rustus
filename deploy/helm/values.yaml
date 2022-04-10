@@ -178,3 +178,17 @@ mysql:
     database: rustus
     username: rustus
     password: rustus
+
+
+# Configuration for prometheus operator's ServiceMonitor.
+# You can read more about operator and custom resources
+# here: https://operatorhub.io/operator/prometheus
+service_monitor:
+    enabled: false
+
+    additionalLabels: {}
+    interval: 5s
+    scrapeTimeout: ""
+    honorLabels: ""
+    relabellings: {}
+    metricRelabelings: {}

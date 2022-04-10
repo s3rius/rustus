@@ -6,21 +6,42 @@ use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
 use lapin::{
     options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
-    types::FieldTable,
+    types::{AMQPValue, FieldTable, LongString},
     BasicProperties, ConnectionProperties, ExchangeKind,
 };
 use mobc_lapin::{mobc::Pool, RMQConnectionManager};
 use strum::IntoEnumIterator;
 use tokio_amqp::LapinTokioExt;
 
+#[allow(clippy::struct_excessive_bools)]
+pub struct DeclareOptions {
+    pub declare_exchange: bool,
+    pub durable_exchange: bool,
+    pub declare_queues: bool,
+    pub durable_queues: bool,
+}
+
 pub struct AMQPNotifier {
     exchange_name: String,
     pool: Pool<RMQConnectionManager>,
     queues_prefix: String,
+    exchange_kind: String,
+    routing_key: Option<String>,
+    declare_options: DeclareOptions,
+    celery: bool,
 }
 
 impl AMQPNotifier {
-    pub fn new(amqp_url: &str, exchange: &str, queues_prefix: &str) -> Self {
+    #[allow(clippy::fn_params_excessive_bools)]
+    pub fn new(
+        amqp_url: &str,
+        exchange: &str,
+        queues_prefix: &str,
+        exchange_kind: &str,
+        routing_key: Option<String>,
+        declare_options: DeclareOptions,
+        celery: bool,
+    ) -> Self {
         let manager = RMQConnectionManager::new(
             amqp_url.into(),
             ConnectionProperties::default().with_tokio(),
@@ -28,13 +49,25 @@ impl AMQPNotifier {
         let pool = Pool::<RMQConnectionManager>::builder().build(manager);
         Self {
             pool,
+            celery,
+            routing_key,
+            declare_options,
+            exchange_kind: exchange_kind.into(),
             exchange_name: exchange.into(),
             queues_prefix: queues_prefix.into(),
         }
     }
 
+    /// Generate queue name based on hook type.
+    ///
+    /// If specific routing key is not empty, it returns it.
+    /// Otherwise it will generate queue name based on hook name.
     pub fn get_queue_name(&self, hook: Hook) -> String {
-        format!("{}.{}", self.queues_prefix.as_str(), hook)
+        if let Some(routing_key) = self.routing_key.as_ref() {
+            routing_key.into()
+        } else {
+            format!("{}.{}", self.queues_prefix.as_str(), hook)
+        }
     }
 }
 
@@ -42,29 +75,39 @@ impl AMQPNotifier {
 impl Notifier for AMQPNotifier {
     async fn prepare(&mut self) -> RustusResult<()> {
         let chan = self.pool.get().await?.create_channel().await?;
-        chan.exchange_declare(
-            self.exchange_name.as_str(),
-            ExchangeKind::Topic,
-            ExchangeDeclareOptions::default(),
-            FieldTable::default(),
-        )
-        .await?;
-        for hook in Hook::iter() {
-            let queue_name = self.get_queue_name(hook);
-            chan.queue_declare(
-                queue_name.as_str(),
-                QueueDeclareOptions::default(),
-                FieldTable::default(),
-            )
-            .await?;
-            chan.queue_bind(
-                queue_name.as_str(),
+        if self.declare_options.declare_exchange {
+            chan.exchange_declare(
                 self.exchange_name.as_str(),
-                queue_name.as_str(),
-                QueueBindOptions::default(),
+                ExchangeKind::Custom(self.exchange_kind.clone()),
+                ExchangeDeclareOptions {
+                    durable: self.declare_options.durable_exchange,
+                    ..ExchangeDeclareOptions::default()
+                },
                 FieldTable::default(),
             )
             .await?;
+        }
+        if self.declare_options.declare_queues {
+            for hook in Hook::iter() {
+                let queue_name = self.get_queue_name(hook);
+                chan.queue_declare(
+                    queue_name.as_str(),
+                    QueueDeclareOptions {
+                        durable: self.declare_options.durable_queues,
+                        ..QueueDeclareOptions::default()
+                    },
+                    FieldTable::default(),
+                )
+                .await?;
+                chan.queue_bind(
+                    queue_name.as_str(),
+                    self.exchange_name.as_str(),
+                    queue_name.as_str(),
+                    QueueBindOptions::default(),
+                    FieldTable::default(),
+                )
+                .await?;
+            }
         }
         Ok(())
     }
@@ -77,12 +120,32 @@ impl Notifier for AMQPNotifier {
     ) -> RustusResult<()> {
         let chan = self.pool.get().await?.create_channel().await?;
         let queue = self.get_queue_name(hook);
+        let routing_key = self.routing_key.as_ref().unwrap_or(&queue);
+        let payload = if self.celery {
+            format!("[[{}], {{}}, {{}}]", message).as_bytes().to_vec()
+        } else {
+            message.as_bytes().to_vec()
+        };
+        let mut headers = FieldTable::default();
+        if self.celery {
+            headers.insert(
+                "id".into(),
+                AMQPValue::LongString(LongString::from(uuid::Uuid::new_v4().to_string())),
+            );
+            headers.insert(
+                "task".into(),
+                AMQPValue::LongString(LongString::from(format!("rustus.{}", hook))),
+            );
+        }
         chan.basic_publish(
             self.exchange_name.as_str(),
-            queue.as_str(),
+            routing_key.as_str(),
             BasicPublishOptions::default(),
-            message.as_bytes().to_vec(),
-            BasicProperties::default().with_content_type("application/json".into()),
+            payload,
+            BasicProperties::default()
+                .with_headers(headers)
+                .with_content_type("application/json".into())
+                .with_content_encoding("utf-8".into()),
         )
         .await?;
         Ok(())
@@ -93,7 +156,7 @@ impl Notifier for AMQPNotifier {
 #[cfg(test)]
 mod tests {
     use super::AMQPNotifier;
-    use crate::notifiers::{Hook, Notifier};
+    use crate::notifiers::{amqp_notifier::DeclareOptions, Hook, Notifier};
     use actix_web::http::header::HeaderMap;
     use lapin::options::{BasicAckOptions, BasicGetOptions};
 
@@ -103,6 +166,15 @@ mod tests {
             amqp_url.as_str(),
             uuid::Uuid::new_v4().to_string().as_str(),
             uuid::Uuid::new_v4().to_string().as_str(),
+            "topic",
+            None,
+            DeclareOptions {
+                declare_exchange: true,
+                declare_queues: true,
+                durable_queues: false,
+                durable_exchange: false,
+            },
+            true,
         );
         notifier.prepare().await.unwrap();
         notifier
@@ -135,7 +207,7 @@ mod tests {
         assert!(message.is_some());
         assert_eq!(
             String::from_utf8(message.clone().unwrap().data.clone()).unwrap(),
-            test_msg
+            format!("[[{}], {{}}, {{}}]", test_msg)
         );
         message
             .unwrap()
@@ -146,7 +218,20 @@ mod tests {
 
     #[actix_rt::test]
     async fn unknown_url() {
-        let notifier = AMQPNotifier::new("http://unknown", "test", "test");
+        let notifier = AMQPNotifier::new(
+            "http://unknown",
+            "test",
+            "test",
+            "topic",
+            None,
+            DeclareOptions {
+                declare_exchange: false,
+                declare_queues: false,
+                durable_queues: false,
+                durable_exchange: false,
+            },
+            false,
+        );
         let res = notifier
             .send_message("Test Message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;

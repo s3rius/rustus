@@ -41,7 +41,7 @@ pub struct StorageOptions {
     /// everything is written on disk correctly.
     ///
     /// In most cases this parameter is redundant.
-    #[structopt(long, parse(from_flag))]
+    #[structopt(long, env = "RUSTUS_FORCE_FSYNC")]
     pub force_fsync: bool,
 }
 
@@ -88,6 +88,7 @@ pub struct InfoStoreOptions {
 }
 
 #[derive(StructOpt, Debug, Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct NotificationsOptions {
     /// Notifications format.
     ///
@@ -120,10 +121,46 @@ pub struct NotificationsOptions {
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_URL")]
     pub hooks_amqp_url: Option<String>,
 
+    /// Rustus will create exchange if enabled.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
+    pub hooks_amqp_declare_exchange: bool,
+
+    /// Rustus will create all queues for communication and bind them
+    /// to exchange if enabled.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
+    pub hooks_amqp_declare_queues: bool,
+
+    /// Durability type of exchange.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
+    pub hooks_amqp_durable_exchange: bool,
+
+    /// Durability type of queues.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
+    pub hooks_amqp_durable_queues: bool,
+
+    /// Adds celery specific headers.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
+    pub hooks_amqp_celery: bool,
+
     /// Name of amqp exchange.
     #[cfg(feature = "amqp_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
+
+    /// Exchange kind.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
+    pub hooks_amqp_exchange_kind: String,
+
+    /// Routing key to use when sending message to an exchange.
+    #[cfg(feature = "amqp_notifier")]
+    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
+    pub hooks_amqp_routing_key: Option<String>,
 
     /// Prefix for all AMQP queues.
     #[cfg(feature = "amqp_notifier")]
@@ -199,7 +236,7 @@ pub struct RustusConf {
     /// By default rustus does nothing with part files after concatenation.
     ///
     /// This parameter is only needed if concatenation extension is enabled.
-    #[structopt(long, parse(from_flag))]
+    #[structopt(long, env = "RUSTUS_REMOVE_PARTS")]
     pub remove_parts: bool,
 
     #[structopt(flatten)]

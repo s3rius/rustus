@@ -14,8 +14,6 @@ pub enum Format {
     Default,
     #[display(fmt = "tusd")]
     Tusd,
-    #[display(fmt = "celery")]
-    Celery,
 }
 
 from_str!(Format, "format");
@@ -25,7 +23,6 @@ impl Format {
         match self {
             Self::Default => default_format(request, file_info),
             Self::Tusd => tusd_format(request, file_info),
-            Self::Celery => celery_format(request, file_info),
         }
     }
 }
@@ -156,8 +153,4 @@ pub fn tusd_format(request: &HttpRequest, file_info: &FileInfo) -> RustusResult<
         ),
     );
     Ok(Value::Object(result_map).to_string())
-}
-
-pub fn celery_format(_request: &HttpRequest, _file_info: &FileInfo) -> RustusResult<String> {
-    todo!()
 }
