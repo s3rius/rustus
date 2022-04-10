@@ -19,7 +19,7 @@ This implementation has several features to make usage as simple as possible.
 * It has a lot of hooks options, and hooks can be combined.
 * Highly configurable;
 
-Please check out [docs](https://s3rius.github.io/rustus/) for more information about configuration and deploy.
+Please check out [Documentation](https://s3rius.github.io/rustus/) for more information about configuration and deploy.
 
 ## Installation
 
