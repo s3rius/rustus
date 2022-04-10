@@ -4,10 +4,7 @@ use crate::notifiers::amqp_notifier;
 use crate::notifiers::http_notifier;
 use crate::{
     errors::RustusResult,
-    notifiers::{
-        amqp_notifier::DeclareOptions, dir_notifier::DirNotifier, file_notifier::FileNotifier,
-        Hook, Notifier,
-    },
+    notifiers::{dir_notifier::DirNotifier, file_notifier::FileNotifier, Hook, Notifier},
     RustusConf,
 };
 use actix_web::http::header::HeaderMap;
@@ -72,7 +69,7 @@ impl NotificationManager {
                         .notification_opts
                         .hooks_amqp_routing_key
                         .clone(),
-                    DeclareOptions {
+                    amqp_notifier::DeclareOptions {
                         declare_exchange: rustus_config
                             .notification_opts
                             .hooks_amqp_declare_exchange,
