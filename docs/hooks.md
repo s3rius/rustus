@@ -39,10 +39,10 @@ You can disable some hooks by using `--hooks` parameter.
     ```
 
 
-## Fomat
+## Format
 
-Information about every hook using `JSON` format.
-Format can be configured using `--hooks-format` parameter or `RUSTUS_HOOKS_FORMAT` environment variable.
+Information about every event is sent using `JSON` format.
+Format can be configured with `--hooks-format` parameter or `RUSTUS_HOOKS_FORMAT` environment variable.
 
 Available formats:
 
@@ -303,32 +303,137 @@ Configuration parameters:
 
 * `--hooks-amqp-url` - connection string to RabbitMQ;
 * `--hooks-amqp-queues-prefix` - prefix for queues for every event queue;
-* `--hooks-amqp-exchange` - name of exchange to use.
+* `--hooks-amqp-exchange` - name of exchange to use;
+* `--hooks-amqp-declare-exchange` - creates exchange on startup;
+* `--hooks-amqp-exchange-kind` - kind of exchange to connect to;
+* `--hooks-amqp-declare-queues` - creates all queues and binds them to exchange;
+* `--hooks-amqp-durable-exchange` - adds durability to created exchange;
+* `--hooks-amqp-durable-queues` - adds durability to created;
+* `--hooks-amqp-celery` - adds headers required by [Celery](https://docs.celeryq.dev/en/stable/index.html);
+* `--hooks-amqp-routing-key` - routing key for all messages passed to exchange.
 
-This hook will send every message in an exchange with routing keys
-like queues names.
-
-Queues are named like `{prefix}.{event type}`. Eg `rustus.pre-create` and so on.
+If no hooks_amqp_routing_key specified, rustus will send all messages with
+different routing keys. Named like `{prefix}.{event type}`. Eg `rustus.pre-create` and so on.
+Otherwise, it will use only one routing key and only one queue!
 
 !!! warning
 
     Since we can't really track message delivery and responses
-    Rustus doesn't stop in any case.
+    Rustus won't stop a current upload in any case.
 
 === "CLI"
 
     ``` bash
     rustus --hooks-amqp-url "amqp://guest:guest@localhost:5672" \
-        --hooks-amqp-queues-prefix "rustus_queue" \
-        --hooks-amqp-exchange "rustus"
+        --hooks-amqp-queues-prefix "rustus_prefix" \
+        --hooks-amqp-exchange "rustus" \
+        --hooks-amqp-exchange-kind "topic" \
+        --hooks-amqp-routing-key "route66" \
+        --hooks-amqp-declare-exchange "yes" \
+        --hooks-amqp-declare-queues "yes" \
+        --hooks-amqp-durable-exchange "yes" \
+        --hooks-amqp-durable-queues "yes" \
+        --hooks-amqp-celery "yes"
     ```
 
 === "ENV"
 
     ``` bash
     export RUSTUS_HOOKS_AMQP_URL="amqp://guest:guest@localhost:5672"
-    export RUSTUS_HOOKS_AMQP_QUEUES_PREFIX="rustus_queue"
+    export RUSTUS_HOOKS_AMQP_QUEUES_PREFIX="rustus_prefix"
     export RUSTUS_HOOKS_AMQP_EXCHANGE="rustus"
+    export RUSTUS_HOOKS_AMQP_EXCHANGE_KIND="topic"
+    export RUSTUS_HOOKS_AMQP_ROUTING_KEY="route66"
+    export RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE="yes"
+    export RUSTUS_HOOKS_AMQP_DECLARE_QUEUES="yes"
+    export RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE="yes"
+    export RUSTUS_HOOKS_AMQP_DURABLE_QUEUES="yes"
+    export RUSTUS_HOOKS_AMQP_CELERY="yes"
+
+    rustus
+    ```
+
+#### Using Rustus with Celery
+
+Rustus has a cool integration with [Celery](https://docs.celeryq.dev/en/stable/index.html).
+Let's build a Celery application that handles rustus hooks.
+
+At first, we need to install Celery itself.
+```bash
+pip install celery
+```
+
+Now we can create a file called "celery.py" in a directory "rustus_celery".
+This file contains code that handles celery tasks.
+
+```python title="rustus_celery/celery.py"
+import celery
+
+app = celery.Celery("rustus_celery")
+app.conf.update(
+    broker_url="amqp://guest:guest@localhost:5672",
+)
+
+
+@app.task(name="rustus.pre-create")
+def post_create(data):
+    print(f"PRE CREATE: {data}")
+
+
+@app.task(name="rustus.post-create")
+def post_create(data):
+    print(f"POST CREATE: {data}")
+
+
+@app.task(name="rustus.post-finish")
+def post_finish(data):
+    print(f"POST FINISH: {data}")
+
+
+@app.task(name="rustus.post-terminate")
+def post_terminate(data):
+    print(f"POST TERMINATE: {data}")
+
+
+@app.task(name="rustus.post-receive")
+def post_recieve(data):
+    print(f"POST RECIEVE: {data}")
+```
+
+!!! info
+    Every task has its name. You must use these names
+    in order to handle tasks.
+
+Now we can run our celery worker to start executing tasks.
+
+```
+celery -A rustus_celery
+```
+
+After starting celery worker you can rus Rustus with these
+parameters. These parameters are default for celery (Except amqp url).
+
+The most important parameter is `--hooks-amqp-celery`, because it
+adds to every message headers required by Celery.
+
+=== "CLI"
+
+    ``` bash
+    rustus --hooks-amqp-url "amqp://guest:guest@localhost:5672" \
+        --hooks-amqp-exchange "celery" \
+        --hooks-amqp-exchange-kind "direct" \
+        --hooks-amqp-routing-key "celery" \
+        --hooks-amqp-celery "yes"
+    ```
+
+=== "ENV"
+
+    ``` bash
+    export RUSTUS_HOOKS_AMQP_URL="amqp://guest:guest@localhost:5672"
+    export RUSTUS_HOOKS_AMQP_EXCHANGE="celery"
+    export RUSTUS_HOOKS_AMQP_EXCHANGE_KIND="direct"
+    export RUSTUS_HOOKS_AMQP_ROUTING_KEY="celery"
+    export RUSTUS_HOOKS_AMQP_CELERY="yes"
 
     rustus
     ```
