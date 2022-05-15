@@ -28,15 +28,12 @@ mod tests {
     use crate::{protocol::extensions::Extensions, rustus_service, State};
     use actix_web::test::{call_service, init_service, TestRequest};
 
-    use actix_web::{http::Method, web, App};
+    use actix_web::{http::Method, App};
 
     #[actix_rt::test]
     async fn test_server_info() {
         let mut state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         state.config.tus_extensions = vec![
             Extensions::Creation,
             Extensions::Concatenation,

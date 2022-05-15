@@ -17,7 +17,7 @@ use crate::{
 };
 use derive_more::Display;
 
-#[derive(Display)]
+#[derive(Display, Clone)]
 #[display(fmt = "file_storage")]
 pub struct FileStorage {
     data_dir: PathBuf,
@@ -87,7 +87,7 @@ impl Storage for FileStorage {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound);
         }
-        let path = String::from(file_info.path.as_ref().unwrap());
+        let path = file_info.path.as_ref().unwrap().clone();
         let force_sync = self.force_fsync;
         tokio::task::spawn_blocking(move || {
             // Opening file in w+a mode.
@@ -104,13 +104,11 @@ impl Storage for FileStorage {
                     error!("{:?}", err);
                     RustusError::UnableToWrite(err.to_string())
                 })?;
-            {
-                let mut writer = BufWriter::new(file);
-                writer.write_all(bytes.as_ref())?;
-                writer.flush()?;
-                if force_sync {
-                    writer.get_ref().sync_data()?;
-                }
+            let mut writer = BufWriter::new(file);
+            writer.write_all(bytes.as_ref())?;
+            writer.flush()?;
+            if force_sync {
+                writer.get_ref().sync_data()?;
             }
             Ok(())
         })
@@ -143,14 +141,15 @@ impl Storage for FileStorage {
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        let info = file_info.clone();
+        // let info = file_info.clone();
         let force_fsync = self.force_fsync;
+        let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
                 .write(true)
                 .append(true)
                 .create(true)
-                .open(info.path.as_ref().unwrap().clone())
+                .open(path)
                 .map_err(|err| {
                     error!("{:?}", err);
                     RustusError::UnableToWrite(err.to_string())

@@ -1,11 +1,11 @@
 use crate::{protocol, State};
 use actix_web::{middleware, web, web::PayloadConfig};
 
-pub fn rustus_service(state: web::Data<State>) -> Box<dyn Fn(&mut web::ServiceConfig)> {
+pub fn rustus_service(state: State) -> Box<dyn Fn(&mut web::ServiceConfig)> {
     Box::new(move |web_app| {
         web_app.service(
             web::scope(state.config.base_url().as_str())
-                .app_data(state.clone())
+                .app_data(web::Data::new(state.clone()))
                 .app_data(PayloadConfig::new(state.config.max_body_size))
                 // Main middleware that appends TUS headers.
                 .wrap(

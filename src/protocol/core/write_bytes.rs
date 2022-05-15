@@ -1,4 +1,9 @@
-use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
+use actix_web::{
+    http::header::{CacheControl, CacheDirective},
+    web,
+    web::Bytes,
+    HttpRequest, HttpResponse,
+};
 
 #[cfg(feature = "hashers")]
 use crate::utils::hashes::verify_chunk_checksum;
@@ -136,6 +141,7 @@ pub async fn write_bytes(
 
     Ok(HttpResponse::NoContent()
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
+        .insert_header(CacheControl(vec![CacheDirective::NoCache]))
         .finish())
 }
 
@@ -145,7 +151,7 @@ mod tests {
     use actix_web::{
         http::StatusCode,
         test::{call_service, init_service, TestRequest},
-        web, App,
+        App,
     };
 
     #[actix_rt::test]
@@ -154,10 +160,7 @@ mod tests {
     /// This test creates file and writes bytes to it.
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -195,10 +198,7 @@ mod tests {
     /// file's length while writing bytes to it.
     async fn success_update_file_length() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = None;
         file.deferred_size = true;
@@ -238,10 +238,7 @@ mod tests {
     /// is less than current offset, error is thrown.
     async fn new_file_length_lt_offset() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = None;
         file.deferred_size = true;
@@ -265,10 +262,7 @@ mod tests {
     /// error is thrown.
     async fn new_file_length_size_already_known() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.deferred_size = false;
@@ -291,10 +285,7 @@ mod tests {
     /// wrong status code is returned.
     async fn no_content_header() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -312,10 +303,7 @@ mod tests {
     /// Tests that method will return error if no offset header specified.
     async fn no_offset_header() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -333,10 +321,7 @@ mod tests {
     /// Tests that method will return error if wrong offset is passed.
     async fn wrong_offset_header() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -355,10 +340,7 @@ mod tests {
     /// Tests that method would return error if file was already uploaded.
     async fn final_upload() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.is_final = true;
         state.info_storage.set_info(&file, false).await.unwrap();
@@ -376,10 +358,7 @@ mod tests {
     /// Tests that method would return 404 if file was saved in other storage.
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.storage = "unknown".into();
         state.info_storage.set_info(&file, false).await.unwrap();
@@ -398,10 +377,7 @@ mod tests {
     /// file if it's offset already equal to length.
     async fn frozen_file() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.offset = 10;
         file.length = Some(10);
@@ -421,10 +397,7 @@ mod tests {
     /// unknown file_id is passed.
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::patch()
             .uri(state.config.file_url("unknown").as_str())
             .insert_header(("Upload-Offset", "0"))
@@ -439,10 +412,7 @@ mod tests {
     /// Tests checksum validation.
     async fn wrong_checksum() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file = state.create_test_file().await;
         file.offset = 0;
         file.length = Some(10);

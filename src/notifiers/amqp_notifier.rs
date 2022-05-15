@@ -14,6 +14,7 @@ use strum::IntoEnumIterator;
 use tokio_amqp::LapinTokioExt;
 
 #[allow(clippy::struct_excessive_bools)]
+#[derive(Clone)]
 pub struct DeclareOptions {
     pub declare_exchange: bool,
     pub durable_exchange: bool,
@@ -21,6 +22,7 @@ pub struct DeclareOptions {
     pub durable_queues: bool,
 }
 
+#[derive(Clone)]
 pub struct AMQPNotifier {
     exchange_name: String,
     pool: Pool<RMQConnectionManager>,

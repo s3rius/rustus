@@ -46,17 +46,14 @@ mod tests {
     use actix_web::{
         http::StatusCode,
         test::{call_service, init_service, TestRequest},
-        web, App,
+        App,
     };
     use std::path::PathBuf;
 
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let file_info = state.create_test_file().await;
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
@@ -74,10 +71,7 @@ mod tests {
     #[actix_rt::test]
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::delete()
             .param("file_id", "not_exists")
             .to_request();
@@ -88,10 +82,7 @@ mod tests {
     #[actix_rt::test]
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = "unknown_storage".into();
         state

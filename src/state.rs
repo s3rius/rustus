@@ -2,6 +2,7 @@
 use crate::info_storages::FileInfo;
 use crate::{InfoStorage, NotificationManager, RustusConf, Storage};
 
+#[derive(Clone)]
 pub struct State {
     pub config: RustusConf,
     pub data_storage: Box<dyn Storage + Send + Sync>,
@@ -56,12 +57,6 @@ impl State {
             ]
             .into_iter(),
         );
-        Self::from_config_test(config).await
-    }
-
-    #[cfg(test)]
-    pub async fn test_clone(&self) -> Self {
-        let config = self.config.clone();
         Self::from_config_test(config).await
     }
 

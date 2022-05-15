@@ -1,12 +1,13 @@
 use crate::{errors::RustusResult, info_storages::FileInfo};
 use async_trait::async_trait;
+use dyn_clone::DynClone;
 
 /// Trait for every info storage.
 ///
 /// This trait defines required functions
 /// for building your own info storage.
 #[async_trait]
-pub trait InfoStorage {
+pub trait InfoStorage: DynClone {
     /// Prepare storage for storing files.
     ///
     /// In this function you can prepare
@@ -39,3 +40,5 @@ pub trait InfoStorage {
     /// associated with the given `file_id`.
     async fn remove_info(&self, file_id: &str) -> RustusResult<()>;
 }
+
+dyn_clone::clone_trait_object!(InfoStorage);
