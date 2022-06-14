@@ -131,7 +131,7 @@ pub async fn create_file(
             .config
             .notification_opts
             .hooks_format
-            .format(&request, &file_info)?;
+            .format(&request, &file_info);
         let headers = request.headers();
         state
             .notification_manager
@@ -208,7 +208,7 @@ pub async fn create_file(
             .config
             .notification_opts
             .hooks_format
-            .format(&request, &file_info)?;
+            .format(&request, &file_info);
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.

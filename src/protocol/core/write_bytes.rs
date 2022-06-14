@@ -124,7 +124,7 @@ pub async fn write_bytes(
             .config
             .notification_opts
             .hooks_format
-            .format(&request, &file_info)?;
+            .format(&request, &file_info);
         let headers = request.headers().clone();
         tokio::task::spawn_local(async move {
             state
