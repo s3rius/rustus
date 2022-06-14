@@ -1,11 +1,9 @@
-use crate::{errors::RustusResult, info_storages::FileInfo};
-use actix_web::HttpRequest;
+use crate::{from_str, info_storages::FileInfo};
+use actix_web::{http::header::HeaderMap, HttpRequest};
 use derive_more::{Display, From};
 use serde::Serialize;
-use serde_json::{Map, Value};
+use serde_json::{json, Value};
 use std::collections::HashMap;
-
-use crate::from_str;
 use strum::EnumIter;
 
 #[derive(Clone, Debug, Eq, Display, From, PartialEq, EnumIter)]
@@ -19,7 +17,7 @@ pub enum Format {
 from_str!(Format, "format");
 
 impl Format {
-    pub fn format(&self, request: &HttpRequest, file_info: &FileInfo) -> RustusResult<String> {
+    pub fn format(&self, request: &HttpRequest, file_info: &FileInfo) -> String {
         match self {
             Self::Default => default_format(request, file_info),
             Self::Tusd => tusd_format(request, file_info),
@@ -70,30 +68,14 @@ impl From<FileInfo> for TusdFileInfo {
     }
 }
 
-/// Turn request into `serde_json::Value`.
+/// Transforms headersmap to `HashMap`.
 ///
-/// This function is used by different formats.
-fn serialize_request(
-    request: &HttpRequest,
-    method_str: String,
-    remote_addr_str: String,
-    headers_str: String,
-    use_arrays: bool,
-) -> Value {
-    let mut map = Map::new();
-    map.insert("URI".into(), Value::String(request.uri().to_string()));
-    map.insert(method_str, Value::String(request.method().to_string()));
-    map.insert(
-        remote_addr_str,
-        Value::String(
-            request
-                .connection_info()
-                .realip_remote_addr()
-                .map_or_else(String::new, String::from),
-        ),
-    );
-    let mut headers_map = Map::new();
-    for (name, value) in request.headers() {
+/// Keys of the resulting map are Strings,
+/// Values are serde values. It ca be either string values or
+/// arrays.
+fn headers_to_value_map(headers: &HeaderMap, use_arrays: bool) -> HashMap<String, Value> {
+    let mut headers_map = HashMap::new();
+    for (name, value) in headers.iter() {
         if let Ok(header_val) = value.to_str().map(String::from) {
             if use_arrays {
                 headers_map.insert(
@@ -105,27 +87,24 @@ fn serialize_request(
             }
         }
     }
-    map.insert(headers_str, Value::Object(headers_map));
-    Value::Object(map)
+    headers_map
 }
 
 /// Default format is specific for Rustus.
 ///
 /// This format is a simple serialized `FileInfo` and some parts of the request.
-pub fn default_format(request: &HttpRequest, file_info: &FileInfo) -> RustusResult<String> {
-    let mut result_map = Map::new();
-    result_map.insert("upload".into(), serde_json::to_value(file_info)?);
-    result_map.insert(
-        "request".into(),
-        serialize_request(
-            request,
-            "method".into(),
-            "remote_addr".into(),
-            "headers".into(),
-            false,
-        ),
-    );
-    Ok(Value::Object(result_map).to_string())
+pub fn default_format(request: &HttpRequest, file_info: &FileInfo) -> String {
+    let remote_addr = request.connection_info().peer_addr().map(String::from);
+    let value = json!({
+        "upload": file_info,
+        "request": {
+            "URI": request.uri().to_string(),
+            "method": request.method().to_string(),
+            "remote_addr": remote_addr,
+            "headers": headers_to_value_map(request.headers(), false)
+        }
+    });
+    value.to_string()
 }
 
 /// This format follows TUSD hooks.
@@ -135,22 +114,16 @@ pub fn default_format(request: &HttpRequest, file_info: &FileInfo) -> RustusResu
 ///
 /// Generally speaking, it's almost the same as the default format,
 /// but some variables are ommited and headers are added to the request.
-pub fn tusd_format(request: &HttpRequest, file_info: &FileInfo) -> RustusResult<String> {
-    let mut result_map = Map::new();
-
-    result_map.insert(
-        "Upload".into(),
-        serde_json::to_value(TusdFileInfo::from(file_info.clone()))?,
-    );
-    result_map.insert(
-        "HTTPRequest".into(),
-        serialize_request(
-            request,
-            "Method".into(),
-            "RemoteAddr".into(),
-            "Header".into(),
-            true,
-        ),
-    );
-    Ok(Value::Object(result_map).to_string())
+pub fn tusd_format(request: &HttpRequest, file_info: &FileInfo) -> String {
+    let remote_addr = request.connection_info().peer_addr().map(String::from);
+    let value = json!({
+        "Upload": file_info,
+        "HTTPRequest": {
+            "URI": request.uri().to_string(),
+            "Method": request.method().to_string(),
+            "RemoteAddr": remote_addr,
+            "Header": headers_to_value_map(request.headers(), false)
+        }
+    });
+    value.to_string()
 }

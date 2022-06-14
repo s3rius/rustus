@@ -1,6 +1,6 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use actix_web::{
     dev::{Server, Service},
@@ -79,7 +79,6 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
     let port = state.config.port;
     let workers = state.config.workers;
-    let state_data: web::Data<State> = web::Data::from(Arc::new(state));
     let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
         .endpoint("/metrics")
         .build()
@@ -104,7 +103,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         App::new()
             .app_data(web::Data::new(active_uploads.clone()))
             .app_data(web::Data::new(file_sizes.clone()))
-            .configure(rustus_service(state_data.clone()))
+            .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
             // Middleware that overrides method of a request if

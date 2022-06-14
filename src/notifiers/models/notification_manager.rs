@@ -10,6 +10,7 @@ use crate::{
 use actix_web::http::header::HeaderMap;
 use log::debug;
 
+#[derive(Clone)]
 pub struct NotificationManager {
     notifiers: Vec<Box<dyn Notifier + Send + Sync>>,
 }

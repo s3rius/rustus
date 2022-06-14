@@ -67,6 +67,8 @@ pub enum RustusError {
     WrongHeaderValue,
     #[error("Metrics error: {0}")]
     PrometheusError(#[from] prometheus::Error),
+    #[error("Blocking error: {0}")]
+    BlockingError(#[from] actix_web::error::BlockingError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

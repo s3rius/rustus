@@ -8,6 +8,7 @@ use log::debug;
 use reqwest::Client;
 use std::time::Duration;
 
+#[derive(Clone)]
 pub struct HttpNotifier {
     urls: Vec<String>,
     client: Client,

@@ -70,20 +70,13 @@ Available variables:
 * `{day}` - current day number from 1 to 31;
 * `{hour}` - hour number from 0 to 23;
 * `{minute}` - minute number from 0 to 59;
-* `{env[ENV_NAME]}` - environment variable where `ENV_NAME` is name of your variable.
 
-!!! note
-
-    All environment variables are saved in memory during rustus startup.
-    So you cannot change variable dynamically. Even if you change env used in
-    structure pattern it won't change.
-
-For example if you use `{env[HOSTNAME]}/{year}/{month}/{day}` as your dir-structure, rustus stores files like:
+For example if you use `files/{year}/{month}/{day}` as your dir-structure, rustus stores files like:
 
 ``` bash
 $ tree data
 data
-└── rtus-68cb5b8746-5mgw9
+└── files
     └── 2022
         └── 1
             └── 8
