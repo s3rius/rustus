@@ -1,7 +1,8 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
+use actix_cors::Cors;
 use actix_web::{
     dev::{Server, Service},
     http::Method,
@@ -14,6 +15,7 @@ use fern::{
 use log::{error, LevelFilter};
 
 use config::RustusConf;
+use wildmatch::WildMatch;
 
 use crate::{
     errors::{RustusError, RustusResult},
@@ -61,6 +63,41 @@ fn greeting(app_conf: &RustusConf) {
     eprintln!();
 }
 
+/// Create CORS rules for the server.
+///
+/// CORS rules are applied to every handler.
+///
+/// If the origins vector is empty all origins are
+/// welcome, otherwise it will create a wildcard match for
+/// every host.
+fn create_cors(origins: Vec<String>) -> Cors {
+    let mut cors = Cors::default()
+        .allowed_methods(vec!["OPTIONS", "GET", "HEAD", "POST", "PATCH", "DELETE"])
+        .allowed_headers(vec![
+            "Content-Type",
+            "Upload-Offset",
+            "Upload-Checksum",
+            "Upload-Length",
+            "Upload-Metadata",
+            "Upload-Concat",
+            "Upload-Defer-Length",
+        ]);
+
+    // We allow any origin by default if no origin is specified.
+    if origins.is_empty() {
+        return cors.allow_any_origin();
+    }
+
+    // Adding origins.
+    for origin in origins {
+        cors = cors.allowed_origin_fn(move |request_origin, _| {
+            WildMatch::new(origin.clone().as_str()) == request_origin.to_str().unwrap_or_default()
+        });
+    }
+
+    cors
+}
+
 /// Creates Actix server.
 ///
 /// This function is parametrized with
@@ -78,8 +115,8 @@ fn greeting(app_conf: &RustusConf) {
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
     let port = state.config.port;
+    let cors_hosts = state.config.cors.clone();
     let workers = state.config.workers;
-    let state_data: web::Data<State> = web::Data::from(Arc::new(state));
     let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
         .endpoint("/metrics")
         .build()
@@ -104,9 +141,10 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         App::new()
             .app_data(web::Data::new(active_uploads.clone()))
             .app_data(web::Data::new(file_sizes.clone()))
-            .configure(rustus_service(state_data.clone()))
+            .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
+            .wrap(create_cors(cors_hosts.clone()))
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.
             .wrap_fn(|mut req, srv| {

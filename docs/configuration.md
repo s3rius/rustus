@@ -21,6 +21,12 @@ Also you can configure number of actix `workers` that handle connections.
 
 `--workers` by default is euqal to number of physical CPU cores. Edit it carefully.
 
+`--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
+You can define which hosts are allowed for your particular application.
+
+For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
+like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
+
 === "CLI"
 
     ``` bash
@@ -30,6 +36,7 @@ Also you can configure number of actix `workers` that handle connections.
         --max-body-size 1000000 \
         --url "/files" \
         --log-level "INFO"
+        --cors "my.*.domain.com,your.*.domain.com"
     ```
 
 === "ENV"
@@ -41,6 +48,7 @@ Also you can configure number of actix `workers` that handle connections.
     export RUSTUS_MAX_BODY_SIZE="1000000"
     export RUSTUS_URL="/files"
     export RUSTUS_LOG_LEVEL="INFO"
+    export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
 
     rustus
     ```
@@ -70,20 +78,13 @@ Available variables:
 * `{day}` - current day number from 1 to 31;
 * `{hour}` - hour number from 0 to 23;
 * `{minute}` - minute number from 0 to 59;
-* `{env[ENV_NAME]}` - environment variable where `ENV_NAME` is name of your variable.
 
-!!! note
-
-    All environment variables are saved in memory during rustus startup.
-    So you cannot change variable dynamically. Even if you change env used in
-    structure pattern it won't change.
-
-For example if you use `{env[HOSTNAME]}/{year}/{month}/{day}` as your dir-structure, rustus stores files like:
+For example if you use `files/{year}/{month}/{day}` as your dir-structure, rustus stores files like:
 
 ``` bash
 $ tree data
 data
-└── rtus-68cb5b8746-5mgw9
+└── files
     └── 2022
         └── 1
             └── 8

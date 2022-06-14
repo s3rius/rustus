@@ -7,6 +7,7 @@ use crate::{
     info_storages::{FileInfo, InfoStorage},
 };
 
+#[derive(Clone)]
 pub struct RedisStorage {
     pool: Pool<RedisConnectionManager>,
 }

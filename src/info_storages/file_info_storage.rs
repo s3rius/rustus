@@ -16,6 +16,7 @@ use crate::{
     info_storages::{FileInfo, InfoStorage},
 };
 
+#[derive(Clone)]
 pub struct FileInfoStorage {
     info_dir: PathBuf,
 }
