@@ -21,6 +21,12 @@ Also you can configure number of actix `workers` that handle connections.
 
 `--workers` by default is euqal to number of physical CPU cores. Edit it carefully.
 
+`--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
+You can define which hosts are allowed for your particular application.
+
+For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
+like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
+
 === "CLI"
 
     ``` bash
@@ -30,6 +36,7 @@ Also you can configure number of actix `workers` that handle connections.
         --max-body-size 1000000 \
         --url "/files" \
         --log-level "INFO"
+        --cors "my.*.domain.com,your.*.domain.com"
     ```
 
 === "ENV"
@@ -41,7 +48,7 @@ Also you can configure number of actix `workers` that handle connections.
     export RUSTUS_MAX_BODY_SIZE="1000000"
     export RUSTUS_URL="/files"
     export RUSTUS_LOG_LEVEL="INFO"
-
+    export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
     rustus
     ```
 

@@ -31,6 +31,8 @@ bytes = "^1.1.0"
 prometheus = "^0.13.0"
 actix-web-prom = "^0.6.0"
 dyn-clone = "^1.0.5"
+actix-cors = "0.6.1"
+wildmatch = "2.1.0"
 
 
 [dependencies.digest]
