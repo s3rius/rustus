@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use log::debug;
 use tokio::process::Command;
 
+#[derive(Clone)]
 pub struct FileNotifier {
     pub command: String,
 }

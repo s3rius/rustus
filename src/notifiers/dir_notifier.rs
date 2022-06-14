@@ -9,6 +9,7 @@ use log::debug;
 use std::path::PathBuf;
 use tokio::process::Command;
 
+#[derive(Clone)]
 pub struct DirNotifier {
     pub dir: PathBuf,
 }

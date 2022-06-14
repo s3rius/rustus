@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use rbatis::{crud::CRUD, crud_table, db::DBPoolOptions, rbatis::Rbatis};
@@ -25,8 +25,9 @@ impl TryFrom<&FileInfo> for DbModel {
     }
 }
 
+#[derive(Clone)]
 pub struct DBInfoStorage {
-    db: Rbatis,
+    db: Arc<Rbatis>,
 }
 
 impl DBInfoStorage {
@@ -35,7 +36,7 @@ impl DBInfoStorage {
         let mut opts = DBPoolOptions::new();
         opts.connect_timeout = Duration::new(2, 0);
         db.link_opt(dsn, opts).await?;
-        Ok(Self { db })
+        Ok(Self { db: Arc::new(db) })
     }
 }
 

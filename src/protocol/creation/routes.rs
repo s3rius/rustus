@@ -131,7 +131,7 @@ pub async fn create_file(
             .config
             .notification_opts
             .hooks_format
-            .format(&request, &file_info)?;
+            .format(&request, &file_info);
         let headers = request.headers();
         state
             .notification_manager
@@ -208,7 +208,7 @@ pub async fn create_file(
             .config
             .notification_opts
             .hooks_format
-            .format(&request, &file_info)?;
+            .format(&request, &file_info);
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
@@ -241,10 +241,7 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .insert_header(("Upload-Length", 100))
@@ -269,10 +266,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_with_bytes() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let test_data = "memes";
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
@@ -300,10 +294,7 @@ mod tests {
     #[actix_rt::test]
     async fn with_bytes_wrong_content_type() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let test_data = "memes";
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
@@ -331,10 +322,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_defer_size() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .insert_header(("Upload-Defer-Length", "1"))
@@ -359,10 +347,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_partial_upload() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .insert_header(("Upload-Length", 100))
@@ -389,10 +374,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_final_upload() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let mut part1 = state.create_test_file().await;
         let mut part2 = state.create_test_file().await;
         part1.is_partial = true;
@@ -434,10 +416,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_with_metadata() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .insert_header(("Upload-Length", 100))
@@ -472,10 +451,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_with_metadata_wrong_encoding() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .insert_header(("Upload-Length", 100))
@@ -506,10 +482,7 @@ mod tests {
     #[actix_rt::test]
     async fn no_length_header() {
         let state = State::test_new().await;
-        let mut rustus = init_service(
-            App::new().configure(rustus_service(web::Data::new(state.test_clone().await))),
-        )
-        .await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
             .uri(state.config.base_url().as_str())
             .to_request();

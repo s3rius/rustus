@@ -2,10 +2,11 @@ use crate::{errors::RustusResult, info_storages::FileInfo};
 use actix_files::NamedFile;
 use async_trait::async_trait;
 use bytes::Bytes;
+use dyn_clone::DynClone;
 use std::fmt::Display;
 
 #[async_trait]
-pub trait Storage: Display {
+pub trait Storage: Display + DynClone {
     /// Prepare storage before starting up server.
     ///
     /// Function to check if configuration is correct
@@ -77,3 +78,5 @@ pub trait Storage: Display {
     /// `file_info` - info about current file.
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()>;
 }
+
+dyn_clone::clone_trait_object!(Storage);

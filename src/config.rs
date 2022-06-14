@@ -204,6 +204,12 @@ pub struct RustusConf {
     #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,
 
+    /// Allowed hosts for CORS protocol.
+    ///
+    /// By default all hosts are allowed.
+    #[structopt(long, env = "RUSTUS_CORS", use_delimiter = true)]
+    pub cors: Vec<String>,
+
     /// Maximum payload size.
     ///
     /// This limit used to reduce amount of consumed memory.

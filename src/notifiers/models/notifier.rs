@@ -3,9 +3,10 @@ use actix_web::http::header::HeaderMap;
 
 use crate::notifiers::Hook;
 use async_trait::async_trait;
+use dyn_clone::DynClone;
 
 #[async_trait]
-pub trait Notifier {
+pub trait Notifier: DynClone {
     async fn prepare(&mut self) -> RustusResult<()>;
     async fn send_message(
         &self,
@@ -14,3 +15,5 @@ pub trait Notifier {
         headers_map: &HeaderMap,
     ) -> RustusResult<()>;
 }
+
+dyn_clone::clone_trait_object!(Notifier);
