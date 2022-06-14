@@ -49,6 +49,7 @@ like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other 
     export RUSTUS_URL="/files"
     export RUSTUS_LOG_LEVEL="INFO"
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
+
     rustus
     ```
 

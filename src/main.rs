@@ -66,7 +66,10 @@ fn greeting(app_conf: &RustusConf) {
 /// Create CORS rules for the server.
 ///
 /// CORS rules are applied to every handler.
-/// For now it defines all possible request
+///
+/// If the origins vector is empty all origins are
+/// welcome, otherwise it will create a wildcard match for
+/// every host.
 fn create_cors(origins: Vec<String>) -> Cors {
     let mut cors = Cors::default()
         .allowed_methods(vec!["OPTIONS", "GET", "HEAD", "POST", "PATCH", "DELETE"])
