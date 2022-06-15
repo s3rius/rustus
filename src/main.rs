@@ -91,7 +91,19 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
             "X-HTTP-Method-Override",
         ])
         .allowed_headers(additional_headers.into_iter())
-        .expose_any_header();
+        .expose_headers(vec![
+            "Location",
+            "Tus-Version",
+            "Tus-Resumable",
+            "Tus-Max-Size",
+            "Tus-Extension",
+            "Upload-Length",
+            "Upload-Metadata",
+            "Upload-Defer-Length",
+            "Upload-Concat",
+            "Upload-Offset",
+        ])
+        .max_age(86400);
 
     // We allow any origin by default if no origin is specified.
     if origins.is_empty() {
