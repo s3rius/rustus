@@ -70,7 +70,7 @@ fn greeting(app_conf: &RustusConf) {
 /// If the origins vector is empty all origins are
 /// welcome, otherwise it will create a wildcard match for
 /// every host.
-fn create_cors(origins: Vec<String>) -> Cors {
+fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
     let mut cors = Cors::default()
         .allowed_methods(vec!["OPTIONS", "GET", "HEAD", "POST", "PATCH", "DELETE"])
         .allowed_headers(vec![
@@ -81,7 +81,17 @@ fn create_cors(origins: Vec<String>) -> Cors {
             "Upload-Metadata",
             "Upload-Concat",
             "Upload-Defer-Length",
-        ]);
+            "Tus-Resumable",
+            "Tus-Version",
+            "X-HTTP-Method-Override",
+            "Authorization",
+            "Origin",
+            "X-Requested-With",
+            "X-Request-ID",
+            "X-HTTP-Method-Override",
+        ])
+        .allowed_headers(additional_headers.into_iter())
+        .expose_any_header();
 
     // We allow any origin by default if no origin is specified.
     if origins.is_empty() {
@@ -117,6 +127,14 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     let port = state.config.port;
     let cors_hosts = state.config.cors.clone();
     let workers = state.config.workers;
+    #[cfg(feature = "http_notifier")]
+    let proxy_headers = state
+        .config
+        .notification_opts
+        .hooks_http_proxy_headers
+        .clone();
+    #[cfg(not(feature = "http_notifier"))]
+    let proxy_headers = vec![];
     let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
         .endpoint("/metrics")
         .build()
@@ -144,7 +162,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
-            .wrap(create_cors(cors_hosts.clone()))
+            .wrap(create_cors(cors_hosts.clone(), proxy_headers.clone()))
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.
             .wrap_fn(|mut req, srv| {
