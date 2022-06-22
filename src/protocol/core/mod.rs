@@ -18,7 +18,7 @@ pub fn add_extension(web_app: &mut web::ServiceConfig) {
         .service(
             // PATCH /base/{file_id}
             // Main URL for uploading files.
-            web::resource("")
+            web::resource("/")
                 .name("core:server_info")
                 .guard(guard::Options())
                 .to(server_info::server_info),
@@ -26,7 +26,7 @@ pub fn add_extension(web_app: &mut web::ServiceConfig) {
         .service(
             // PATCH /base/{file_id}
             // Main URL for uploading files.
-            web::resource("{file_id}")
+            web::resource("/{file_id}/")
                 .name("core:write_bytes")
                 .guard(guard::Patch())
                 .to(write_bytes::write_bytes),
@@ -34,7 +34,7 @@ pub fn add_extension(web_app: &mut web::ServiceConfig) {
         .service(
             // HEAD /base/{file_id}
             // Main URL for getting info about files.
-            web::resource("{file_id}")
+            web::resource("/{file_id}/")
                 .name("core:file_info")
                 .guard(guard::Head())
                 // Header to prevent the client and/or proxies from caching the response.

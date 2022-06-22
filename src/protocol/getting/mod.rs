@@ -12,7 +12,7 @@ mod routes;
 pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app.service(
         // GET /base/file
-        web::resource("{file_id}")
+        web::resource("/{file_id}/")
             .name("getting:get")
             .guard(guard::Get())
             .to(routes::get_file),
