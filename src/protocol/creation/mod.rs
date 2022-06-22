@@ -10,7 +10,7 @@ pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app.service(
         // Post /base
         // URL for creating files.
-        web::resource("")
+        web::resource("/")
             .name("creation:create_file")
             .guard(guard::Post())
             .to(routes::create_file),

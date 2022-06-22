@@ -243,7 +243,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .to_request();
         let resp = call_service(&mut rustus, request).await;
@@ -256,7 +256,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -269,7 +270,7 @@ mod tests {
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let test_data = "memes";
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload(web::Bytes::from(test_data))
@@ -284,7 +285,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -297,7 +299,7 @@ mod tests {
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let test_data = "memes";
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header(("Content-Type", "random"))
             .set_payload(web::Bytes::from(test_data))
@@ -312,7 +314,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -324,7 +327,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Defer-Length", "1"))
             .to_request();
         let resp = call_service(&mut rustus, request).await;
@@ -337,7 +340,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, None);
@@ -349,7 +353,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header(("Upload-Concat", "partial"))
             .to_request();
@@ -363,7 +367,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -389,7 +394,7 @@ mod tests {
         state.info_storage.set_info(&part2, false).await.unwrap();
 
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header((
                 "Upload-Concat",
@@ -406,7 +411,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(200));
@@ -418,7 +424,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header((
                 "Upload-Metadata",
@@ -439,7 +445,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -453,7 +460,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .insert_header((
                 "Upload-Metadata",
@@ -470,7 +477,8 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .last()
+            .rev()
+            .nth(1)
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -484,7 +492,7 @@ mod tests {
         let state = State::test_new().await;
         let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
         let request = TestRequest::post()
-            .uri(state.config.base_url().as_str())
+            .uri(state.config.test_url().as_str())
             .to_request();
         let resp = call_service(&mut rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
