@@ -39,7 +39,7 @@ mod tests {
             Extensions::Concatenation,
             Extensions::Termination,
         ];
-        let request = TestRequest::with_uri(state.config.base_url().as_str())
+        let request = TestRequest::with_uri(state.config.test_url().as_str())
             .method(Method::OPTIONS)
             .to_request();
         let response = call_service(&mut rustus, request).await;

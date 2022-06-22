@@ -56,7 +56,7 @@ fn greeting(app_conf: &RustusConf) {
     let rustus_logo = include_str!("../imgs/rustus_startup_logo.txt");
     eprintln!("\n\n{}", rustus_logo);
     eprintln!("Welcome to rustus!");
-    eprintln!("Base URL: {}", app_conf.base_url());
+    eprintln!("Base URL: /{}", app_conf.base_url());
     eprintln!("Available extensions: {}", extensions);
     eprintln!("Enabled hooks: {}", hooks);
     eprintln!();

@@ -275,21 +275,19 @@ impl RustusConf {
 
     /// Base API url.
     pub fn base_url(&self) -> String {
-        format!(
-            "/{}",
-            self.url.strip_prefix('/').unwrap_or(self.url.as_str())
-        )
+        let stripped_prefix = self.url.strip_prefix('/').unwrap_or(self.url.as_str());
+        String::from(stripped_prefix.strip_suffix('/').unwrap_or(stripped_prefix))
     }
 
     /// Helper for generating URI for test files.
     #[cfg(test)]
     pub fn file_url(&self, file_id: &str) -> String {
-        let base_url = self.base_url();
-        format!(
-            "{}/{}",
-            base_url.strip_suffix('/').unwrap_or(base_url.as_str()),
-            file_id
-        )
+        format!("/{}/{}/", self.base_url(), file_id)
+    }
+
+    #[cfg(test)]
+    pub fn test_url(&self) -> String {
+        format!("/{}/", self.base_url())
     }
 
     /// Check if hook is enabled by user.
