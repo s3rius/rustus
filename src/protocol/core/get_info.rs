@@ -33,7 +33,7 @@ pub async fn get_file_info(
             .clone()
             .unwrap()
             .iter()
-            .map(|file| format!("/{}/{}/", state.config.base_url(), file.as_str()))
+            .map(|file| format!("/{}/{}", state.config.base_url(), file.as_str()))
             .collect::<Vec<String>>()
             .join(" ");
         builder.insert_header(("Upload-Concat", format!("final; {}", parts)));
@@ -202,8 +202,8 @@ mod tests {
                 .unwrap(),
             format!(
                 "final; {} {}",
-                state.config.file_url("test1"),
-                state.config.file_url("test2")
+                state.config.file_url("test1").strip_suffix('/').unwrap(),
+                state.config.file_url("test2").strip_suffix('/').unwrap()
             )
             .as_str()
         );

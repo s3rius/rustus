@@ -224,7 +224,13 @@ pub async fn create_file(
     let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
 
     Ok(HttpResponse::Created()
-        .insert_header(("Location", upload_url.as_str()))
+        .insert_header((
+            "Location",
+            upload_url
+                .as_str()
+                .strip_suffix('/')
+                .unwrap_or(upload_url.as_str()),
+        ))
         .insert_header(("Upload-Offset", file_info.offset.to_string()))
         .finish())
 }
@@ -256,8 +262,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -285,8 +290,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -314,8 +318,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -340,8 +343,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, None);
@@ -367,8 +369,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -411,8 +412,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(200));
@@ -445,8 +445,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
@@ -477,8 +476,7 @@ mod tests {
             .to_str()
             .unwrap()
             .split('/')
-            .rev()
-            .nth(1)
+            .last()
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
