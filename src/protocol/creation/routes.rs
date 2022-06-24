@@ -118,7 +118,12 @@ pub async fn create_file(
     if concat_ext {
         if is_final {
             file_info.is_final = true;
-            file_info.parts = Some(get_upload_parts(&request));
+            let upload_parts = get_upload_parts(&request);
+            if upload_parts.is_empty() {
+                return Ok(HttpResponse::BadRequest()
+                    .body("Upload-Concat header has no parts to create final upload."));
+            }
+            file_info.parts = Some(upload_parts);
             file_info.deferred_size = false;
         }
         if is_partial {
@@ -203,7 +208,15 @@ pub async fn create_file(
 
     state.info_storage.set_info(&file_info, true).await?;
 
-    if state.config.hook_is_active(Hook::PostCreate) {
+    // It's more intuitive to send post-finish
+    // hook, when final upload is created.
+    // https://github.com/s3rius/rustus/issues/77
+    let mut post_hook = Hook::PostCreate;
+    if file_info.is_final {
+        post_hook = Hook::PostFinish;
+    }
+
+    if state.config.hook_is_active(post_hook) {
         let message = state
             .config
             .notification_opts
@@ -215,7 +228,7 @@ pub async fn create_file(
         tokio::task::spawn_local(async move {
             state
                 .notification_manager
-                .send_message(message, Hook::PostCreate, &headers)
+                .send_message(message, post_hook, &headers)
                 .await
         });
     }
@@ -417,6 +430,20 @@ mod tests {
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(200));
         assert!(file_info.is_final);
+    }
+
+    #[actix_rt::test]
+    async fn invalid_final_upload_no_parts() {
+        let state = State::test_new().await;
+        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+
+        let request = TestRequest::post()
+            .uri(state.config.test_url().as_str())
+            .insert_header(("Upload-Length", 100))
+            .insert_header(("Upload-Concat", "final;"))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
     #[actix_rt::test]

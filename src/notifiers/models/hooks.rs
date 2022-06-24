@@ -11,6 +11,8 @@ pub enum Hook {
     PostCreate,
     #[display(fmt = "post-receive")]
     PostReceive,
+    #[display(fmt = "pre-terminate")]
+    PreTerminate,
     #[display(fmt = "post-terminate")]
     PostTerminate,
     #[display(fmt = "post-finish")]
