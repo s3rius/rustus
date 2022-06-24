@@ -12,28 +12,33 @@ Rustus has different event types for different moments of an upload's lifecycle.
 * `pre-create` - This hook means that someone wants to create an upload;
 * `post-create` - someone successfully created an upload;
 * `post-receive` - someone uploaded a new part of an upload;
+* `pre-terminate` - someone wants to delete the upload;
 * `post-terminate` - someone deleted upload;
 * `post-finish` - someone finished uploading file.
 
 !!! note
 
-    Pre-create hook is very important.
-    If at least one of hooks fails, upload is canceled.
+    `Pre-create` and `Pre-terminate` hooks are very important.
+    If at least one of hooks fails, upload creation or removal is canceled.
 
     But AMQP hooks won't cancel the upload, since it's non blocking type of hooks.
+
+!!! warning
+    After creating final upload with concatenation extension,
+    you won't receive `post-create` hook, but `post-finish` instead.
 
 You can disable some hooks by using `--hooks` parameter.
 
 === "CLI"
 
     ``` bash
-    rustus --hooks "pre-create,post-create,post-receive,post-terminate,post-finish"
+    rustus --hooks "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish"
     ```
 
 === "ENV"
 
     ``` bash
-    export RUSTUS_HOOKS="pre-create,post-create,post-receive,post-terminate,post-finish"
+    export RUSTUS_HOOKS="pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish"
 
     rustus
     ```
