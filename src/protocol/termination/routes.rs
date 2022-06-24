@@ -20,6 +20,18 @@ pub async fn terminate(
         if file_info.storage != state.data_storage.to_string() {
             return Err(RustusError::FileNotFound);
         }
+        if state.config.hook_is_active(Hook::PreTerminate) {
+            let message = state
+                .config
+                .notification_opts
+                .hooks_format
+                .format(&request, &file_info);
+            let headers = request.headers();
+            state
+                .notification_manager
+                .send_message(message, Hook::PreTerminate, headers)
+                .await?;
+        }
         state.info_storage.remove_info(file_id.as_str()).await?;
         state.data_storage.remove_file(&file_info).await?;
         if state.config.hook_is_active(Hook::PostTerminate) {

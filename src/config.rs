@@ -100,7 +100,7 @@ pub struct NotificationsOptions {
     /// Enabled hooks for notifications.
     #[structopt(
         long,
-        default_value = "pre-create,post-create,post-receive,post-terminate,post-finish",
+        default_value = "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish",
         env = "RUSTUS_HOOKS",
         use_delimiter = true
     )]
