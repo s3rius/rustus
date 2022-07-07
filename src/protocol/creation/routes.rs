@@ -212,7 +212,7 @@ pub async fn create_file(
     // hook, when final upload is created.
     // https://github.com/s3rius/rustus/issues/77
     let mut post_hook = Hook::PostCreate;
-    if file_info.is_final {
+    if file_info.is_final || Some(file_info.offset) == file_info.length {
         post_hook = Hook::PostFinish;
     }
 

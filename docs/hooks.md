@@ -27,6 +27,12 @@ Rustus has different event types for different moments of an upload's lifecycle.
     After creating final upload with concatenation extension,
     you won't receive `post-create` hook, but `post-finish` instead.
 
+!!! warning
+    If you uploaded a whole file within one request with
+    `creation-with-upload` extension,
+    you won't receive `post-create` hook, but `post-finish` instead.
+
+
 You can disable some hooks by using `--hooks` parameter.
 
 === "CLI"
