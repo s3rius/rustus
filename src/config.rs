@@ -106,6 +106,11 @@ pub struct NotificationsOptions {
     )]
     pub hooks: Vec<Hook>,
 
+    /// Use this option if you use rustus
+    /// behind any proxy. Like Nginx or Traefik.
+    #[structopt(long, env = "RUSTUS_BEHIND_PROXY")]
+    pub behind_proxy: bool,
+
     /// List of URLS to send webhooks to.
     #[cfg(feature = "http_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
