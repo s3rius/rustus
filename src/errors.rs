@@ -69,6 +69,8 @@ pub enum RustusError {
     PrometheusError(#[from] prometheus::Error),
     #[error("Blocking error: {0}")]
     BlockingError(#[from] actix_web::error::BlockingError),
+    #[error("HTTP hook error. Returned status: {0}")]
+    HTTPHookError(u16, String, Option<String>),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
@@ -84,9 +86,21 @@ impl From<RustusError> for Error {
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
         error!("{}", self);
-        HttpResponseBuilder::new(self.status_code())
-            .insert_header(("Content-Type", "text/html; charset=utf-8"))
-            .body(format!("{}", self))
+        match self {
+            RustusError::HTTPHookError(_, proxy_response, content_type) => {
+                HttpResponseBuilder::new(self.status_code())
+                    .insert_header((
+                        "Content-Type",
+                        content_type
+                            .clone()
+                            .unwrap_or_else(|| "text/plain; charset=utf-8".into()),
+                    ))
+                    .body(proxy_response.clone())
+            }
+            _ => HttpResponseBuilder::new(self.status_code())
+                .insert_header(("Content-Type", "text/html; charset=utf-8"))
+                .body(format!("{}", self)),
+        }
     }
 
     fn status_code(&self) -> StatusCode {
@@ -99,6 +113,9 @@ impl ResponseError for RustusError {
             | RustusError::UnknownHashAlgorithm
             | RustusError::WrongHeaderValue => StatusCode::BAD_REQUEST,
             RustusError::WrongChecksum => StatusCode::EXPECTATION_FAILED,
+            RustusError::HTTPHookError(status, _, _) => {
+                StatusCode::from_u16(*status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
+            }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

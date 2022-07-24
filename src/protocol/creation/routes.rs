@@ -132,11 +132,11 @@ pub async fn create_file(
     }
 
     if state.config.hook_is_active(Hook::PreCreate) {
-        let message = state
-            .config
-            .notification_opts
-            .hooks_format
-            .format(&request, &file_info);
+        let message = state.config.notification_opts.hooks_format.format(
+            &request,
+            &file_info,
+            state.config.notification_opts.behind_proxy,
+        );
         let headers = request.headers();
         state
             .notification_manager
@@ -217,11 +217,11 @@ pub async fn create_file(
     }
 
     if state.config.hook_is_active(post_hook) {
-        let message = state
-            .config
-            .notification_opts
-            .hooks_format
-            .format(&request, &file_info);
+        let message = state.config.notification_opts.hooks_format.format(
+            &request,
+            &file_info,
+            state.config.notification_opts.behind_proxy,
+        );
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
