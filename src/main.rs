@@ -174,6 +174,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         App::new()
             .app_data(web::Data::new(active_uploads.clone()))
             .app_data(web::Data::new(file_sizes.clone()))
+            .route("/health", web::get().to(routes::health_check))
             .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
             .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
@@ -190,7 +191,6 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                 }
                 srv.call(req)
             })
-            .route("/health", web::get().to(routes::health_check))
             // Default response for unknown requests.
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))
