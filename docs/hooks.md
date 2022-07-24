@@ -49,6 +49,27 @@ You can disable some hooks by using `--hooks` parameter.
     rustus
     ```
 
+## Proxies
+
+If you have rustus behind proxy like nginx, please use `--behind-proxy` parameter.
+This parameter helps rustus resolve ip addresses using `Forwarded` and `X-Forwarded-For`.
+
+This option disabled by default for security purposes unless you can be sure that the `Forwarded` and `X-Forwarded-For` headers cannot be spoofed by the client.
+
+=== "CLI"
+
+    ``` bash
+    rustus --behind-proxy "yes"
+    ```
+
+=== "ENV"
+
+    ``` bash
+    export RUSTUS_BEHIND_PROXY="yes"
+
+    rustus
+    ```
+
 
 ## Format
 
@@ -57,101 +78,653 @@ Format can be configured with `--hooks-format` parameter or `RUSTUS_HOOKS_FORMAT
 
 Available formats:
 
-* default
+* default (will be replaced by v2 in the future)
+* v2 (preferred format)
 * tusd
 
 === "default"
 
-    ``` json
-    {
-        "upload": {
-            "id": "",
-            "offset": 0,
-            "length": 39729945,
-            "path": null,
-            "created_at": 1641620821,
-            "deferred_size": false,
-            "metadata": {
-                "filename": "38MB_video.mp4",
-                "meme": "hehe2"
-            }
-        },
-        "request": {
-            "URI": "/files",
-            "method": "POST",
-            "remote_addr": "127.0.0.1",
-            "headers": {
-                "accept-encoding": "gzip, deflate",
-                "connection": "keep-alive",
-                "host": "localhost:1081",
-                "upload-metadata": "meme aGVoZTI=,filename MzhNQl92aWRlby5tcDQ=",
-                "tus-resumable": "1.0.0",
-                "content-length": "0",
-                "upload-length": "39729945",
-                "user-agent": "python-requests/2.26.0",
-                "accept": "*/*"
+    === "Example"
+
+        ``` json
+        {
+            "upload": {
+                "id": "3cd911fe-eba0-499a-b220-b1d1b947b80f",
+                "offset": 0,
+                "length": 220,
+                "path": null,
+                "created_at": 1658671969,
+                "deferred_size": false,
+                "is_partial": false,
+                "is_final": false,
+                "parts": null,
+                "storage": "file_storage",
+                "metadata": {
+                    "filename" "shrek2.mkv"
+                }
+            },
+            "request": {
+                "URI": "/files/",
+                "method": "POST",
+                "remote_addr": "127.0.0.1",
+                "headers": {
+                    "host": "rustus.localhost",
+                    "upload-length": "220",
+                    "user-agent": "curl/7.84.0",
+                    "accept": "*/*",
+                    "upload-metadata": "filename MTZNQl92aWRlby5tcDQ="
+                }
             }
         }
-    }
-    ```
+        ```
 
+    === "Pydantic models"
+
+        ```python
+        from datetime import datetime
+        from typing import Dict, Optional
+
+        from pydantic import BaseModel, IPvAnyAddress
+
+
+        class Upload(BaseModel):
+            """Information about the upload."""
+
+            id: str
+            offset: int
+            length: int
+            path: Optional[str]
+            # Actually it's an int,
+            # but pydantic can parse it as datetime.
+            created_at: datetime
+            deferred_size: bool
+            is_partial: bool
+            is_final: bool
+            parts: Optional[List[str]]
+            storage: str
+            metadata: Dict[str, str]
+
+
+        class Request(BaseModel):
+            """
+            Information about request.
+
+            This request was direct cause of hook invocation.
+            """
+
+            URI: str
+            method: str
+            remote_addr: Optional[IPvAnyAddress]
+            headers: Dict[str, str]
+
+
+        class Hook(BaseModel):
+            """Rustus hook."""
+
+            upload: Upload
+            request: Request
+
+        ```
+
+    === "JSON schema"
+
+        ```json
+        {
+            "title": "Hook",
+            "type": "object",
+            "properties": {
+                "upload": {
+                    "$ref": "#/definitions/Upload"
+                },
+                "request": {
+                    "$ref": "#/definitions/Request"
+                }
+            },
+            "required": [
+                "upload",
+                "request"
+            ],
+            "definitions": {
+                "Upload": {
+                    "title": "Upload",
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "title": "Id",
+                            "type": "string"
+                        },
+                        "offset": {
+                            "title": "Offset",
+                            "type": "integer"
+                        },
+                        "length": {
+                            "title": "Length",
+                            "type": "integer"
+                        },
+                        "path": {
+                            "title": "Path",
+                            "type": "string"
+                        },
+                        "created_at": {
+                            "title": "Created At",
+                            "type": "integer"
+                        },
+                        "deferred_size": {
+                            "title": "Deferred Size",
+                            "type": "boolean"
+                        },
+                        "is_partial": {
+                            "title": "Is Partial",
+                            "type": "boolean"
+                        },
+                        "is_final": {
+                            "title": "Is Final",
+                            "type": "boolean"
+                        },
+                        "parts": {
+                            "title": "Parts",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "storage": {
+                            "title": "Storage",
+                            "type": "string"
+                        },
+                        "metadata": {
+                            "title": "Metadata",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "offset",
+                        "length",
+                        "created_at",
+                        "deferred_size",
+                        "is_partial",
+                        "is_final",
+                        "storage",
+                        "metadata"
+                    ]
+                },
+                "Request": {
+                    "title": "Request",
+                    "type": "object",
+                    "properties": {
+                        "URI": {
+                            "title": "Uri",
+                            "type": "string"
+                        },
+                        "method": {
+                            "title": "Method",
+                            "type": "string"
+                        },
+                        "remote_addr": {
+                            "title": "Remote Addr",
+                            "type": "string",
+                            "format": "ipvanyaddress"
+                        },
+                        "headers": {
+                            "title": "Headers",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "URI",
+                        "method",
+                        "headers"
+                    ]
+                }
+            }
+        }
+        ```
+
+=== "v2"
+
+
+    === "Example"
+
+        ``` json
+        {
+            "upload": {
+                "id": "3cd911fe-eba0-499a-b220-b1d1b947b80f",
+                "offset": 0,
+                "length": 220,
+                "path": null,
+                "created_at": 1658671969,
+                "deferred_size": false,
+                "is_partial": false,
+                "is_final": false,
+                "parts": null,
+                "storage": "file_storage",
+                "metadata": {
+                    "filename" "shrek2.mkv"
+                }
+            },
+            "request": {
+                "uri": "/files/",
+                "method": "POST",
+                "remote_addr": "127.0.0.1",
+                "headers": {
+                    "host": "rustus.localhost",
+                    "upload-length": "220",
+                    "user-agent": "curl/7.84.0",
+                    "accept": "*/*",
+                    "upload-metadata": "filename MTZNQl92aWRlby5tcDQ="
+                }
+            }
+        }
+        ```
+
+    === "Pydantic models"
+
+        ```python
+        from datetime import datetime
+        from typing import Dict, Optional
+
+        from pydantic import BaseModel, IPvAnyAddress
+
+
+        class Upload(BaseModel):
+            """Information about the upload."""
+
+            id: str
+            offset: int
+            length: int
+            path: Optional[str]
+            # Actually it's an int,
+            # but pydantic can parse it as datetime.
+            created_at: datetime
+            deferred_size: bool
+            is_partial: bool
+            is_final: bool
+            parts: Optional[List[str]]
+            storage: str
+            metadata: Dict[str, str]
+
+
+        class Request(BaseModel):
+            """
+            Information about request.
+
+            This request was direct cause of hook invocation.
+            """
+
+            uri: str
+            method: str
+            remote_addr: Optional[IPvAnyAddress]
+            headers: Dict[str, str]
+
+
+        class Hook(BaseModel):
+            """Rustus hook."""
+
+            upload: Upload
+            request: Request
+
+        ```
+
+    === "JSON schema"
+
+        ```json
+        {
+            "title": "Hook",
+            "type": "object",
+            "properties": {
+                "upload": {
+                    "$ref": "#/definitions/Upload"
+                },
+                "request": {
+                    "$ref": "#/definitions/Request"
+                }
+            },
+            "required": [
+                "upload",
+                "request"
+            ],
+            "definitions": {
+                "Upload": {
+                    "title": "Upload",
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "title": "Id",
+                            "type": "string"
+                        },
+                        "offset": {
+                            "title": "Offset",
+                            "type": "integer"
+                        },
+                        "length": {
+                            "title": "Length",
+                            "type": "integer"
+                        },
+                        "path": {
+                            "title": "Path",
+                            "type": "string"
+                        },
+                        "created_at": {
+                            "title": "Created At",
+                            "type": "integer"
+                        },
+                        "deferred_size": {
+                            "title": "Deferred Size",
+                            "type": "boolean"
+                        },
+                        "is_partial": {
+                            "title": "Is Partial",
+                            "type": "boolean"
+                        },
+                        "is_final": {
+                            "title": "Is Final",
+                            "type": "boolean"
+                        },
+                        "parts": {
+                            "title": "Parts",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "storage": {
+                            "title": "Storage",
+                            "type": "string"
+                        },
+                        "metadata": {
+                            "title": "Metadata",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "offset",
+                        "length",
+                        "created_at",
+                        "deferred_size",
+                        "is_partial",
+                        "is_final",
+                        "storage",
+                        "metadata"
+                    ]
+                },
+                "Request": {
+                    "title": "Request",
+                    "type": "object",
+                    "properties": {
+                        "uri": {
+                            "title": "Uri",
+                            "type": "string"
+                        },
+                        "method": {
+                            "title": "Method",
+                            "type": "string"
+                        },
+                        "remote_addr": {
+                            "title": "Remote Addr",
+                            "type": "string",
+                            "format": "ipvanyaddress"
+                        },
+                        "headers": {
+                            "title": "Headers",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "uri",
+                        "method",
+                        "headers"
+                    ]
+                }
+            }
+        }
+        ```
 === "tusd"
 
-    ``` json
-    {
-        "Upload": {
-            "ID": "",
-            "Offset": 0,
-            "Size": 39729945,
-            "IsFinal": true,
-            "IsPartial": false,
-            "PartialUploads": null,
-            "SizeIsDeferred": false,
-            "Metadata": {
-                "filename": "38MB_video.mp4",
-                "meme": "hehe2"
+    === "Example"
+
+        ``` json
+        {
+            "Upload": {
+                "ID": "317e1429-61f3-4631-a480-c50207b69ee4",
+                "Offset": 0,
+                "Size": 16392985,
+                "IsFinal": false,
+                "IsPartial": false,
+                "PartialUploads": null,
+                "SizeIsDeferred": false,
+                "Metadata": {
+                    "filename": "shrek2.mkv"
+                },
+                "Storage": {
+                    "Type": "file_storage",
+                    "Path": null
+                }
             },
-            "Storage": {
-                "Type": "filestore",
-                "Path": null
-            }
-        },
-        "HTTPRequest": {
-            "URI": "/files",
-            "Method": "POST",
-            "RemoteAddr": "127.0.0.1",
-            "Header": {
-                "host": [
-                    "localhost:1081"
-                ],
-                "user-agent": [
-                    "python-requests/2.26.0"
-                ],
-                "accept": [
-                    "*/*"
-                ],
-                "content-length": [
-                    "0"
-                ],
-                "upload-metadata": [
-                    "meme aGVoZTI=,filename MzhNQl92aWRlby5tcDQ="
-                ],
-                "connection": [
-                    "keep-alive"
-                ],
-                "tus-resumable": [
-                    "1.0.0"
-                ],
-                "upload-length": [
-                    "39729945"
-                ],
-                "accept-encoding": [
-                    "gzip, deflate"
-                ]
+            "HTTPRequest": {
+                "URI": "/files/",
+                "Method": "POST",
+                "RemoteAddr": "127.0.0.1",
+                "Header": {
+                    "content-length": [
+                        "0"
+                    ],
+                    "upload-length": [
+                        "16392985"
+                    ],
+                    "user-agent": [
+                        "python-requests/2.27.1"
+                    ],
+                    "host": [
+                        "rustus.localhost"
+                    ],
+                    "accept": [
+                        "*/*"
+                    ],
+                    "upload-metadata": [
+                        "filename MTZNQl92aWRlby5tcDQ="
+                    ],
+                    "tus-resumable": [
+                        "1.0.0"
+                    ]
+                }
             }
         }
-    }
-    ```
+        ```
+    === "Pydantic models"
+
+        ```python
+        from typing import Dict, List, Optional
+
+        from pydantic import BaseModel, IPvAnyAddress
+
+
+        class Request(BaseModel):
+            """
+            Information about request.
+
+            This request was direct cause of hook invocation.
+            """
+
+            URI: str
+            Method: str
+            RemoteAddr: IPvAnyAddress
+            Header: Dict[str, List[str]]
+
+
+        class Storage(BaseModel):
+            """Information where upload is stored."""
+
+            Type: str
+            Path: Optional[str]
+
+
+        class Upload(BaseModel):
+            """Information about the upload."""
+
+            ID: str
+            Offset: int
+            Size: int
+            IsFinal: bool
+            IsPartial: bool
+            PartialUploads: Optional[List[str]]
+            SizeIsDeferred: bool
+            Metadata: Dict[str, str]
+            Storage: Storage
+
+
+        class Hook(BaseModel):
+            """Rustus hook."""
+
+            Upload: Upload
+            HTTPRequest: Request
+
+        ```
+
+    === "JSON schema"
+
+        ```json
+        {
+            "title": "Hook",
+            "type": "object",
+            "properties": {
+                "Upload": {
+                    "$ref": "#/definitions/Upload"
+                },
+                "HTTPRequest": {
+                    "$ref": "#/definitions/Request"
+                }
+            },
+            "required": [
+                "Upload",
+                "HTTPRequest"
+            ],
+            "definitions": {
+                "Storage": {
+                    "title": "Storage",
+                    "type": "object",
+                    "properties": {
+                        "Type": {
+                            "title": "Type",
+                            "type": "string"
+                        },
+                        "Path": {
+                            "title": "Path",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "Type"
+                    ]
+                },
+                "Upload": {
+                    "title": "Upload",
+                    "type": "object",
+                    "properties": {
+                        "ID": {
+                            "title": "Id",
+                            "type": "string"
+                        },
+                        "Offset": {
+                            "title": "Offset",
+                            "type": "integer"
+                        },
+                        "Size": {
+                            "title": "Size",
+                            "type": "integer"
+                        },
+                        "IsFinal": {
+                            "title": "Isfinal",
+                            "type": "boolean"
+                        },
+                        "IsPartial": {
+                            "title": "Ispartial",
+                            "type": "boolean"
+                        },
+                        "PartialUploads": {
+                            "title": "Partialuploads",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "SizeIsDeferred": {
+                            "title": "Sizeisdeferred",
+                            "type": "boolean"
+                        },
+                        "Metadata": {
+                            "title": "Metadata",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        },
+                        "Storage": {
+                            "$ref": "#/definitions/Storage"
+                        }
+                    },
+                    "required": [
+                        "ID",
+                        "Offset",
+                        "Size",
+                        "IsFinal",
+                        "IsPartial",
+                        "SizeIsDeferred",
+                        "Metadata",
+                        "Storage"
+                    ]
+                },
+                "Request": {
+                    "title": "Request",
+                    "type": "object",
+                    "properties": {
+                        "URI": {
+                            "title": "Uri",
+                            "type": "string"
+                        },
+                        "Method": {
+                            "title": "Method",
+                            "type": "string"
+                        },
+                        "RemoteAddr": {
+                            "title": "Remoteaddr",
+                            "type": "string",
+                            "format": "ipvanyaddress"
+                        },
+                        "Header": {
+                            "title": "Header",
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "required": [
+                        "URI",
+                        "Method",
+                        "RemoteAddr",
+                        "Header"
+                    ]
+                }
+            }
+        }
+        ```
 
 ## Hook types
 

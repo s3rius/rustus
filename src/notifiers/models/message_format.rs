@@ -12,15 +12,23 @@ pub enum Format {
     Default,
     #[display(fmt = "tusd")]
     Tusd,
+    #[display(fmt = "v2")]
+    V2,
 }
 
 from_str!(Format, "format");
 
 impl Format {
-    pub fn format(&self, request: &HttpRequest, file_info: &FileInfo) -> String {
+    pub fn format(
+        &self,
+        request: &HttpRequest,
+        file_info: &FileInfo,
+        behind_proxy: bool,
+    ) -> String {
         match self {
-            Self::Default => default_format(request, file_info),
-            Self::Tusd => tusd_format(request, file_info),
+            Self::Default => default_format(request, file_info, behind_proxy),
+            Self::Tusd => tusd_format(request, file_info, behind_proxy),
+            Self::V2 => rustus_format_v2(request, file_info, behind_proxy),
         }
     }
 }
@@ -48,21 +56,21 @@ struct TusdFileInfo {
     storage: TusdStorageInfo,
 }
 
-impl From<FileInfo> for TusdFileInfo {
-    fn from(file_info: FileInfo) -> Self {
+impl From<&FileInfo> for TusdFileInfo {
+    fn from(file_info: &FileInfo) -> Self {
         let deferred_size = file_info.length.is_none();
         Self {
-            id: file_info.id,
+            id: file_info.id.clone(),
             offset: file_info.offset,
             size: file_info.length,
             size_is_deferred: deferred_size,
             is_final: file_info.is_final,
             is_partial: file_info.is_partial,
-            partial_uploads: file_info.parts,
-            metadata: file_info.metadata,
+            partial_uploads: file_info.parts.clone(),
+            metadata: file_info.metadata.clone(),
             storage: TusdStorageInfo {
-                storage_type: file_info.storage,
-                path: file_info.path,
+                storage_type: file_info.storage.clone(),
+                path: file_info.path.clone(),
             },
         }
     }
@@ -90,17 +98,48 @@ fn headers_to_value_map(headers: &HeaderMap, use_arrays: bool) -> HashMap<String
     headers_map
 }
 
+/// Resolves real client's IP.
+///
+/// This function is used to get peer's address,
+/// but if Rustus is running behind proxy, then you
+/// it should check for `Forwarded` or `X-Forwarded-For` headers.
+fn get_remote_addr(request: &HttpRequest, behind_proxy: bool) -> Option<String> {
+    if behind_proxy {
+        request
+            .connection_info()
+            .realip_remote_addr()
+            .map(String::from)
+    } else {
+        request.connection_info().peer_addr().map(String::from)
+    }
+}
+
 /// Default format is specific for Rustus.
 ///
 /// This format is a simple serialized `FileInfo` and some parts of the request.
-pub fn default_format(request: &HttpRequest, file_info: &FileInfo) -> String {
-    let remote_addr = request.connection_info().peer_addr().map(String::from);
+pub fn default_format(request: &HttpRequest, file_info: &FileInfo, behind_proxy: bool) -> String {
     let value = json!({
         "upload": file_info,
         "request": {
             "URI": request.uri().to_string(),
             "method": request.method().to_string(),
-            "remote_addr": remote_addr,
+            "remote_addr": get_remote_addr(request, behind_proxy),
+            "headers": headers_to_value_map(request.headers(), false)
+        }
+    });
+    value.to_string()
+}
+
+/// Default format is specific for Rustus V2.
+///
+/// This format is almost the same as V1, but with some enhancements.
+pub fn rustus_format_v2(request: &HttpRequest, file_info: &FileInfo, behind_proxy: bool) -> String {
+    let value = json!({
+        "upload": file_info,
+        "request": {
+            "uri": request.uri().to_string(),
+            "method": request.method().to_string(),
+            "remote_addr": get_remote_addr(request, behind_proxy),
             "headers": headers_to_value_map(request.headers(), false)
         }
     });
@@ -114,15 +153,14 @@ pub fn default_format(request: &HttpRequest, file_info: &FileInfo) -> String {
 ///
 /// Generally speaking, it's almost the same as the default format,
 /// but some variables are ommited and headers are added to the request.
-pub fn tusd_format(request: &HttpRequest, file_info: &FileInfo) -> String {
-    let remote_addr = request.connection_info().peer_addr().map(String::from);
+pub fn tusd_format(request: &HttpRequest, file_info: &FileInfo, behind_proxy: bool) -> String {
     let value = json!({
-        "Upload": file_info,
+        "Upload": TusdFileInfo::from(file_info),
         "HTTPRequest": {
             "URI": request.uri().to_string(),
             "Method": request.method().to_string(),
-            "RemoteAddr": remote_addr,
-            "Header": headers_to_value_map(request.headers(), false)
+            "RemoteAddr": get_remote_addr(request, behind_proxy),
+            "Header": headers_to_value_map(request.headers(), true)
         }
     });
     value.to_string()
