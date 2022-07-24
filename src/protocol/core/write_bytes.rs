@@ -120,11 +120,11 @@ pub async fn write_bytes(
         hook = Hook::PostFinish;
     }
     if state.config.hook_is_active(hook) {
-        let message = state
-            .config
-            .notification_opts
-            .hooks_format
-            .format(&request, &file_info);
+        let message = state.config.notification_opts.hooks_format.format(
+            &request,
+            &file_info,
+            state.config.notification_opts.behind_proxy,
+        );
         let headers = request.headers().clone();
         tokio::task::spawn_local(async move {
             state

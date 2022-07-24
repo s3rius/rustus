@@ -1,4 +1,4 @@
-use crate::errors::RustusResult;
+use crate::errors::{RustusError, RustusResult};
 
 use crate::notifiers::{Hook, Notifier};
 
@@ -57,7 +57,18 @@ impl Notifier for HttpNotifier {
             request.body(message.clone()).send()
         });
         for response in requests_vec {
-            response.await?.error_for_status()?;
+            let real_resp = response.await?;
+            if !real_resp.status().is_success() {
+                let content_type = real_resp
+                    .headers()
+                    .get("Content-Type")
+                    .and_then(|hval| hval.to_str().ok().map(String::from));
+                return Err(RustusError::HTTPHookError(
+                    real_resp.status().as_u16(),
+                    real_resp.text().await.unwrap_or_default(),
+                    content_type,
+                ));
+            }
         }
         Ok(())
     }
