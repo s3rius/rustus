@@ -24,7 +24,7 @@ services:
   rustus:
     image: s3rius/rustus
     volumes:
-    # Volume mouted to default data directory
+    # Volume mounted to default data directory
     # So it's available across multiple containers.
       - rustus_data_volume:/app/data
 
@@ -59,7 +59,7 @@ services:
     # To generate correct nginx config.
       - 1081
     volumes:
-    # Volume mouted to default data directory
+    # Volume mounted to default data directory
     # So it's available across multiple containers.
       - rustus_data_volume:/app/data
     environment:
@@ -76,7 +76,7 @@ is routed in one of multiple rustus containers.
 Here I used `jwilder/nginx-proxy` but you can use other
 reverse-proxies such as [Nginx proxy](https://www.nginx.com/), [Traefik](https://traefik.io/) or [Envoy proxy](https://www.envoyproxy.io/).
 
-Now you can run multiple rustus instnaces like this.
+Now you can run multiple rustus instances like this.
 
 ```bash
 docker compose up --scale rustus=3
@@ -103,7 +103,7 @@ helm install "rustus" "rustus/rustus"
 
 ### Configuration
 
-Since default deplyment may not fit you.
+Since default deployment may not fit you.
 You can adjust it to satisfy your needs.
 You can do it easily with helm.
 
@@ -153,7 +153,7 @@ persistence:
 !!! warning
 
     Currently there's no ability to create multiple mounts
-    and if you use file info storage you must specify the same direcotry
+    and if you use file info storage you must specify the same directory
     as you specified for data storage.
 
     But it would be better to use other type of info-storage.
@@ -171,7 +171,7 @@ redis:
   enabled: true
 ```
 
-`redis`, `postgersql` and `mysql` are subcharts.
+`redis`, `postgresql` and `mysql` are subcharts.
 
 You can find information about configuration these subcharts here:
 
