@@ -11,7 +11,7 @@ use crate::info_storages::db_info_storage;
 #[cfg(feature = "redis_info_storage")]
 use crate::info_storages::redis_info_storage;
 
-#[derive(PartialEq, From, Display, Clone, Debug, EnumIter)]
+#[derive(PartialEq, Eq, From, Display, Clone, Debug, EnumIter)]
 pub enum AvailableInfoStores {
     #[display(fmt = "file-info-storage")]
     Files,

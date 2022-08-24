@@ -12,14 +12,14 @@ Rustus is highly configurable. You can adjust it with CLI or you can use environ
 ## Configuring server
 
 We use actix to run server.
-You can configure on wich `host` and `port` rustus is listenging.
+You can configure on which `host` and `port` rustus is listening.
 Also you can configure number of actix `workers` that handle connections.
 
 `--max-body-size` is the max number of bytes that users can send in request body.
 
 `--url` is a base URL for all tus requests.
 
-`--workers` by default is euqal to number of physical CPU cores. Edit it carefully.
+`--workers` by default is equal to number of physical CPU cores. Edit it carefully.
 
 `--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
 You can define which hosts are allowed for your particular application.
@@ -228,7 +228,7 @@ Available extensions:
 You can read more about extensions on [official web-site](https://tus.io/protocols/resumable-upload.html#protocol-extensions).
 
 `--tus-extensions` - a list of enabled extensions.
-`--remove-parts` - remove parts files after successfull concatentation (disabled by default).
+`--remove-parts` - remove parts files after successful concatenation (disabled by default).
 
 By default all extensions are enabled.
 

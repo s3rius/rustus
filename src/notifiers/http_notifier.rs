@@ -48,6 +48,7 @@ impl Notifier for HttpNotifier {
                 .post(url.as_str())
                 .header("Idempotency-Key", idempotency_key.as_str())
                 .header("Hook-Name", hook.clone().to_string())
+                .header("Content-Type", "application/json")
                 .timeout(Duration::from_secs(2));
             for item in &self.forward_headers {
                 if let Some(value) = header_map.get(item.clone()) {
