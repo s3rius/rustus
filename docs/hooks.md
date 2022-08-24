@@ -1,6 +1,6 @@
 ---
 title: Setting up hooks
-desctiption: Setting up hooks to notify other systems about uploads
+description: Setting up hooks to notify other systems about uploads
 ---
 
 Rustus can notify about uploads using hooks.
@@ -858,7 +858,7 @@ Now we can run this server using uvicorn.
 uvicorn server:app --port 8080
 ```
 
-Let's configure rustus to use this server as a hook reciever.
+Let's configure rustus to use this server as a hook receiver.
 
 === "CLI"
 
@@ -980,8 +980,8 @@ def post_terminate(data):
 
 
 @app.task(name="rustus.post-receive")
-def post_recieve(data):
-    print(f"POST RECIEVE: {data}")
+def post_receive(data):
+    print(f"POST RECEIVE: {data}")
 ```
 
 !!! info
