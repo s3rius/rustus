@@ -3,7 +3,7 @@ use derive_more::{Display, From};
 use strum::EnumIter;
 
 /// Enum of available Storage implementations.
-#[derive(PartialEq, From, Display, EnumIter, Clone, Debug)]
+#[derive(PartialEq, Eq, From, Display, EnumIter, Clone, Debug)]
 pub enum AvailableStores {
     #[display(fmt = "file-storage")]
     FileStorage,
