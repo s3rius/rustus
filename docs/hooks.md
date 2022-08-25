@@ -506,7 +506,7 @@ Available formats:
                 "IsPartial": false,
                 "PartialUploads": null,
                 "SizeIsDeferred": false,
-                "Metadata": {
+                "MetaData": {
                     "filename": "shrek2.mkv"
                 },
                 "Storage": {
@@ -582,7 +582,7 @@ Available formats:
             IsPartial: bool
             PartialUploads: Optional[List[str]]
             SizeIsDeferred: bool
-            Metadata: Dict[str, str]
+            MetaData: Dict[str, str]
             Storage: Storage
 
 
@@ -665,8 +665,8 @@ Available formats:
                             "title": "Sizeisdeferred",
                             "type": "boolean"
                         },
-                        "Metadata": {
-                            "title": "Metadata",
+                        "MetaData": {
+                            "title": "MetaData",
                             "type": "object",
                             "additionalProperties": {
                                 "type": "string"
@@ -683,7 +683,7 @@ Available formats:
                         "IsFinal",
                         "IsPartial",
                         "SizeIsDeferred",
-                        "Metadata",
+                        "MetaData",
                         "Storage"
                     ]
                 },
