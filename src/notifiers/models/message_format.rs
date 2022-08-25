@@ -52,7 +52,7 @@ struct TusdFileInfo {
     is_partial: bool,
     partial_uploads: Option<Vec<String>>,
     size_is_deferred: bool,
-    metadata: HashMap<String, String>,
+    meta_data: HashMap<String, String>,
     storage: TusdStorageInfo,
 }
 
@@ -67,7 +67,7 @@ impl From<&FileInfo> for TusdFileInfo {
             is_final: file_info.is_final,
             is_partial: file_info.is_partial,
             partial_uploads: file_info.parts.clone(),
-            metadata: file_info.metadata.clone(),
+            meta_data: file_info.metadata.clone(),
             storage: TusdStorageInfo {
                 storage_type: file_info.storage.clone(),
                 path: file_info.path.clone(),
