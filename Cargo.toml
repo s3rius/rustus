@@ -148,6 +148,7 @@ integration_tests = ["test_redis", "test_db", "test_rmq"]
 tempdir = "0.3.7"
 actix-rt = "2.6.0"
 httptest = "0.15.4"
+actix-http = "3.2.2"
 
 [profile]
 [profile.release]

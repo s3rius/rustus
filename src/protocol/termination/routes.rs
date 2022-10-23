@@ -36,7 +36,7 @@ pub async fn terminate(
         }
         state.info_storage.remove_info(file_id.as_str()).await?;
         state.data_storage.remove_file(&file_info).await?;
-        terminated_uploads.0.inc();
+        terminated_uploads.counter.inc();
         if state.config.hook_is_active(Hook::PostTerminate) {
             let message = state.config.notification_opts.hooks_format.format(
                 &request,
@@ -57,18 +57,17 @@ pub async fn terminate(
 
 #[cfg(test)]
 mod tests {
-    use crate::{rustus_service, State};
+    use crate::{server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
-        test::{call_service, init_service, TestRequest},
-        App,
+        test::{call_service, TestRequest},
     };
     use std::path::PathBuf;
 
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let file_info = state.create_test_file().await;
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
@@ -86,7 +85,7 @@ mod tests {
     #[actix_rt::test]
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let request = TestRequest::delete()
             .param("file_id", "not_exists")
             .to_request();
@@ -97,7 +96,7 @@ mod tests {
     #[actix_rt::test]
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = "unknown_storage".into();
         state

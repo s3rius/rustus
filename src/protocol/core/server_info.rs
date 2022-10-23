@@ -25,15 +25,15 @@ pub async fn server_info(state: web::Data<State>) -> HttpResponse {
 
 #[cfg(test)]
 mod tests {
-    use crate::{protocol::extensions::Extensions, rustus_service, State};
-    use actix_web::test::{call_service, init_service, TestRequest};
+    use crate::{protocol::extensions::Extensions, server::test::get_service, State};
+    use actix_web::test::{call_service, TestRequest};
 
-    use actix_web::{http::Method, App};
+    use actix_web::http::Method;
 
     #[actix_rt::test]
     async fn test_server_info() {
         let mut state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         state.config.tus_extensions = vec![
             Extensions::Creation,
             Extensions::Concatenation,

@@ -16,6 +16,7 @@ use log::{error, LevelFilter};
 
 use config::RustusConf;
 
+use metrics::{ActiveUploads, FinishedUploads, StartedUploads, TerminatedUploads, UploadSizes};
 use wildmatch::WildMatch;
 
 use crate::{
@@ -160,18 +161,11 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             error!("{}", err);
             RustusError::Unknown
         })?;
-    let active_uploads =
-        prometheus::IntGauge::new("active_uploads", "Number of active file uploads")?;
-    let file_sizes = prometheus::Histogram::with_opts(
-        prometheus::HistogramOpts::new("uploads_sizes", "Size of uploaded files in bytes")
-            .buckets(prometheus::exponential_buckets(2., 2., 40)?),
-    )?;
-    let started_uploads =
-        prometheus::IntCounter::new("started_uploads", "Number of created uploads")?;
-    let finished_uploads =
-        prometheus::IntCounter::new("finished_uploads", "Number of finished uploads")?;
-    let terminated_uploads =
-        prometheus::IntCounter::new("terminated_uploads", "Number of terminated uploads")?;
+    let active_uploads = ActiveUploads::new()?;
+    let upload_sizes = UploadSizes::new()?;
+    let started_uploads = StartedUploads::new()?;
+    let finished_uploads = FinishedUploads::new()?;
+    let terminated_uploads = TerminatedUploads::new()?;
     let found_errors = prometheus::IntCounterVec::new(
         prometheus::Opts {
             namespace: "".into(),
@@ -185,34 +179,28 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     )?;
     metrics
         .registry
-        .register(Box::new(active_uploads.clone()))?;
-    metrics.registry.register(Box::new(file_sizes.clone()))?;
+        .register(Box::new(active_uploads.gauge.clone()))?;
     metrics
         .registry
-        .register(Box::new(started_uploads.clone()))?;
+        .register(Box::new(upload_sizes.hist.clone()))?;
     metrics
         .registry
-        .register(Box::new(finished_uploads.clone()))?;
+        .register(Box::new(started_uploads.counter.clone()))?;
     metrics
         .registry
-        .register(Box::new(terminated_uploads.clone()))?;
+        .register(Box::new(finished_uploads.counter.clone()))?;
+    metrics
+        .registry
+        .register(Box::new(terminated_uploads.counter.clone()))?;
     metrics.registry.register(Box::new(found_errors.clone()))?;
     let mut server = HttpServer::new(move || {
         let error_metrics = found_errors.clone();
         App::new()
-            .app_data(web::Data::new(metrics::ActiveUploads(
-                active_uploads.clone(),
-            )))
-            .app_data(web::Data::new(metrics::StartedUploads(
-                started_uploads.clone(),
-            )))
-            .app_data(web::Data::new(metrics::FinishedUploads(
-                finished_uploads.clone(),
-            )))
-            .app_data(web::Data::new(metrics::TerminatedUploads(
-                terminated_uploads.clone(),
-            )))
-            .app_data(web::Data::new(metrics::UploadSizes(file_sizes.clone())))
+            .app_data(web::Data::new(active_uploads.clone()))
+            .app_data(web::Data::new(started_uploads.clone()))
+            .app_data(web::Data::new(finished_uploads.clone()))
+            .app_data(web::Data::new(terminated_uploads.clone()))
+            .app_data(web::Data::new(upload_sizes.clone()))
             .route("/health", web::get().to(routes::health_check))
             .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
