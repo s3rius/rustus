@@ -137,7 +137,6 @@ default = []
 http_notifier = ["reqwest"]
 redis_info_storage = ["mobc-redis"]
 hashers = ["md-5", "sha1", "sha2", "digest"]
-metrics = []
 
 ### For testing
 test_redis = []

@@ -13,6 +13,7 @@ pub struct RedisStorage {
 }
 
 impl RedisStorage {
+    #[allow(clippy::unused_async)]
     pub async fn new(db_dsn: &str) -> RustusResult<Self> {
         let client = redis::Client::open(db_dsn)?;
         let manager = RedisConnectionManager::new(client);

@@ -9,6 +9,7 @@ use actix_web::{
 use crate::utils::hashes::verify_chunk_checksum;
 use crate::{
     errors::RustusError,
+    metrics,
     notifiers::Hook,
     protocol::extensions::Extensions,
     utils::headers::{check_header, parse_header},
@@ -19,7 +20,8 @@ pub async fn write_bytes(
     request: HttpRequest,
     bytes: Bytes,
     state: web::Data<State>,
-    #[cfg(feature = "metrics")] active_uploads: web::Data<prometheus::IntGauge>,
+    active_uploads: web::Data<metrics::ActiveUploads>,
+    finished_uploads: web::Data<metrics::FinishedUploads>,
 ) -> RustusResult<HttpResponse> {
     // Checking if request has required headers.
     let check_content_type = |val: &str| val == "application/offset+octet-stream";
@@ -134,9 +136,9 @@ pub async fn write_bytes(
         });
     }
 
-    #[cfg(feature = "metrics")]
     if hook == Hook::PostFinish {
-        active_uploads.dec();
+        active_uploads.0.dec();
+        finished_uploads.0.inc();
     }
 
     Ok(HttpResponse::NoContent()

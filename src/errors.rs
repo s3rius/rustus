@@ -9,8 +9,8 @@ pub type RustusResult<T> = Result<T, RustusError>;
 pub enum RustusError {
     #[error("Not found")]
     FileNotFound,
-    #[error("File with id {0} already exists")]
-    FileAlreadyExists(String),
+    #[error("File already exists")]
+    FileAlreadyExists,
     #[error("Given offset is incorrect.")]
     WrongOffset,
     #[error("Unknown error")]

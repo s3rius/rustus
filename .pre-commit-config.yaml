@@ -5,7 +5,6 @@ repos:
       - id: trailing-whitespace
   - repo: local
     hooks:
-
       - id: fmt
         types:
           - rust
@@ -40,13 +39,23 @@ repos:
           - -D
           - warnings
 
-      - id: build
+      - id: check
         types:
           - rust
-        name: cargo build
+        name: cargo check
         language: system
         entry: cargo
         pass_filenames: false
         args:
-          - build
+          - check
+
+      - id: check-all
+        types:
+          - rust
+        name: cargo check all
+        language: system
+        entry: cargo
+        pass_filenames: false
+        args:
+          - check
           - --features=all

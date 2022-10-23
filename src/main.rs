@@ -1,6 +1,6 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 
 use actix_cors::Cors;
 use actix_web::{
@@ -15,6 +15,7 @@ use fern::{
 use log::{error, LevelFilter};
 
 use config::RustusConf;
+
 use wildmatch::WildMatch;
 
 use crate::{
@@ -29,6 +30,7 @@ use crate::{
 mod config;
 mod errors;
 mod info_storages;
+mod metrics;
 mod notifiers;
 mod protocol;
 mod routes;
@@ -137,6 +139,7 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
 /// if the server can't be bound to the
 /// given address.
 #[cfg_attr(coverage, no_coverage)]
+#[allow(clippy::too_many_lines)]
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
     let port = state.config.port;
@@ -163,17 +166,53 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         prometheus::HistogramOpts::new("uploads_sizes", "Size of uploaded files in bytes")
             .buckets(prometheus::exponential_buckets(2., 2., 40)?),
     )?;
-    #[cfg(feature = "metrics")]
-    {
-        metrics
-            .registry
-            .register(Box::new(active_uploads.clone()))?;
-        metrics.registry.register(Box::new(file_sizes.clone()))?;
-    }
+    let started_uploads =
+        prometheus::IntCounter::new("started_uploads", "Number of created uploads")?;
+    let finished_uploads =
+        prometheus::IntCounter::new("finished_uploads", "Number of finished uploads")?;
+    let terminated_uploads =
+        prometheus::IntCounter::new("terminated_uploads", "Number of terminated uploads")?;
+    let found_errors = prometheus::IntCounterVec::new(
+        prometheus::Opts {
+            namespace: "".into(),
+            subsystem: "".into(),
+            name: "errors".into(),
+            help: "Found errors".into(),
+            const_labels: HashMap::new(),
+            variable_labels: Vec::new(),
+        },
+        &["path", "description"],
+    )?;
+    metrics
+        .registry
+        .register(Box::new(active_uploads.clone()))?;
+    metrics.registry.register(Box::new(file_sizes.clone()))?;
+    metrics
+        .registry
+        .register(Box::new(started_uploads.clone()))?;
+    metrics
+        .registry
+        .register(Box::new(finished_uploads.clone()))?;
+    metrics
+        .registry
+        .register(Box::new(terminated_uploads.clone()))?;
+    metrics.registry.register(Box::new(found_errors.clone()))?;
     let mut server = HttpServer::new(move || {
+        let error_metrics = found_errors.clone();
         App::new()
-            .app_data(web::Data::new(active_uploads.clone()))
-            .app_data(web::Data::new(file_sizes.clone()))
+            .app_data(web::Data::new(metrics::ActiveUploads(
+                active_uploads.clone(),
+            )))
+            .app_data(web::Data::new(metrics::StartedUploads(
+                started_uploads.clone(),
+            )))
+            .app_data(web::Data::new(metrics::FinishedUploads(
+                finished_uploads.clone(),
+            )))
+            .app_data(web::Data::new(metrics::TerminatedUploads(
+                terminated_uploads.clone(),
+            )))
+            .app_data(web::Data::new(metrics::UploadSizes(file_sizes.clone())))
             .route("/health", web::get().to(routes::health_check))
             .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
@@ -190,6 +229,28 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                     }
                 }
                 srv.call(req)
+            })
+            // This is middleware that registers found errors.
+            .wrap_fn(move |req, srv| {
+                // Call the service to resolve handler and return response.
+                let fut = srv.call(req);
+                // We need this copy, since we use it in moved closure later.
+                let error_counter = error_metrics.clone();
+                async move {
+                    let srv_response = fut.await?;
+                    if let Some(err) = srv_response.response().error() {
+                        let url = match srv_response.request().match_pattern() {
+                            Some(pattern) => pattern,
+                            None => "".into(),
+                        };
+                        let err_desc = format!("{}", err);
+                        error_counter
+                            .clone()
+                            .with_label_values(&[url.as_str(), err_desc.as_str()])
+                            .inc();
+                    }
+                    Ok(srv_response)
+                }
             })
             // Default response for unknown requests.
             // It returns 404 status_code.
