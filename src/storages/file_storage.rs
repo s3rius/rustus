@@ -129,7 +129,7 @@ impl Storage for FileStorage {
                 .open(file_path.as_path())
                 .map_err(|err| {
                     error!("{:?}", err);
-                    RustusError::FileAlreadyExists(info.id.clone())
+                    RustusError::FileAlreadyExists
                 })?;
             Ok(file_path.display().to_string())
         })

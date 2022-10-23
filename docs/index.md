@@ -42,8 +42,7 @@ Available features:
 * `http_notifier` - adds support for notifying about upload status via `HTTP` protocol;
 * `redis_info_storage` - adds support for storing information about upload in `Redis` database;
 * `hashers` - adds support for checksum verification;
-* `metrics` - adds rustus specific metrics to prometheus endpoint;
-* `all` - enables all rustus features except `metrics`.
+* `all` - enables all rustus features.
 
 All precompiled binaries have all features enabled.
 
