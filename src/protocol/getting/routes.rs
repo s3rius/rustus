@@ -21,18 +21,17 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusRe
 
 #[cfg(test)]
 mod test {
-    use crate::{rustus_service, State};
+    use crate::{server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
-        test::{call_service, init_service, TestRequest},
-        App,
+        test::{call_service, TestRequest},
     };
     use bytes::Bytes;
 
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let file_info = state.create_test_file().await;
         state
             .data_storage
@@ -49,7 +48,7 @@ mod test {
     #[actix_rt::test]
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let request = TestRequest::get()
             .uri(state.config.file_url("random_str").as_str())
             .to_request();
@@ -60,7 +59,7 @@ mod test {
     #[actix_rt::test]
     async fn unknown_storage() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = "unknown_storage".into();
         state

@@ -61,16 +61,13 @@ pub async fn get_file_info(
 mod tests {
     use actix_web::http::{Method, StatusCode};
 
-    use crate::{rustus_service, State};
-    use actix_web::{
-        test::{call_service, init_service, TestRequest},
-        App,
-    };
+    use crate::{server::test::get_service, State};
+    use actix_web::test::{call_service, TestRequest};
 
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.offset = 100;
         file_info.length = Some(100);
@@ -97,7 +94,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_metadata() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.offset = 100;
         file_info.length = Some(100);
@@ -126,7 +123,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_defer_len() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.deferred_size = true;
         file_info.length = None;
@@ -153,7 +150,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_get_file_info_partial() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.is_partial = true;
         state
@@ -179,7 +176,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_final() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.is_partial = false;
         file_info.is_final = true;
@@ -212,7 +209,7 @@ mod tests {
     #[actix_rt::test]
     async fn no_file() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let request = TestRequest::with_uri(state.config.file_url("unknknown").as_str())
             .method(Method::HEAD)
             .to_request();
@@ -223,7 +220,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_get_file_info_wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = init_service(App::new().configure(rustus_service(state.clone()))).await;
+        let mut rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = String::from("unknown");
         state
