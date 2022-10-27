@@ -55,7 +55,7 @@ impl FileStorage {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Storage for FileStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         // We're creating directory for new files
@@ -81,7 +81,7 @@ impl Storage for FileStorage {
             })
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if file_info.path.is_none() {
@@ -110,6 +110,8 @@ impl Storage for FileStorage {
             if force_sync {
                 writer.get_ref().sync_data()?;
             }
+            bytes.clear();
+
             Ok(())
         })
         .await?

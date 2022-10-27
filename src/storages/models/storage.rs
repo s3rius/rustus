@@ -5,7 +5,7 @@ use bytes::Bytes;
 use dyn_clone::DynClone;
 use std::fmt::Display;
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait Storage: Display + DynClone {
     /// Prepare storage before starting up server.
     ///

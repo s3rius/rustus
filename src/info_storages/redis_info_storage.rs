@@ -22,7 +22,7 @@ impl RedisStorage {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl InfoStorage for RedisStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())

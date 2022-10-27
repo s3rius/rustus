@@ -34,6 +34,8 @@ dyn-clone = "^1.0.5"
 actix-cors = "0.6.1"
 wildmatch = "2.1.0"
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = "~0.5"
 
 [dependencies.digest]
 version = "0.10.3"
@@ -152,6 +154,7 @@ actix-http = "3.2.2"
 
 [profile]
 [profile.release]
+debug = false
 lto = "fat"
 panic = "abort"
 opt-level = 3
