@@ -1,8 +1,8 @@
 use crate::{protocol, State};
 use actix_web::{middleware, web, web::PayloadConfig};
 
-pub fn rustus_service(state: State) -> Box<dyn Fn(&mut web::ServiceConfig)> {
-    Box::new(move |web_app| {
+pub fn rustus_service(state: State) -> impl Fn(&mut web::ServiceConfig) {
+    move |web_app| {
         web_app.service(
             web::scope(state.config.base_url().as_str())
                 .app_data(web::Data::new(state.clone()))
@@ -18,7 +18,7 @@ pub fn rustus_service(state: State) -> Box<dyn Fn(&mut web::ServiceConfig)> {
                 )
                 .configure(protocol::setup(state.config.clone())),
         );
-    })
+    }
 }
 
 #[cfg(test)]

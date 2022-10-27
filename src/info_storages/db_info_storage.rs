@@ -40,7 +40,7 @@ impl DBInfoStorage {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl InfoStorage for DBInfoStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         self.db

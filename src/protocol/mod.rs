@@ -13,8 +13,8 @@ mod termination;
 /// This function resolves all protocol extensions
 /// provided by CLI into services and adds it to the application.
 #[cfg_attr(coverage, no_coverage)]
-pub fn setup(app_conf: RustusConf) -> Box<dyn Fn(&mut web::ServiceConfig)> {
-    Box::new(move |web_app| {
+pub fn setup(app_conf: RustusConf) -> impl Fn(&mut web::ServiceConfig) {
+    move |web_app| {
         for extension in app_conf.extensions_vec() {
             match extension {
                 extensions::Extensions::Creation => creation::add_extension(web_app),
@@ -28,5 +28,5 @@ pub fn setup(app_conf: RustusConf) -> Box<dyn Fn(&mut web::ServiceConfig)> {
             }
         }
         core::add_extension(web_app);
-    })
+    }
 }

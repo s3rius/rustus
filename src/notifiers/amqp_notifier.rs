@@ -73,7 +73,7 @@ impl AMQPNotifier {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Notifier for AMQPNotifier {
     async fn prepare(&mut self) -> RustusResult<()> {
         let chan = self.pool.get().await?.create_channel().await?;

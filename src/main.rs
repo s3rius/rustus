@@ -5,7 +5,7 @@ use std::{collections::HashMap, str::FromStr};
 use actix_cors::Cors;
 use actix_web::{
     dev::{Server, Service},
-    http::Method,
+    http::{KeepAlive, Method},
     middleware, web, App, HttpServer,
 };
 use fern::{
@@ -27,6 +27,13 @@ use crate::{
     state::State,
     storages::Storage,
 };
+
+#[cfg(not(target_env = "msvc"))]
+use jemallocator::Jemalloc;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 mod config;
 mod errors;
@@ -244,6 +251,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))
     })
+    .keep_alive(KeepAlive::Disabled)
     .bind((host, port))?;
 
     // If custom workers count variable is provided.
