@@ -2408,7 +2408,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.5.10"
+version = "0.5.12"
 dependencies = [
  "actix-cors",
  "actix-files",
