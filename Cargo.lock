@@ -552,6 +552,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmake"
+version = "0.1.49"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db34956e100b30725f2eb215f90d4871051239535632f84fea3bc92722c66b7c"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2399,7 +2408,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.5.10"
+version = "0.5.12"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -2431,6 +2440,7 @@ dependencies = [
  "serde_json",
  "sha1 0.10.5",
  "sha2",
+ "snmalloc-rs",
  "structopt",
  "strum",
  "tempdir",
@@ -2654,6 +2664,24 @@ name = "smallvec"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
+
+[[package]]
+name = "snmalloc-rs"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90bbab242a22c735dcd4c1441fffbe7004ea91f7d8fe7902cf283d72405ef978"
+dependencies = [
+ "snmalloc-sys",
+]
+
+[[package]]
+name = "snmalloc-sys"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80756c9f5dacaa9ff49afddb77ea18e80013228128ced3c2162f13306a225dd7"
+dependencies = [
+ "cmake",
+]
 
 [[package]]
 name = "socket2"

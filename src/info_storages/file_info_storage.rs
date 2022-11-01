@@ -31,7 +31,7 @@ impl FileInfoStorage {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl InfoStorage for FileInfoStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         if !self.info_dir.exists() {

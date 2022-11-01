@@ -6,7 +6,7 @@ use dyn_clone::DynClone;
 ///
 /// This trait defines required functions
 /// for building your own info storage.
-#[async_trait]
+#[async_trait(?Send)]
 pub trait InfoStorage: DynClone {
     /// Prepare storage for storing files.
     ///

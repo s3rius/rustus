@@ -111,6 +111,7 @@ pub async fn write_bytes(
     let chunk_len = bytes.len();
     // Appending bytes to file.
     state.data_storage.add_bytes(&file_info, bytes).await?;
+    // bytes.clear()
     // Updating offset.
     file_info.offset += chunk_len;
     // Saving info to info storage.

@@ -1,11 +1,14 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
+#[global_allocator]
+static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+
 use std::{collections::HashMap, str::FromStr};
 
 use actix_cors::Cors;
 use actix_web::{
     dev::{Server, Service},
-    http::Method,
+    http::{KeepAlive, Method},
     middleware, web, App, HttpServer,
 };
 use fern::{
@@ -244,6 +247,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             // It returns 404 status_code.
             .default_service(web::route().to(routes::not_found))
     })
+    .keep_alive(KeepAlive::Disabled)
     .bind((host, port))?;
 
     // If custom workers count variable is provided.

@@ -5,7 +5,7 @@ use crate::notifiers::Hook;
 use async_trait::async_trait;
 use dyn_clone::DynClone;
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait Notifier: DynClone {
     async fn prepare(&mut self) -> RustusResult<()>;
     async fn send_message(
