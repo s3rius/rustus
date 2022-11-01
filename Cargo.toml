@@ -33,7 +33,7 @@ actix-web-prom = "^0.6.0"
 dyn-clone = "^1.0.5"
 actix-cors = "0.6.1"
 wildmatch = "2.1.0"
-snmalloc-rs = "~0.3.0"
+mimalloc = { version = "~0.1.30", default-features = false }
 
 [dependencies.digest]
 version = "0.10.3"
