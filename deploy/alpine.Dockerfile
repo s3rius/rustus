@@ -7,7 +7,6 @@ ADD "https://github.com/s3rius/rustus/releases/download/${app_version}/rustus-${
 RUN tar xvf *.tar.gz
 RUN rm *.tar.gz
 RUN mv rustus /bin
-RUN apk add --no-cache libatomic
 
 ENTRYPOINT ["/bin/rustus"]
 

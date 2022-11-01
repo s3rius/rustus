@@ -1,7 +1,7 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
 #[global_allocator]
-static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use std::{collections::HashMap, str::FromStr};
 
