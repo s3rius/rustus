@@ -4,7 +4,7 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY imgs ./imgs
-RUN RUSTFLAGS="-C target-cpu=native" cargo build --release --bin rustus --features=all
+RUN cargo build --release --bin rustus --features=all
 
 FROM debian:bullseye-20211201-slim AS base
 
