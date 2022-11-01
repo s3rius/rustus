@@ -1,5 +1,8 @@
 #![cfg_attr(coverage, feature(no_coverage))]
 
+#[global_allocator]
+static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+
 use std::{collections::HashMap, str::FromStr};
 
 use actix_cors::Cors;
@@ -27,13 +30,6 @@ use crate::{
     state::State,
     storages::Storage,
 };
-
-#[cfg(not(target_env = "msvc"))]
-use jemallocator::Jemalloc;
-
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
 
 mod config;
 mod errors;
