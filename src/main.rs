@@ -147,6 +147,7 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
     let port = state.config.port;
+    let disable_health_log = state.config.disable_health_access_log;
     let cors_hosts = state.config.cors.clone();
     let workers = state.config.workers;
     #[cfg(feature = "http_notifier")]
@@ -197,6 +198,10 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         .register(Box::new(terminated_uploads.counter.clone()))?;
     metrics.registry.register(Box::new(found_errors.clone()))?;
     let mut server = HttpServer::new(move || {
+        let mut logger = middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\"");
+        if disable_health_log {
+            logger = logger.exclude("/health");
+        }
         let error_metrics = found_errors.clone();
         App::new()
             .app_data(web::Data::new(active_uploads.clone()))
@@ -207,7 +212,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             .route("/health", web::get().to(routes::health_check))
             .configure(rustus_service(state.clone()))
             .wrap(metrics.clone())
-            .wrap(middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\""))
+            .wrap(logger)
             .wrap(create_cors(cors_hosts.clone(), proxy_headers.clone()))
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.
