@@ -172,8 +172,8 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     let terminated_uploads = TerminatedUploads::new()?;
     let found_errors = prometheus::IntCounterVec::new(
         prometheus::Opts {
-            namespace: "".into(),
-            subsystem: "".into(),
+            namespace: String::new(),
+            subsystem: String::new(),
             name: "errors".into(),
             help: "Found errors".into(),
             const_labels: HashMap::new(),
@@ -237,7 +237,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                     if let Some(err) = srv_response.response().error() {
                         let url = match srv_response.request().match_pattern() {
                             Some(pattern) => pattern,
-                            None => "".into(),
+                            None => String::new(),
                         };
                         let err_desc = format!("{}", err);
                         error_counter
