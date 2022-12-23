@@ -36,7 +36,7 @@ pub async fn get_file_info(
             .map(|file| format!("/{}/{}", state.config.base_url(), file.as_str()))
             .collect::<Vec<String>>()
             .join(" ");
-        builder.insert_header(("Upload-Concat", format!("final; {}", parts)));
+        builder.insert_header(("Upload-Concat", format!("final; {parts}")));
     }
     builder
         .no_chunking(file_info.offset as u64)
@@ -53,6 +53,7 @@ pub async fn get_file_info(
     if let Some(meta) = file_info.get_metadata_string() {
         builder.insert_header(("Upload-Metadata", meta));
     }
+    builder.insert_header(("Upload-Created", file_info.created_at.timestamp()));
     builder.insert_header(CacheControl(vec![CacheDirective::NoCache]));
     Ok(builder.streaming(empty::<RustusResult<web::Bytes>>()))
 }

@@ -7,6 +7,8 @@ pub type RustusResult<T> = Result<T, RustusError>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum RustusError {
+    #[error("{0}")]
+    Unimplemented(String),
     #[error("Not found")]
     FileNotFound,
     #[error("File already exists")]
@@ -71,6 +73,8 @@ pub enum RustusError {
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error("HTTP hook error. Returned status: {0}")]
     HTTPHookError(u16, String, Option<String>),
+    #[error("Found S3 error: {0}")]
+    S3Error(#[from] s3::error::S3Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
@@ -99,7 +103,7 @@ impl ResponseError for RustusError {
             }
             _ => HttpResponseBuilder::new(self.status_code())
                 .insert_header(("Content-Type", "text/html; charset=utf-8"))
-                .body(format!("{}", self)),
+                .body(format!("{self}")),
         }
     }
 

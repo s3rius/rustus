@@ -43,6 +43,60 @@ pub struct StorageOptions {
     /// In most cases this parameter is redundant.
     #[structopt(long, env = "RUSTUS_FORCE_FSYNC")]
     pub force_fsync: bool,
+
+    /// S3 bucket to upload files to.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_BUCKET")]
+    pub s3_bucket: Option<String>,
+
+    /// S3 region.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_REGION")]
+    pub s3_region: Option<String>,
+
+    /// S3 access key.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_ACCESS_KEY")]
+    pub s3_access_key: Option<String>,
+
+    /// S3 secret key.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_ACCESS_KEY")]
+    pub s3_secret_key: Option<String>,
+
+    /// S3 URL.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_URL")]
+    pub s3_url: Option<String>,
+
+    /// S3 force path style.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_FORCE_PATH_STYLE")]
+    pub s3_force_path_style: bool,
+
+    /// S3 security token.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_SECURITY_TOKEN")]
+    pub s3_security_token: Option<String>,
+
+    /// S3 session token.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_SESSION_TOKEN")]
+    pub s3_session_token: Option<String>,
+
+    /// S3 profile.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_PROFILE")]
+    pub s3_profile: Option<String>,
 }
 
 #[derive(StructOpt, Debug, Clone)]

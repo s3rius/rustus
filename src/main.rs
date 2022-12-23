@@ -60,11 +60,11 @@ fn greeting(app_conf: &RustusConf) {
         .collect::<Vec<String>>()
         .join(", ");
     let rustus_logo = include_str!("../imgs/rustus_startup_logo.txt");
-    eprintln!("\n\n{}", rustus_logo);
+    eprintln!("\n\n{rustus_logo}");
     eprintln!("Welcome to rustus!");
     eprintln!("Base URL: /{}", app_conf.base_url());
-    eprintln!("Available extensions: {}", extensions);
-    eprintln!("Enabled hooks: {}", hooks);
+    eprintln!("Available extensions: {extensions}");
+    eprintln!("Enabled hooks: {hooks}");
     eprintln!();
     eprintln!();
 }
@@ -239,7 +239,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                             Some(pattern) => pattern,
                             None => String::new(),
                         };
-                        let err_desc = format!("{}", err);
+                        let err_desc = format!("{err}");
                         error_counter
                             .clone()
                             .with_label_values(&[url.as_str(), err_desc.as_str()])

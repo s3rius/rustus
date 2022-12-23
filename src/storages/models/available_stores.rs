@@ -1,4 +1,8 @@
-use crate::{from_str, storages::file_storage, RustusConf, Storage};
+use crate::{
+    from_str,
+    storages::{file_storage, s3_hybrid_storage},
+    RustusConf, Storage,
+};
 use derive_more::{Display, From};
 use strum::EnumIter;
 
@@ -7,6 +11,8 @@ use strum::EnumIter;
 pub enum AvailableStores {
     #[display(fmt = "file-storage")]
     FileStorage,
+    #[display(fmt = "hybrid-s3")]
+    HybridS3,
 }
 
 from_str!(AvailableStores, "storage");
@@ -23,6 +29,20 @@ impl AvailableStores {
         #[allow(clippy::single_match)]
         match self {
             Self::FileStorage => Box::new(file_storage::FileStorage::new(
+                config.storage_opts.data_dir.clone(),
+                config.storage_opts.dir_structure.clone(),
+                config.storage_opts.force_fsync,
+            )),
+            Self::HybridS3 => Box::new(s3_hybrid_storage::S3Storage::new(
+                config.storage_opts.s3_url.clone().unwrap(),
+                config.storage_opts.s3_region.clone().unwrap(),
+                &config.storage_opts.s3_access_key,
+                &config.storage_opts.s3_secret_key.clone(),
+                &config.storage_opts.s3_security_token.clone(),
+                &config.storage_opts.s3_session_token.clone(),
+                &config.storage_opts.s3_profile.clone(),
+                config.storage_opts.s3_bucket.clone().unwrap().as_str(),
+                config.storage_opts.s3_force_path_style,
                 config.storage_opts.data_dir.clone(),
                 config.storage_opts.dir_structure.clone(),
                 config.storage_opts.force_fsync,
