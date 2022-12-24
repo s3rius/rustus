@@ -1,5 +1,5 @@
 use crate::{errors::RustusResult, info_storages::FileInfo};
-use actix_files::NamedFile;
+use actix_web::{HttpRequest, HttpResponse};
 use async_trait::async_trait;
 use bytes::Bytes;
 use dyn_clone::DynClone;
@@ -20,13 +20,17 @@ pub trait Storage: Display + DynClone {
 
     /// Get contents of a file.
     ///
-    /// This method must return NamedFile since it
-    /// is compatible with ActixWeb files interface.
-    /// FIXME: change return type to stream.
+    /// This method must return HttpResponse.
+    /// This resposne would be sent directly.
     ///
     /// # Params
     /// `file_info` - info about current file.
-    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<NamedFile>;
+    /// `request` - this parameter is needed to construct responses in some case
+    async fn get_contents(
+        &self,
+        file_info: &FileInfo,
+        request: &HttpRequest,
+    ) -> RustusResult<HttpResponse>;
 
     /// Add bytes to the file.
     ///

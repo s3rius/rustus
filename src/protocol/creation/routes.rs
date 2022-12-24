@@ -236,7 +236,7 @@ pub async fn create_file(
     }
 
     // Create upload URL for this file.
-    let upload_url = request.url_for("core:write_bytes", &[file_info.id.clone()])?;
+    let upload_url = request.url_for("core:write_bytes", [file_info.id.clone()])?;
 
     Ok(HttpResponse::Created()
         .insert_header((

@@ -27,8 +27,8 @@ You can install rustus by 4 different ways.
 
 ### From source
 
-To build it from source rust must be installed.
-Preferred version is 1.59.0.
+To build it from source rust must be installed. We don't rely on nightly features,
+you can use last stable release.
 
 ```bash
 git clone https://github.com/s3rius/rustus.git
@@ -41,9 +41,7 @@ Available features:
 
 * `amqp_notifier` - adds amqp protocol support for notifying about upload status;
 * `db_info_storage` - adds support for storing information about upload in different databases (Postgres, MySQL, SQLite);
-* `http_notifier` - adds support for notifying about upload status via http protocol;
 * `redis_info_storage` - adds support for storing information about upload in redis database;
-* `hashers` - adds support for checksum verification;
 * `all` - enables all rustus features.
 
 All precompiled binaries have all features enabled.

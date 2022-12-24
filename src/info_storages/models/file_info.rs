@@ -78,7 +78,7 @@ impl FileInfo {
         for (key, val) in &self.metadata {
             let encoded_value = base64::encode(val);
             // Adding metadata entry to the list.
-            result.push(format!("{} {}", key, encoded_value));
+            result.push(format!("{key} {encoded_value}"));
         }
 
         if result.is_empty() {
