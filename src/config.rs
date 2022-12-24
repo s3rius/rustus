@@ -65,7 +65,7 @@ pub struct StorageOptions {
     /// S3 secret key.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_ACCESS_KEY")]
+    #[structopt(long, env = "RUSTUS_S3_SECRET_KEY")]
     pub s3_secret_key: Option<String>,
 
     /// S3 URL.
@@ -97,6 +97,14 @@ pub struct StorageOptions {
     /// This parameter is required fo s3-based storages.
     #[structopt(long, env = "RUSTUS_S3_PROFILE")]
     pub s3_profile: Option<String>,
+
+    /// Additional S3 headers.
+    /// These headers are passed to every request to s3.
+    /// Useful for configuring ACLs.
+    ///
+    /// This parameter is required fo s3-based storages.
+    #[structopt(long, env = "RUSTUS_S3_HEADERS")]
+    pub s3_headers: Option<String>,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -166,12 +174,10 @@ pub struct NotificationsOptions {
     pub behind_proxy: bool,
 
     /// List of URLS to send webhooks to.
-    #[cfg(feature = "http_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
     pub hooks_http_urls: Vec<String>,
 
     // List of headers to forward from client.
-    #[cfg(feature = "http_notifier")]
     #[structopt(long, env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS", use_delimiter = true)]
     pub hooks_http_proxy_headers: Vec<String>,
 

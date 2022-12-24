@@ -39,9 +39,7 @@ Available features:
 
 * `amqp_notifier` - adds `AMQP` protocol support for notifying about upload status;
 * `db_info_storage` - adds support for storing information about upload in different databases (`Postgres`, `MySQL`, `SQLite`);
-* `http_notifier` - adds support for notifying about upload status via `HTTP` protocol;
 * `redis_info_storage` - adds support for storing information about upload in `Redis` database;
-* `hashers` - adds support for checksum verification;
 * `all` - enables all rustus features.
 
 All precompiled binaries have all features enabled.

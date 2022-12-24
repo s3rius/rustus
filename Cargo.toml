@@ -29,25 +29,18 @@ actix-web-prom = "^0.6.0"
 dyn-clone = "^1.0.5"
 actix-cors = "0.6.1"
 wildmatch = "2.1.0"
+md-5 = "^0.10.1"
+digest = "0.10.3"
 mimalloc = { version = "~0.1.30", default-features = false }
 
-[dependencies.digest]
-version = "0.10.3"
-optional = true
 
 [dependencies.sha1]
 version = "^0.10.1"
 features = ["compress"]
-optional = true
 
 [dependencies.sha2]
 version = "^0.10.1"
 features = ["compress"]
-optional = true
-
-[dependencies.md-5]
-version = "^0.10.1"
-optional = true
 
 [dependencies.futures]
 version = "^0.3.21"
@@ -103,7 +96,6 @@ version = "^2.0"
 
 [dependencies.reqwest]
 features = ["json"]
-optional = true
 version = "^0.11.8"
 
 [dependencies.structopt]
@@ -142,16 +134,12 @@ version = "~0.32.3"
 all = [
     "redis_info_storage",
     "db_info_storage",
-    "http_notifier",
     "amqp_notifier",
-    "hashers",
 ]
 amqp_notifier = ["lapin", "tokio-amqp", "mobc-lapin"]
 db_info_storage = ["rbatis", "rbson"]
 default = []
-http_notifier = ["reqwest"]
 redis_info_storage = ["mobc-redis"]
-hashers = ["md-5", "sha1", "sha2", "digest"]
 
 ### For testing
 test_redis = []

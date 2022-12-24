@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
     errors::{RustusError, RustusResult},
@@ -22,13 +22,13 @@ use s3::{command::Command, request::Reqwest, request_trait::Request, Bucket};
 /// It's not intended to use this storage for large files.
 #[derive(Display, Clone)]
 #[display(fmt = "s3_storage")]
-pub struct S3Storage {
+pub struct S3HybridStorage {
     bucket: Bucket,
     local_storage: FileStorage,
     dir_struct: String,
 }
 
-impl S3Storage {
+impl S3HybridStorage {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         endpoint: String,
@@ -38,6 +38,7 @@ impl S3Storage {
         security_token: &Option<String>,
         session_token: &Option<String>,
         profile: &Option<String>,
+        custom_headers: &Option<String>,
         bucket_name: &str,
         force_path_style: bool,
         data_dir: PathBuf,
@@ -55,6 +56,7 @@ impl S3Storage {
         if let Err(err) = creds {
             panic!("Cannot build credentials: {err}")
         }
+        log::debug!("Parsed credentials");
         let credentials = creds.unwrap();
         let bucket = Bucket::new(
             bucket_name,
@@ -65,6 +67,16 @@ impl S3Storage {
             panic!("Cannot create bucket instance {error}");
         }
         let mut bucket = bucket.unwrap();
+        if let Some(raw_s3_headers) = custom_headers {
+            let headers_map = serde_json::from_str::<HashMap<String, String>>(raw_s3_headers)
+                .expect("Cannot parse s3 headers. Please provide valid JSON object.");
+            log::debug!("Found extra s3 headers.");
+            for (key, value) in &headers_map {
+                log::debug!("Adding header `{key}` with value `{value}`.");
+                bucket.add_header(key, value);
+            }
+        }
+        // bucket.add_header();
         if force_path_style {
             bucket = bucket.with_path_style();
         }
@@ -84,6 +96,11 @@ impl S3Storage {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
         }
         let s3_path = self.get_s3_key(file_info.id.as_str());
+        log::debug!(
+            "Starting uploading {} to S3 with key `{}`",
+            file_info.id,
+            s3_path,
+        );
         let file = tokio::fs::File::open(file_info.path.clone().unwrap()).await?;
         let mut reader = tokio::io::BufReader::new(file);
         self.bucket.put_object_stream(&mut reader, s3_path).await?;
@@ -99,7 +116,7 @@ impl S3Storage {
 }
 
 #[async_trait(?Send)]
-impl Storage for S3Storage {
+impl Storage for S3HybridStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
@@ -110,14 +127,13 @@ impl Storage for S3Storage {
         request: &HttpRequest,
     ) -> RustusResult<HttpResponse> {
         if file_info.length != Some(file_info.offset) {
+            log::debug!("File isn't uploaded. Returning from local storage.");
             return self.local_storage.get_contents(file_info, request).await;
         }
-
         let key = self.get_s3_key(&file_info.id);
         let command = Command::GetObject;
         let s3_request = Reqwest::new(&self.bucket, &key, command);
         let s3_response = s3_request.response().await?;
-
         let mut response = HttpResponseBuilder::new(actix_web::http::StatusCode::OK);
         Ok(response.streaming(s3_response.bytes_stream()))
     }

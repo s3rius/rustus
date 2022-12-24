@@ -206,10 +206,7 @@ impl Storage for FileStorage {
 mod tests {
     use super::FileStorage;
     use crate::{info_storages::FileInfo, Storage};
-    use actix_web::{
-        http::StatusCode,
-        test::{call_service, TestRequest},
-    };
+    use actix_web::test::TestRequest;
     use bytes::Bytes;
     use std::{
         fs::File,

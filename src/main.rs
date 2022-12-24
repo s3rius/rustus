@@ -150,14 +150,11 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     let disable_health_log = state.config.disable_health_access_log;
     let cors_hosts = state.config.cors.clone();
     let workers = state.config.workers;
-    #[cfg(feature = "http_notifier")]
     let proxy_headers = state
         .config
         .notification_opts
         .hooks_http_proxy_headers
         .clone();
-    #[cfg(not(feature = "http_notifier"))]
-    let proxy_headers = vec![];
     let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
         .endpoint("/metrics")
         .build()

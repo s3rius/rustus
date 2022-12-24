@@ -44,7 +44,6 @@ pub enum RustusError {
     UnableToPrepareStorage(String),
     #[error("Unknown extension: {0}")]
     UnknownExtension(String),
-    #[cfg(feature = "http_notifier")]
     #[error("Http request failed: {0}")]
     HttpRequestError(#[from] reqwest::Error),
     #[error("Hook invocation failed. Reason: {0}")]
