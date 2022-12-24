@@ -205,6 +205,9 @@ pub struct RustusConf {
     #[structopt(short, long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
     pub port: u16,
 
+    #[structopt(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
+    pub disable_health_access_log: bool,
+
     /// Rustus base API url
     #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,

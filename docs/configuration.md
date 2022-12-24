@@ -27,6 +27,8 @@ You can define which hosts are allowed for your particular application.
 For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
 like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
 
+Also you can disable access log for `/health` endpoint, by using `--disable-health-access-log`.
+
 === "CLI"
 
     ``` bash
@@ -35,8 +37,9 @@ like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other 
         --workers 8 \
         --max-body-size 1000000 \
         --url "/files" \
-        --log-level "INFO"
-        --cors "my.*.domain.com,your.*.domain.com"
+        --log-level "INFO" \
+        --cors "my.*.domain.com,your.*.domain.com" \
+        --disable-health-access-log "yes"
     ```
 
 === "ENV"
@@ -49,6 +52,7 @@ like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other 
     export RUSTUS_URL="/files"
     export RUSTUS_LOG_LEVEL="INFO"
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
+    export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="yes"
 
     rustus
     ```
