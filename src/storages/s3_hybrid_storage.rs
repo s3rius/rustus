@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::Storage;
-use crate::{storages::file_storage::FileStorage, utils::dir_struct::dir_struct};
+use crate::{storages::file_storage::FileStorage, utils::dir_struct::substr_time};
 use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -95,7 +95,7 @@ impl S3HybridStorage {
         if file_info.path.is_none() {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
         }
-        let s3_path = self.get_s3_key(file_info.id.as_str());
+        let s3_path = self.get_s3_key(file_info);
         log::debug!(
             "Starting uploading {} to S3 with key `{}`",
             file_info.id,
@@ -108,10 +108,10 @@ impl S3HybridStorage {
     }
 
     // Construct an S3 key which is used to upload files.
-    fn get_s3_key(&self, file_id: &str) -> String {
-        let base_path = dir_struct(self.dir_struct.as_str());
+    fn get_s3_key(&self, file_info: &FileInfo) -> String {
+        let base_path = substr_time(self.dir_struct.as_str(), file_info.created_at);
         let trimmed_path = base_path.trim_end_matches(|c: char| c == '/');
-        format!("{trimmed_path}/{file_id}")
+        format!("{trimmed_path}/{}", file_info.id)
     }
 }
 
@@ -130,7 +130,7 @@ impl Storage for S3HybridStorage {
             log::debug!("File isn't uploaded. Returning from local storage.");
             return self.local_storage.get_contents(file_info, request).await;
         }
-        let key = self.get_s3_key(&file_info.id);
+        let key = self.get_s3_key(file_info);
         let command = Command::GetObject;
         let s3_request = Reqwest::new(&self.bucket, &key, command);
         let s3_response = s3_request.response().await?;
@@ -166,7 +166,7 @@ impl Storage for S3HybridStorage {
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if Some(file_info.offset) == file_info.length {
             self.bucket
-                .delete_object(self.get_s3_key(&file_info.id))
+                .delete_object(self.get_s3_key(file_info))
                 .await?;
         } else {
             self.local_storage.remove_file(file_info).await?;

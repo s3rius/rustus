@@ -14,7 +14,7 @@ use crate::{
     errors::{RustusError, RustusResult},
     info_storages::FileInfo,
     storages::Storage,
-    utils::dir_struct::dir_struct,
+    utils::dir_struct::substr_now,
 };
 use derive_more::Display;
 
@@ -44,7 +44,7 @@ impl FileStorage {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?
-            .join(dir_struct(self.dir_struct.as_str()));
+            .join(substr_now(self.dir_struct.as_str()));
         DirBuilder::new()
             .recursive(true)
             .create(dir.as_path())
