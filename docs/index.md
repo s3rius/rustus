@@ -24,13 +24,13 @@ You can install rustus in four different ways.
 
 ### From source
 
-To build it from source rust must be installed.
-Preferred version is 1.59.0.
+To build it from source rust must be installed. We don't rely on nightly features,
+you can use last stable release.
 
 ```bash
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all,metrics
+cargo install --path . --features=all
 ```
 
 Also, you can speedup build by disabling some features.

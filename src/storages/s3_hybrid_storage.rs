@@ -90,7 +90,8 @@ impl S3HybridStorage {
 
     /// Upload file to S3.
     ///
-    /// This function is called with
+    /// This function is called to upload file to s3 completely.
+    /// It streams file directly from disk to s3.
     async fn upload_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if file_info.path.is_none() {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
