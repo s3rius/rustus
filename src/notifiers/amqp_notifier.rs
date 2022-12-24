@@ -68,7 +68,7 @@ impl AMQPNotifier {
         if let Some(routing_key) = self.routing_key.as_ref() {
             routing_key.into()
         } else {
-            format!("{}.{}", self.queues_prefix.as_str(), hook)
+            format!("{}.{hook}", self.queues_prefix.as_str())
         }
     }
 }
@@ -124,7 +124,7 @@ impl Notifier for AMQPNotifier {
         let queue = self.get_queue_name(hook);
         let routing_key = self.routing_key.as_ref().unwrap_or(&queue);
         let payload = if self.celery {
-            format!("[[{}], {{}}, {{}}]", message).as_bytes().to_vec()
+            format!("[[{message}], {{}}, {{}}]").as_bytes().to_vec()
         } else {
             message.as_bytes().to_vec()
         };
@@ -136,7 +136,7 @@ impl Notifier for AMQPNotifier {
             );
             headers.insert(
                 "task".into(),
-                AMQPValue::LongString(LongString::from(format!("rustus.{}", hook))),
+                AMQPValue::LongString(LongString::from(format!("rustus.{hook}"))),
             );
         }
         chan.basic_publish(

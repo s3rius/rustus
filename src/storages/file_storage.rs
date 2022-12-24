@@ -1,6 +1,7 @@
 use std::{io::Write, path::PathBuf};
 
 use actix_files::NamedFile;
+use actix_web::{HttpRequest, HttpResponse};
 use async_trait::async_trait;
 use bytes::Bytes;
 use log::error;
@@ -13,7 +14,7 @@ use crate::{
     errors::{RustusError, RustusResult},
     info_storages::FileInfo,
     storages::Storage,
-    utils::dir_struct::dir_struct,
+    utils::dir_struct::substr_now,
 };
 use derive_more::Display;
 
@@ -43,7 +44,7 @@ impl FileStorage {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?
-            .join(dir_struct(self.dir_struct.as_str()));
+            .join(substr_now(self.dir_struct.as_str()));
         DirBuilder::new()
             .recursive(true)
             .create(dir.as_path())
@@ -69,16 +70,23 @@ impl Storage for FileStorage {
         Ok(())
     }
 
-    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<NamedFile> {
+    async fn get_contents(
+        &self,
+        file_info: &FileInfo,
+        request: &HttpRequest,
+    ) -> RustusResult<HttpResponse> {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound);
         }
-        NamedFile::open_async(file_info.path.clone().unwrap().as_str())
-            .await
-            .map_err(|err| {
-                error!("{:?}", err);
-                RustusError::FileNotFound
-            })
+        Ok(
+            NamedFile::open_async(file_info.path.clone().unwrap().as_str())
+                .await
+                .map_err(|err| {
+                    error!("{:?}", err);
+                    RustusError::FileNotFound
+                })?
+                .into_response(request),
+        )
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
@@ -198,6 +206,7 @@ impl Storage for FileStorage {
 mod tests {
     use super::FileStorage;
     use crate::{info_storages::FileInfo, Storage};
+    use actix_web::test::TestRequest;
     use bytes::Bytes;
     use std::{
         fs::File,
@@ -280,7 +289,8 @@ mod tests {
             storage.to_string(),
             None,
         );
-        let file_info = storage.get_contents(&file_info).await;
+        let request = TestRequest::get().to_http_request();
+        let file_info = storage.get_contents(&file_info, &request).await;
         assert!(file_info.is_err());
     }
 

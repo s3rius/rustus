@@ -5,14 +5,15 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 
-#[cfg(feature = "hashers")]
-use crate::utils::hashes::verify_chunk_checksum;
 use crate::{
     errors::RustusError,
     metrics,
     notifiers::Hook,
     protocol::extensions::Extensions,
-    utils::headers::{check_header, parse_header},
+    utils::{
+        hashes::verify_chunk_checksum,
+        headers::{check_header, parse_header},
+    },
     RustusResult, State,
 };
 
@@ -39,7 +40,6 @@ pub async fn write_bytes(
         return Err(RustusError::FileNotFound);
     }
 
-    #[cfg(feature = "hashers")]
     if state.config.tus_extensions.contains(&Extensions::Checksum) {
         if let Some(header) = request.headers().get("Upload-Checksum").cloned() {
             let cloned_bytes = bytes.clone();

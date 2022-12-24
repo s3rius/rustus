@@ -47,12 +47,12 @@ impl Notifier for HttpNotifier {
                 .client
                 .post(url.as_str())
                 .header("Idempotency-Key", idempotency_key.as_str())
-                .header("Hook-Name", hook.clone().to_string())
+                .header("Hook-Name", hook.to_string())
                 .header("Content-Type", "application/json")
                 .timeout(Duration::from_secs(2));
             for item in &self.forward_headers {
-                if let Some(value) = header_map.get(item.clone()) {
-                    request = request.header(item.clone(), value.as_bytes());
+                if let Some(value) = header_map.get(item.as_str()) {
+                    request = request.header(item.as_str(), value.as_bytes());
                 }
             }
             request.body(message.clone()).send()

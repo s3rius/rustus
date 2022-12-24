@@ -27,7 +27,7 @@ impl FileInfoStorage {
     }
 
     pub fn info_file_path(&self, file_id: &str) -> PathBuf {
-        self.info_dir.join(format!("{}.info", file_id))
+        self.info_dir.join(format!("{file_id}.info"))
     }
 }
 

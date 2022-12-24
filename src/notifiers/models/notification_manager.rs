@@ -1,10 +1,10 @@
 #[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
-#[cfg(feature = "http_notifier")]
-use crate::notifiers::http_notifier;
 use crate::{
     errors::RustusResult,
-    notifiers::{dir_notifier::DirNotifier, file_notifier::FileNotifier, Hook, Notifier},
+    notifiers::{
+        dir_notifier::DirNotifier, file_notifier::FileNotifier, http_notifier, Hook, Notifier,
+    },
     RustusConf,
 };
 use actix_web::http::header::HeaderMap;
@@ -33,7 +33,6 @@ impl NotificationManager {
                 rustus_config.notification_opts.hooks_dir.clone().unwrap(),
             )));
         }
-        #[cfg(feature = "http_notifier")]
         if !rustus_config.notification_opts.hooks_http_urls.is_empty() {
             debug!("Found http hook urls.");
             manager
