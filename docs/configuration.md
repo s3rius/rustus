@@ -67,6 +67,7 @@ to store files. By default in uses `file-storage` and stores every upload on
 your local file system.
 
 Availabe storages:
+
 * `file-storage`
 * `hybrid-s3`
 
