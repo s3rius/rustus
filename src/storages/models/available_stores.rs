@@ -33,21 +33,24 @@ impl AvailableStores {
                 config.storage_opts.dir_structure.clone(),
                 config.storage_opts.force_fsync,
             )),
-            Self::HybridS3 => Box::new(s3_hybrid_storage::S3HybridStorage::new(
-                config.storage_opts.s3_url.clone().unwrap(),
-                config.storage_opts.s3_region.clone().unwrap(),
-                &config.storage_opts.s3_access_key,
-                &config.storage_opts.s3_secret_key,
-                &config.storage_opts.s3_security_token,
-                &config.storage_opts.s3_session_token,
-                &config.storage_opts.s3_profile,
-                &config.storage_opts.s3_headers,
-                config.storage_opts.s3_bucket.clone().unwrap().as_str(),
-                config.storage_opts.s3_force_path_style,
-                config.storage_opts.data_dir.clone(),
-                config.storage_opts.dir_structure.clone(),
-                config.storage_opts.force_fsync,
-            )),
+            Self::HybridS3 => {
+                log::warn!("Hybrid S3 is an unstable feature. If you ecounter a problem, please raise an issue: https://github.com/s3rius/rustus/issues.");
+                Box::new(s3_hybrid_storage::S3HybridStorage::new(
+                    config.storage_opts.s3_url.clone().unwrap(),
+                    config.storage_opts.s3_region.clone().unwrap(),
+                    &config.storage_opts.s3_access_key,
+                    &config.storage_opts.s3_secret_key,
+                    &config.storage_opts.s3_security_token,
+                    &config.storage_opts.s3_session_token,
+                    &config.storage_opts.s3_profile,
+                    &config.storage_opts.s3_headers,
+                    config.storage_opts.s3_bucket.clone().unwrap().as_str(),
+                    config.storage_opts.s3_force_path_style,
+                    config.storage_opts.data_dir.clone(),
+                    config.storage_opts.dir_structure.clone(),
+                    config.storage_opts.force_fsync,
+                ))
+            }
         }
     }
 }

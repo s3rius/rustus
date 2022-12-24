@@ -76,7 +76,7 @@ impl S3HybridStorage {
                 bucket.add_header(key, value);
             }
         }
-        // bucket.add_header();
+
         if force_path_style {
             bucket = bucket.with_path_style();
         }
