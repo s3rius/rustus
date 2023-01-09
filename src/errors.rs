@@ -95,8 +95,8 @@ impl ResponseError for RustusError {
                     .insert_header((
                         "Content-Type",
                         content_type
-                            .clone()
-                            .unwrap_or_else(|| "text/plain; charset=utf-8".into()),
+                            .as_deref()
+                            .unwrap_or("text/plain; charset=utf-8"),
                     ))
                     .body(proxy_response.clone())
             }

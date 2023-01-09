@@ -330,7 +330,7 @@ impl RustusConf {
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
     pub fn from_args() -> RustusConf {
-        <RustusConf as StructOpt>::from_args()
+        <RustusConf as StructOpt>::from_args().update_extensions()
     }
 
     pub fn from_iter<I>(iter: I) -> RustusConf
@@ -363,7 +363,7 @@ impl RustusConf {
         self.notification_opts.hooks.contains(&hook)
     }
 
-    /// List of extensions.
+    /// Update extension vec.
     ///
     /// This function will parse list of extensions from CLI
     /// and sort them.
@@ -371,7 +371,7 @@ impl RustusConf {
     /// Protocol extensions must be sorted,
     /// because Actix doesn't override
     /// existing methods.
-    pub fn extensions_vec(&self) -> Vec<Extensions> {
+    pub fn update_extensions(self) -> Self {
         let mut ext = self.tus_extensions.clone();
 
         // If create-with-upload extension is enabled
@@ -387,6 +387,9 @@ impl RustusConf {
         }
 
         ext.sort();
-        ext
+        Self {
+            tus_extensions: ext,
+            ..self
+        }
     }
 }

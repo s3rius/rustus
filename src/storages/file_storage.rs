@@ -75,18 +75,17 @@ impl Storage for FileStorage {
         file_info: &FileInfo,
         request: &HttpRequest,
     ) -> RustusResult<HttpResponse> {
-        if file_info.path.is_none() {
-            return Err(RustusError::FileNotFound);
-        }
-        Ok(
-            NamedFile::open_async(file_info.path.clone().unwrap().as_str())
+        if let Some(path) = &file_info.path {
+            Ok(NamedFile::open_async(path)
                 .await
                 .map_err(|err| {
                     error!("{:?}", err);
                     RustusError::FileNotFound
                 })?
-                .into_response(request),
-        )
+                .into_response(request))
+        } else {
+            Err(RustusError::FileNotFound)
+        }
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
@@ -126,9 +125,8 @@ impl Storage for FileStorage {
     }
 
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
-        let info = file_info.clone();
         // New path to file.
-        let file_path = self.data_file_path(info.id.as_str())?;
+        let file_path = self.data_file_path(file_info.id.as_str())?;
         tokio::task::spawn_blocking(move || {
             // Creating new file.
             OpenOptions::new()
@@ -151,7 +149,6 @@ impl Storage for FileStorage {
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        // let info = file_info.clone();
         let force_fsync = self.force_fsync;
         let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {

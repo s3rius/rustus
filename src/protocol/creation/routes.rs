@@ -87,14 +87,14 @@ pub async fn create_file(
     // Indicator that creation-defer-length is enabled.
     let defer_ext = state
         .config
-        .extensions_vec()
+        .tus_extensions
         .contains(&Extensions::CreationDeferLength);
 
     let is_final = check_header(&request, "Upload-Concat", |val| val.starts_with("final;"));
 
     let concat_ext = state
         .config
-        .extensions_vec()
+        .tus_extensions
         .contains(&Extensions::Concatenation);
 
     // Check that Upload-Length header is provided.
@@ -112,7 +112,7 @@ pub async fn create_file(
         length,
         None,
         state.data_storage.to_string(),
-        meta.clone(),
+        meta,
     );
 
     let is_partial = check_header(&request, "Upload-Concat", |val| val == "partial");
@@ -194,7 +194,7 @@ pub async fn create_file(
     // Checking if creation-with-upload extension is enabled.
     let with_upload = state
         .config
-        .extensions_vec()
+        .tus_extensions
         .contains(&Extensions::CreationWithUpload);
     if with_upload && !bytes.is_empty() && !(concat_ext && is_final) {
         let octet_stream = |val: &str| val == "application/offset+octet-stream";
