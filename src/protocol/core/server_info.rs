@@ -8,9 +8,9 @@ use crate::State;
 pub async fn server_info(state: web::Data<State>) -> HttpResponse {
     let ext_str = state
         .config
-        .extensions_vec()
-        .into_iter()
-        .map(|x| x.to_string())
+        .tus_extensions
+        .iter()
+        .map(ToString::to_string)
         .collect::<Vec<String>>()
         .join(",");
     let mut response_builder = HttpResponseBuilder::new(StatusCode::OK);

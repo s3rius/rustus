@@ -15,7 +15,7 @@ mod termination;
 #[cfg_attr(coverage, no_coverage)]
 pub fn setup(app_conf: RustusConf) -> impl Fn(&mut web::ServiceConfig) {
     move |web_app| {
-        for extension in app_conf.extensions_vec() {
+        for extension in &app_conf.tus_extensions {
             match extension {
                 extensions::Extensions::Creation => creation::add_extension(web_app),
                 extensions::Extensions::Termination => {

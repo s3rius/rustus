@@ -46,7 +46,8 @@ mod utils;
 #[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
-        .extensions_vec()
+        .tus_extensions
+        .clone()
         .into_iter()
         .map(|x| x.to_string())
         .collect::<Vec<String>>()
@@ -54,9 +55,8 @@ fn greeting(app_conf: &RustusConf) {
     let hooks = app_conf
         .notification_opts
         .hooks
-        .clone()
-        .into_iter()
-        .map(|x| x.to_string())
+        .iter()
+        .map(ToString::to_string)
         .collect::<Vec<String>>()
         .join(", ");
     let rustus_logo = include_str!("../imgs/rustus_startup_logo.txt");
@@ -122,7 +122,7 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
     // Adding origins.
     for origin in origins {
         cors = cors.allowed_origin_fn(move |request_origin, _| {
-            WildMatch::new(origin.clone().as_str()) == request_origin.to_str().unwrap_or_default()
+            WildMatch::new(&origin) == request_origin.to_str().unwrap_or_default()
         });
     }
 
