@@ -330,7 +330,9 @@ impl RustusConf {
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
     pub fn from_args() -> RustusConf {
-        <RustusConf as StructOpt>::from_args().update_extensions()
+        let mut conf = <RustusConf as StructOpt>::from_args();
+        conf.normalize_extentions();
+        conf
     }
 
     pub fn from_iter<I>(iter: I) -> RustusConf
@@ -363,17 +365,17 @@ impl RustusConf {
         self.notification_opts.hooks.contains(&hook)
     }
 
-    /// Update extension vec.
+    /// Normalize extension vec.
     ///
-    /// This function will parse list of extensions from CLI
-    /// and sort them.
+    ///  Nomralization consists of two parts:
+    ///  1. Adding dependent extentions (e.g. creation-with-upload depends on creation);
+    ///  2. Sorting the resulting extentions;
     ///
     /// Protocol extensions must be sorted,
     /// because Actix doesn't override
     /// existing methods.
-    pub fn update_extensions(self) -> Self {
-        let mut ext = self.tus_extensions.clone();
-
+    pub fn normalize_extentions(&mut self) {
+        let ext = &mut self.tus_extensions;
         // If create-with-upload extension is enabled
         // creation extension must be enabled too.
         if ext.contains(&Extensions::CreationWithUpload) && !ext.contains(&Extensions::Creation) {
@@ -387,9 +389,5 @@ impl RustusConf {
         }
 
         ext.sort();
-        Self {
-            tus_extensions: ext,
-            ..self
-        }
     }
 }
