@@ -70,7 +70,7 @@ pub enum RustusError {
     PrometheusError(#[from] prometheus::Error),
     #[error("Blocking error: {0}")]
     BlockingError(#[from] actix_web::error::BlockingError),
-    #[error("HTTP hook error. Returned status: {0}")]
+    #[error("HTTP hook error. Returned status: {0}, Response text: {1}")]
     HTTPHookError(u16, String, Option<String>),
     #[error("Found S3 error: {0}")]
     S3Error(#[from] s3::error::S3Error),
