@@ -1,6 +1,6 @@
 [package]
 name = "rustus"
-version = "0.6.0"
+version = "0.6.1"
 edition = "2021"
 description = "TUS protocol implementation written in Rust."
 keywords = ["tus", "server", "actix-web"]
