@@ -12,8 +12,14 @@
       
         <link rel="canonical" href="https://s3rius.github.io/rustus/configuration/">
       
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../deploy/">
+      
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
     
     
       
@@ -21,11 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.975780f9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
-        
       
       
 
@@ -112,8 +117,6 @@
       <form class="md-header__option" data-md-component="palette">
         
           
-          
-          
           <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
@@ -121,8 +124,6 @@
             </label>
           
         
-          
-          
           
           <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
           
@@ -163,7 +164,7 @@
           <div class="md-search-result__meta">
             Initializing search
           </div>
-          <ol class="md-search-result__list"></ol>
+          <ol class="md-search-result__list" role="presentation"></ol>
         </div>
       </div>
     </div>
@@ -508,6 +509,7 @@
                   
 
 
+
   <h1>Configuration</h1>
 
 <p>Rustus is highly configurable. You can adjust it with CLI or you can use environment variables.</p>
@@ -530,25 +532,25 @@ like <code>my.staging.domain</code> or <code>my.prod.domain</code>, but it will 
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">CLI</label><label for="__tabbed_1_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rustus --host <span class="s2">&quot;0.0.0.0&quot;</span> <span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    --port <span class="m">1081</span> <span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    --workers <span class="m">8</span> <span class="se">\</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    --max-body-size <span class="m">1000000</span> <span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    --url <span class="s2">&quot;/files&quot;</span> <span class="se">\</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    --log-level <span class="s2">&quot;INFO&quot;</span> <span class="se">\</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    --cors <span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span> <span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    --disable-health-access-log <span class="s2">&quot;yes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rustus<span class="w"> </span>--host<span class="w"> </span><span class="s2">&quot;0.0.0.0&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>--port<span class="w"> </span><span class="m">1081</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span>--workers<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span>--max-body-size<span class="w"> </span><span class="m">1000000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--url<span class="w"> </span><span class="s2">&quot;/files&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>--log-level<span class="w"> </span><span class="s2">&quot;INFO&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>--cors<span class="w"> </span><span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span>--disable-health-access-log<span class="w"> </span><span class="s2">&quot;yes&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_HOST</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_PORT</span><span class="o">=</span><span class="s2">&quot;1081&quot;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">export</span> <span class="nv">RUSTUS_SERVER_WORKERS</span><span class="o">=</span><span class="s2">&quot;8&quot;</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">export</span> <span class="nv">RUSTUS_MAX_BODY_SIZE</span><span class="o">=</span><span class="s2">&quot;1000000&quot;</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">export</span> <span class="nv">RUSTUS_URL</span><span class="o">=</span><span class="s2">&quot;/files&quot;</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nb">export</span> <span class="nv">RUSTUS_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nb">export</span> <span class="nv">RUSTUS_CORS</span><span class="o">=</span><span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">export</span> <span class="nv">RUSTUS_DISABLE_HEALTH_ACCESS_LOG</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_SERVER_HOST</span><span class="o">=</span><span class="s2">&quot;0.0.0.0&quot;</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_SERVER_PORT</span><span class="o">=</span><span class="s2">&quot;1081&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_SERVER_WORKERS</span><span class="o">=</span><span class="s2">&quot;8&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_MAX_BODY_SIZE</span><span class="o">=</span><span class="s2">&quot;1000000&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_URL</span><span class="o">=</span><span class="s2">&quot;/files&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_CORS</span><span class="o">=</span><span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DISABLE_HEALTH_ACCESS_LOG</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>rustus
 </code></pre></div>
@@ -582,29 +584,29 @@ You can use variables within the pattern.</li>
 <li><code>{minute}</code> - minute number from 0 to 59;</li>
 </ul>
 <p>For example if you use <code>files/{year}/{month}/{day}</code> as your dir-structure, rustus stores files like:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$ tree data
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>$<span class="w"> </span>tree<span class="w"> </span>data
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>data
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└── files
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    └── <span class="m">2022</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        └── <span class="m">1</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>            └── <span class="m">8</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>                ├── 0bd911d4054d41c6a3ad54be67ee3e66
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>                └── 5bc9c62384494c439e2a064b82a39cc6
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>└──<span class="w"> </span>files
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span>└──<span class="w"> </span><span class="m">2022</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">        </span>└──<span class="w"> </span><span class="m">1</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">            </span>└──<span class="w"> </span><span class="m">8</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">                </span>├──<span class="w"> </span>0bd911d4054d41c6a3ad54be67ee3e66
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">                </span>└──<span class="w"> </span>5bc9c62384494c439e2a064b82a39cc6
 </code></pre></div>
 <div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">CLI</label><label for="__tabbed_2_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>rustus --force-fsync <span class="s2">&quot;yes&quot;</span> <span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    --storage <span class="s2">&quot;file-storage&quot;</span> <span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    --data-dir <span class="s2">&quot;./data/&quot;</span> <span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    --dir-structure <span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>rustus<span class="w"> </span>--force-fsync<span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span>--storage<span class="w"> </span><span class="s2">&quot;file-storage&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>--data-dir<span class="w"> </span><span class="s2">&quot;./data/&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>--dir-structure<span class="w"> </span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-storage&quot;</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">export</span> <span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span> <span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-storage&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>rustus
 </code></pre></div>
@@ -643,36 +645,36 @@ also applied to it.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">CLI</label><label for="__tabbed_3_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>rustus --storage <span class="s2">&quot;hybrid-s3&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    --s3-url <span class="s2">&quot;https://localhost:9000&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    --s3-bucket <span class="s2">&quot;bucket&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    --s3-region <span class="s2">&quot;eu-central1&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    --s3-access-key <span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    --s3-secret-key <span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    --s3-profile <span class="s2">&quot;my_profile&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    --s3-security-token <span class="s2">&quot;token&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    --s3-session-token <span class="s2">&quot;token&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    --s3-force-path-style <span class="s2">&quot;yes&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    --s3-headers <span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span> <span class="se">\</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    --force-fsync <span class="s2">&quot;yes&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    --data-dir <span class="s2">&quot;./data/&quot;</span> <span class="se">\</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    --dir-structure <span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>rustus<span class="w"> </span>--storage<span class="w"> </span><span class="s2">&quot;hybrid-s3&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--s3-url<span class="w"> </span><span class="s2">&quot;https://localhost:9000&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--s3-bucket<span class="w"> </span><span class="s2">&quot;bucket&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--s3-region<span class="w"> </span><span class="s2">&quot;eu-central1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span>--s3-access-key<span class="w"> </span><span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span>--s3-secret-key<span class="w"> </span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>--s3-profile<span class="w"> </span><span class="s2">&quot;my_profile&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span>--s3-security-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span>--s3-session-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span>--s3-force-path-style<span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span>--s3-headers<span class="w"> </span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span>--force-fsync<span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span>--data-dir<span class="w"> </span><span class="s2">&quot;./data/&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span>--dir-structure<span class="w"> </span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_STORAGE</span><span class="o">=</span><span class="s2">&quot;hybrid-s3&quot;</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_URL</span><span class="o">=</span><span class="s2">&quot;https://localhost:9000&quot;</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_BUCKET</span><span class="o">=</span><span class="s2">&quot;bucket&quot;</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_REGION</span><span class="o">=</span><span class="s2">&quot;eu-central1&quot;</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_SECRET_KEY</span><span class="o">=</span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_SECURITY_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_PROFILE</span><span class="o">=</span><span class="s2">&quot;my_profile&quot;</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nb">export</span> <span class="nv">RUSTUS_S3_HEADERS</span><span class="o">=</span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">export</span> <span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">export</span> <span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">export</span> <span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_STORAGE</span><span class="o">=</span><span class="s2">&quot;hybrid-s3&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_URL</span><span class="o">=</span><span class="s2">&quot;https://localhost:9000&quot;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_BUCKET</span><span class="o">=</span><span class="s2">&quot;bucket&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_REGION</span><span class="o">=</span><span class="s2">&quot;eu-central1&quot;</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECRET_KEY</span><span class="o">=</span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECURITY_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_PROFILE</span><span class="o">=</span><span class="s2">&quot;my_profile&quot;</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_HEADERS</span><span class="o">=</span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
 <a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
 <a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>rustus
 </code></pre></div>
@@ -700,13 +702,13 @@ storing information about uploads. But if you don't plan to have many uploads, i
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">CLI</label><label for="__tabbed_4_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>rustus --info-storage <span class="s2">&quot;file-info-storage&quot;</span> <span class="se">\</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    --info-dir <span class="s2">&quot;./data&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>rustus<span class="w"> </span>--info-storage<span class="w"> </span><span class="s2">&quot;file-info-storage&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">    </span>--info-dir<span class="w"> </span><span class="s2">&quot;./data&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-info-storage&quot;</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DIR</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;file-info-storage&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_DIR</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>rustus
 </code></pre></div>
@@ -726,13 +728,13 @@ It's required if <code>redis-info-storage</code> is chosen.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">CLI</label><label for="__tabbed_5_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>rustus --info-storage <span class="s2">&quot;redis-info-storage&quot;</span> <span class="se">\</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    --info-db-dsn <span class="s2">&quot;redis://localhost/0&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>rustus<span class="w"> </span>--info-storage<span class="w"> </span><span class="s2">&quot;redis-info-storage&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span>--info-db-dsn<span class="w"> </span><span class="s2">&quot;redis://localhost/0&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;redis://localhost&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;redis://localhost&quot;</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>rustus
 </code></pre></div>
@@ -750,13 +752,13 @@ connect to database.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">CLI</label><label for="__tabbed_6_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>rustus --info-storage <span class="s2">&quot;db-info-storage&quot;</span> <span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    --info-db-dsn <span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>rustus<span class="w"> </span>--info-storage<span class="w"> </span><span class="s2">&quot;db-info-storage&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--info-db-dsn<span class="w"> </span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>rustus
 </code></pre></div>
@@ -782,13 +784,13 @@ connect to database.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">CLI</label><label for="__tabbed_7_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>rustus --remove-parts <span class="s2">&quot;yes&quot;</span> <span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    --tus-extensions <span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>rustus<span class="w"> </span>--remove-parts<span class="w"> </span><span class="s2">&quot;yes&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--tus-extensions<span class="w"> </span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span> <span class="nv">RUSTUS_TUS_EXTENSIONS</span><span class="o">=</span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span> <span class="nv">RUSTUS_REMOVE_PARTS</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_TUS_EXTENSIONS</span><span class="o">=</span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_REMOVE_PARTS</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>rustus
 </code></pre></div>
@@ -811,42 +813,6 @@ connect to database.</p>
       
         <footer class="md-footer">
   
-    
-    <nav class="md-footer__inner md-grid" aria-label="Footer" >
-      
-        
-        <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Welcome page" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Welcome page
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../deploy/" class="md-footer__link md-footer__link--next" aria-label="Next: Deployment" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Deployment
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
-  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
@@ -868,12 +834,11 @@ connect to database.</p>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.expand", "search.suggest", "header.autohide"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.expand", "search.suggest", "header.autohide"], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
       
-    
     
   </body>
 </html>
