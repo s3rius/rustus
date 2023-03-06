@@ -1,5 +1,9 @@
 use async_trait::async_trait;
-use mobc_redis::{mobc::Pool, redis, RedisConnectionManager};
+// use mobc_redis::{mobc::Pool, redis, RedisConnectionManager};
+// use redis::aio::Connection;
+
+use bb8::Pool;
+use bb8_redis::RedisConnectionManager;
 use redis::aio::Connection;
 
 use crate::{
@@ -15,9 +19,8 @@ pub struct RedisStorage {
 impl RedisStorage {
     #[allow(clippy::unused_async)]
     pub async fn new(db_dsn: &str) -> RustusResult<Self> {
-        let client = redis::Client::open(db_dsn)?;
-        let manager = RedisConnectionManager::new(client);
-        let pool = Pool::builder().max_open(100).build(manager);
+        let manager = RedisConnectionManager::new(db_dsn)?;
+        let pool = bb8::Pool::builder().max_size(100).build(manager).await?;
         Ok(Self { pool })
     }
 }

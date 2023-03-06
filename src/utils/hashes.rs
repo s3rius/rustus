@@ -1,5 +1,6 @@
 use crate::{errors::RustusError, RustusResult};
 use actix_web::http::header::HeaderValue;
+use base64::Engine;
 use digest::Digest;
 
 /// Checks if hash-sum of a slice matches the given checksum.
@@ -44,10 +45,12 @@ pub fn verify_chunk_checksum(header: &HeaderValue, data: &[u8]) -> RustusResult<
         let mut split = val.split(' ');
         if let Some(algo) = split.next() {
             if let Some(checksum_base) = split.next() {
-                let checksum = base64::decode(checksum_base).map_err(|_| {
-                    log::error!("Can't decode checksum value");
-                    RustusError::WrongHeaderValue
-                })?;
+                let checksum = base64::engine::general_purpose::STANDARD
+                    .decode(checksum_base)
+                    .map_err(|_| {
+                        log::error!("Can't decode checksum value");
+                        RustusError::WrongHeaderValue
+                    })?;
                 return checksum_verify(algo, data, checksum.as_slice());
             }
         }

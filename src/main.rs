@@ -290,6 +290,7 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 #[cfg_attr(coverage, no_coverage)]
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
+    dotenvy::dotenv().ok();
     let app_conf = RustusConf::from_args();
     // Configuring logging.
     // I may change it to another log system like `fern` later, idk.

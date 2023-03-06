@@ -37,8 +37,7 @@ impl Notifier for DirNotifier {
         if !hook_path.exists() {
             debug!("Hook {} not found.", hook.to_string());
             return Err(RustusError::HookError(format!(
-                "Hook file {} not found.",
-                hook
+                "Hook file {hook} not found."
             )));
         }
         debug!("Running hook: {}", hook_path.as_path().display());

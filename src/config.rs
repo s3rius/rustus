@@ -1,6 +1,6 @@
 use std::{ffi::OsString, path::PathBuf};
 
-use structopt::StructOpt;
+use clap::Parser;
 
 use crate::{
     info_storages::AvailableInfoStores,
@@ -10,20 +10,20 @@ use crate::{
 
 use crate::storages::AvailableStores;
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct StorageOptions {
     /// Rustus storage type.
     ///
     /// Storages are used to store
     /// uploads.
-    #[structopt(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
+    #[arg(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
     pub storage: AvailableStores,
 
     /// Rustus data directory
     ///
     /// This directory is used to store files
     /// for all *file_storage storages.
-    #[structopt(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
+    #[arg(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
     /// Storage directory structure.
@@ -32,7 +32,7 @@ pub struct StorageOptions {
     /// day, month, year or even environment variables.
     /// Example: "/year/month/day/env[HOSTNAME]/".
     ///
-    #[structopt(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
+    #[arg(long, env = "RUSTUS_DIR_STRUCTURE", default_value = "")]
     pub dir_structure: String,
 
     /// Forces fsync call after writing chunk to filesystem.
@@ -41,61 +41,61 @@ pub struct StorageOptions {
     /// everything is written on disk correctly.
     ///
     /// In most cases this parameter is redundant.
-    #[structopt(long, env = "RUSTUS_FORCE_FSYNC")]
+    #[arg(long, env = "RUSTUS_FORCE_FSYNC")]
     pub force_fsync: bool,
 
     /// S3 bucket to upload files to.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_BUCKET")]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_BUCKET")]
     pub s3_bucket: Option<String>,
 
     /// S3 region.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_REGION")]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_REGION")]
     pub s3_region: Option<String>,
 
     /// S3 access key.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_ACCESS_KEY")]
+    #[arg(long, env = "RUSTUS_S3_ACCESS_KEY")]
     pub s3_access_key: Option<String>,
 
     /// S3 secret key.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_SECRET_KEY")]
+    #[arg(long, env = "RUSTUS_S3_SECRET_KEY")]
     pub s3_secret_key: Option<String>,
 
     /// S3 URL.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, required_if("storage", "hybrid-s3"), env = "RUSTUS_S3_URL")]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_URL")]
     pub s3_url: Option<String>,
 
     /// S3 force path style.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_FORCE_PATH_STYLE")]
+    #[arg(long, env = "RUSTUS_S3_FORCE_PATH_STYLE")]
     pub s3_force_path_style: bool,
 
     /// S3 security token.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_SECURITY_TOKEN")]
+    #[arg(long, env = "RUSTUS_S3_SECURITY_TOKEN")]
     pub s3_security_token: Option<String>,
 
     /// S3 session token.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_SESSION_TOKEN")]
+    #[arg(long, env = "RUSTUS_S3_SESSION_TOKEN")]
     pub s3_session_token: Option<String>,
 
     /// S3 profile.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_PROFILE")]
+    #[arg(long, env = "RUSTUS_S3_PROFILE")]
     pub s3_profile: Option<String>,
 
     /// Additional S3 headers.
@@ -103,11 +103,11 @@ pub struct StorageOptions {
     /// Useful for configuring ACLs.
     ///
     /// This parameter is required fo s3-based storages.
-    #[structopt(long, env = "RUSTUS_S3_HEADERS")]
+    #[arg(long, env = "RUSTUS_S3_HEADERS")]
     pub s3_headers: Option<String>,
 }
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 pub struct InfoStoreOptions {
     /// Type of info storage.
     ///
@@ -117,7 +117,7 @@ pub struct InfoStoreOptions {
     ///
     /// This information is used in
     /// HEAD requests.
-    #[structopt(
+    #[arg(
         long,
         short,
         default_value = "file-info-storage",
@@ -129,7 +129,7 @@ pub struct InfoStoreOptions {
     ///
     /// This directory is used to store .info files
     /// for `file_info_storage`.
-    #[structopt(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
+    #[arg(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
     pub info_dir: PathBuf,
 
     /// Connection string for remote info storages.
@@ -140,96 +140,99 @@ pub struct InfoStoreOptions {
     ///
     /// Value must include all connection details.
     #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
-    #[structopt(
+    #[arg(
         long,
-        required_if("info-storage", "db-info-storage"),
-        required_if("info-storage", "redis-info-storage"),
+        required_if_eq_any([("info-storage", "db-info-storage"), ("info-storage", "redis-info-storage")]),
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
 }
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct NotificationsOptions {
     /// Notifications format.
     ///
     /// This format will be used in all
     /// messages about hooks.
-    #[structopt(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
+    #[arg(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
     pub hooks_format: Format,
 
     /// Enabled hooks for notifications.
-    #[structopt(
+    #[arg(
         long,
         default_value = "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish",
         env = "RUSTUS_HOOKS",
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     pub hooks: Vec<Hook>,
 
     /// Use this option if you use rustus
     /// behind any proxy. Like Nginx or Traefik.
-    #[structopt(long, env = "RUSTUS_BEHIND_PROXY")]
+    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
     pub behind_proxy: bool,
 
     /// List of URLS to send webhooks to.
-    #[structopt(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_delimiter = true)]
+    #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
     pub hooks_http_urls: Vec<String>,
 
     // List of headers to forward from client.
-    #[structopt(long, env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS", use_delimiter = true)]
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS",
+        use_value_delimiter = true
+    )]
     pub hooks_http_proxy_headers: Vec<String>,
 
     /// Url for AMQP server.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_URL")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
     pub hooks_amqp_url: Option<String>,
 
     /// Rustus will create exchange if enabled.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
     pub hooks_amqp_declare_exchange: bool,
 
     /// Rustus will create all queues for communication and bind them
     /// to exchange if enabled.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
     pub hooks_amqp_declare_queues: bool,
 
     /// Durability type of exchange.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
     pub hooks_amqp_durable_exchange: bool,
 
     /// Durability type of queues.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
     pub hooks_amqp_durable_queues: bool,
 
     /// Adds celery specific headers.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
     pub hooks_amqp_celery: bool,
 
     /// Name of amqp exchange.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
 
     /// Exchange kind.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
     pub hooks_amqp_exchange_kind: String,
 
     /// Routing key to use when sending message to an exchange.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
     pub hooks_amqp_routing_key: Option<String>,
 
     /// Prefix for all AMQP queues.
     #[cfg(feature = "amqp_notifier")]
-    #[structopt(
+    #[arg(
         long,
         env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
         default_value = "rustus"
@@ -238,17 +241,17 @@ pub struct NotificationsOptions {
 
     /// Directory for executable hook files.
     /// This parameter is used to call executables from dir.
-    #[structopt(long, env = "RUSTUS_HOOKS_DIR")]
+    #[arg(long, env = "RUSTUS_HOOKS_DIR")]
     pub hooks_dir: Option<PathBuf>,
 
     /// Executable file which must be called for
     /// notifying about upload status.
-    #[structopt(long, env = "RUSTUS_HOOKS_FILE")]
+    #[arg(long, env = "RUSTUS_HOOKS_FILE")]
     pub hooks_file: Option<String>,
 }
 
-#[derive(Debug, StructOpt, Clone)]
-#[structopt(name = "Rustus")]
+#[derive(Debug, Parser, Clone)]
+#[command(name = "Rustus")]
 /// Tus protocol implementation.
 ///
 /// This program is a web-server that
@@ -258,51 +261,51 @@ pub struct NotificationsOptions {
 /// [here](https://tus.io/).
 pub struct RustusConf {
     /// Rustus server host
-    #[structopt(short, long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
+    #[arg(long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
     pub host: String,
 
     /// Rustus server port
-    #[structopt(short, long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
+    #[arg(long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
     pub port: u16,
 
-    #[structopt(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
+    #[arg(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
     pub disable_health_access_log: bool,
 
     /// Rustus base API url
-    #[structopt(long, default_value = "/files", env = "RUSTUS_URL")]
+    #[arg(long, default_value = "/files", env = "RUSTUS_URL")]
     pub url: String,
 
     /// Allowed hosts for CORS protocol.
     ///
     /// By default all hosts are allowed.
-    #[structopt(long, env = "RUSTUS_CORS", use_delimiter = true)]
+    #[arg(long, env = "RUSTUS_CORS", use_value_delimiter = true)]
     pub cors: Vec<String>,
 
     /// Maximum payload size.
     ///
     /// This limit used to reduce amount of consumed memory.
-    #[structopt(
+    #[arg(
         long,
-        short = "mbs",
+        short = 'm',
         default_value = "262144",
         env = "RUSTUS_MAX_BODY_SIZE"
     )]
     pub max_body_size: usize,
 
     /// Rustus maximum log level
-    #[structopt(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
+    #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
     /// Number of actix workers default value = number of cpu cores.
-    #[structopt(long, short, env = "RUSTUS_WORKERS")]
+    #[arg(long, short, env = "RUSTUS_WORKERS")]
     pub workers: Option<usize>,
 
     /// Enabled extensions for TUS protocol.
-    #[structopt(
+    #[arg(
         long,
         default_value = "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum",
         env = "RUSTUS_TUS_EXTENSIONS",
-        use_delimiter = true
+        use_value_delimiter = true
     )]
     pub tus_extensions: Vec<Extensions>,
 
@@ -310,16 +313,16 @@ pub struct RustusConf {
     /// By default rustus does nothing with part files after concatenation.
     ///
     /// This parameter is only needed if concatenation extension is enabled.
-    #[structopt(long, env = "RUSTUS_REMOVE_PARTS")]
+    #[arg(long, env = "RUSTUS_REMOVE_PARTS")]
     pub remove_parts: bool,
 
-    #[structopt(flatten)]
+    #[command(flatten)]
     pub storage_opts: StorageOptions,
 
-    #[structopt(flatten)]
+    #[command(flatten)]
     pub info_storage_opts: InfoStoreOptions,
 
-    #[structopt(flatten)]
+    #[command(flatten)]
     pub notification_opts: NotificationsOptions,
 }
 
@@ -330,7 +333,7 @@ impl RustusConf {
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
     pub fn from_args() -> RustusConf {
-        let mut conf = <RustusConf as StructOpt>::from_args();
+        let mut conf = RustusConf::parse();
         conf.normalize_extentions();
         conf
     }
@@ -340,7 +343,7 @@ impl RustusConf {
         I: IntoIterator,
         I::Item: Into<OsString> + Clone,
     {
-        <RustusConf as StructOpt>::from_iter(iter)
+        <RustusConf as Parser>::parse_from(iter)
     }
 
     /// Base API url.

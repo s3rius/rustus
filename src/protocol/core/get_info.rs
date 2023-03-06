@@ -65,6 +65,8 @@ mod tests {
     use crate::{server::test::get_service, State};
     use actix_web::test::{call_service, TestRequest};
 
+    use base64::{engine::general_purpose, Engine};
+
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
@@ -117,7 +119,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             String::from(metadata),
-            format!("{} {}", "test", base64::encode("value"))
+            format!("{} {}", "test", general_purpose::STANDARD.encode("value"))
         )
     }
 
