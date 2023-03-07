@@ -59,13 +59,13 @@ This option disabled by default for security purposes unless you can be sure tha
 === "CLI"
 
     ``` bash
-    rustus --behind-proxy "yes"
+    rustus --behind-proxy
     ```
 
 === "ENV"
 
     ``` bash
-    export RUSTUS_BEHIND_PROXY="yes"
+    export RUSTUS_BEHIND_PROXY="true"
 
     rustus
     ```
@@ -913,11 +913,11 @@ Otherwise, it will use only one routing key and only one queue!
         --hooks-amqp-exchange "rustus" \
         --hooks-amqp-exchange-kind "topic" \
         --hooks-amqp-routing-key "route66" \
-        --hooks-amqp-declare-exchange "yes" \
-        --hooks-amqp-declare-queues "yes" \
-        --hooks-amqp-durable-exchange "yes" \
-        --hooks-amqp-durable-queues "yes" \
-        --hooks-amqp-celery "yes"
+        --hooks-amqp-declare-exchange \
+        --hooks-amqp-declare-queues \
+        --hooks-amqp-durable-exchange \
+        --hooks-amqp-durable-queues \
+        --hooks-amqp-celery
     ```
 
 === "ENV"
@@ -928,11 +928,11 @@ Otherwise, it will use only one routing key and only one queue!
     export RUSTUS_HOOKS_AMQP_EXCHANGE="rustus"
     export RUSTUS_HOOKS_AMQP_EXCHANGE_KIND="topic"
     export RUSTUS_HOOKS_AMQP_ROUTING_KEY="route66"
-    export RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE="yes"
-    export RUSTUS_HOOKS_AMQP_DECLARE_QUEUES="yes"
-    export RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE="yes"
-    export RUSTUS_HOOKS_AMQP_DURABLE_QUEUES="yes"
-    export RUSTUS_HOOKS_AMQP_CELERY="yes"
+    export RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE="true"
+    export RUSTUS_HOOKS_AMQP_DECLARE_QUEUES="true"
+    export RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE="true"
+    export RUSTUS_HOOKS_AMQP_DURABLE_QUEUES="true"
+    export RUSTUS_HOOKS_AMQP_CELERY="true"
 
     rustus
     ```
@@ -1007,7 +1007,7 @@ adds required by Celery headers to every message.
         --hooks-amqp-exchange "celery" \
         --hooks-amqp-exchange-kind "direct" \
         --hooks-amqp-routing-key "celery" \
-        --hooks-amqp-celery "yes"
+        --hooks-amqp-celery
     ```
 
 === "ENV"
@@ -1017,7 +1017,7 @@ adds required by Celery headers to every message.
     export RUSTUS_HOOKS_AMQP_EXCHANGE="celery"
     export RUSTUS_HOOKS_AMQP_EXCHANGE_KIND="direct"
     export RUSTUS_HOOKS_AMQP_ROUTING_KEY="celery"
-    export RUSTUS_HOOKS_AMQP_CELERY="yes"
+    export RUSTUS_HOOKS_AMQP_CELERY="true"
 
     rustus
     ```

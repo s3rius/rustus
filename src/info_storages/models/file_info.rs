@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{errors::RustusError, RustusResult};
+use base64::{engine::general_purpose, Engine};
 use chrono::{serde::ts_seconds, DateTime, Utc};
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -76,7 +77,7 @@ impl FileInfo {
 
         // Getting all metadata keys.
         for (key, val) in &self.metadata {
-            let encoded_value = base64::encode(val);
+            let encoded_value = general_purpose::STANDARD.encode(val);
             // Adding metadata entry to the list.
             result.push(format!("{key} {encoded_value}"));
         }

@@ -48,9 +48,8 @@ impl NotificationManager {
         #[cfg(feature = "amqp_notifier")]
         if rustus_config.notification_opts.hooks_amqp_url.is_some() {
             debug!("Found AMQP notifier.");
-            manager
-                .notifiers
-                .push(Box::new(amqp_notifier::AMQPNotifier::new(
+            manager.notifiers.push(Box::new(
+                amqp_notifier::AMQPNotifier::new(
                     rustus_config
                         .notification_opts
                         .hooks_amqp_url
@@ -80,7 +79,9 @@ impl NotificationManager {
                         durable_queues: rustus_config.notification_opts.hooks_amqp_durable_queues,
                     },
                     rustus_config.notification_opts.hooks_amqp_celery,
-                )));
+                )
+                .await?,
+            ));
         }
         for notifier in &mut manager.notifiers.iter_mut() {
             notifier.prepare().await?;

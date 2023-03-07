@@ -39,7 +39,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
         --url "/files" \
         --log-level "INFO" \
         --cors "my.*.domain.com,your.*.domain.com" \
-        --disable-health-access-log "yes"
+        --disable-health-access-log
     ```
 
 === "ENV"
@@ -52,7 +52,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
     export RUSTUS_URL="/files"
     export RUSTUS_LOG_LEVEL="INFO"
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
-    export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="yes"
+    export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="true"
 
     rustus
     ```
@@ -105,7 +105,7 @@ data
 === "CLI"
 
     ``` bash
-    rustus --force-fsync "yes" \
+    rustus --force-fsync \
         --storage "file-storage" \
         --data-dir "./data/" \
         --dir-structure "{year}/{month}/{day}"
@@ -117,7 +117,7 @@ data
     export RUSTUS_STORAGE="file-storage"
     export RUSTUS_DATA_DIR="./data/"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
-    export RUSTUS_FORCE_FSYNC="yes"
+    export RUSTUS_FORCE_FSYNC="true"
 
     rustus
     ```
@@ -167,9 +167,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
         --s3-profile "my_profile" \
         --s3-security-token "token" \
         --s3-session-token "token" \
-        --s3-force-path-style "yes" \
+        --s3-force-path-style \
         --s3-headers '{"x-amz-acl": "public-read"}' \
-        --force-fsync "yes" \
+        --force-fsync \
         --data-dir "./data/" \
         --dir-structure "{year}/{month}/{day}"
     ```
@@ -189,7 +189,7 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_S3_HEADERS='{"x-amz-acl": "public-read"}'
     export RUSTUS_DATA_DIR="./data/"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
-    export RUSTUS_FORCE_FSYNC="yes"
+    export RUSTUS_FORCE_FSYNC="true"
 
     rustus
     ```
@@ -317,7 +317,7 @@ By default all extensions are enabled.
 === "CLI"
 
     ``` bash
-    rustus --remove-parts "yes" \
+    rustus --remove-parts \
         --tus-extensions "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
     ```
 
@@ -325,7 +325,7 @@ By default all extensions are enabled.
 
     ``` bash
     export RUSTUS_TUS_EXTENSIONS="getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum"
-    export RUSTUS_REMOVE_PARTS="yes"
+    export RUSTUS_REMOVE_PARTS="true"
 
     rustus
     ```
