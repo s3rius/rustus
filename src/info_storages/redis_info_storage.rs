@@ -72,7 +72,7 @@ impl InfoStorage for RedisStorage {
 mod tests {
     use super::RedisStorage;
     use crate::{info_storages::FileInfo, InfoStorage};
-    use mobc_redis::{redis, redis::AsyncCommands};
+    use redis::AsyncCommands;
 
     async fn get_storage() -> RedisStorage {
         let redis_url = std::env::var("TEST_REDIS_URL").unwrap();

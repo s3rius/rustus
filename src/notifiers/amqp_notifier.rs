@@ -175,7 +175,9 @@ mod tests {
                 durable_exchange: false,
             },
             true,
-        );
+        )
+        .await
+        .unwrap();
         notifier.prepare().await.unwrap();
         notifier
     }
@@ -206,7 +208,7 @@ mod tests {
             .unwrap();
         assert!(message.is_some());
         assert_eq!(
-            String::from_utf8(message.clone().unwrap().data.clone()).unwrap(),
+            String::from_utf8(message.as_ref().unwrap().data.clone()).unwrap(),
             format!("[[{}], {{}}, {{}}]", test_msg)
         );
         message
@@ -231,7 +233,9 @@ mod tests {
                 durable_exchange: false,
             },
             false,
-        );
+        )
+        .await
+        .unwrap();
         let res = notifier
             .send_message("Test Message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;
