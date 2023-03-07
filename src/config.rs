@@ -142,7 +142,7 @@ pub struct InfoStoreOptions {
     #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
     #[arg(
         long,
-        required_if_eq_any([("info-storage", "db-info-storage"), ("info-storage", "redis-info-storage")]),
+        required_if_eq_any([("info_storage", "db-info-storage"), ("info_storage", "redis-info-storage")]),
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
