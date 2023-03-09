@@ -258,7 +258,7 @@ pub struct SentryOptions {
     #[arg(
         name = "sentry-sample-rate",
         long,
-        default_value = "0.5",
+        default_value = "1.0",
         env = "RUSTUS_SENTRY_SAMPLE_RATE"
     )]
     pub sample_rate: f32,

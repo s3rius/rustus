@@ -58,6 +58,26 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
     ```
 
 
+## Sentry integration
+
+If you have sentry and want to see all erros in your sentry project,
+please provide sentry-dsn to rustus.
+
+=== "CLI"
+
+    ``` bash
+    rustus --sentry-dsn "https://user@sentry-instance.com/11" \
+        --sentry-sample-rate 1.0
+    ```
+
+=== "ENV"
+
+    ``` bash
+    export RUSTUS_SENTRY_DSN="https://user@sentry-instance.com/11"
+    export RUSTUS_SENTRY_SAMPLE_RATE="1.0"
+
+    rustus
+    ```
 
 
 ## Configuring storage
