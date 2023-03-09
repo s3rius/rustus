@@ -21,8 +21,7 @@ pub async fn write_bytes(
     request: HttpRequest,
     bytes: Bytes,
     state: web::Data<State>,
-    active_uploads: web::Data<metrics::ActiveUploads>,
-    finished_uploads: web::Data<metrics::FinishedUploads>,
+    metrics: web::Data<metrics::RustusMetrics>,
 ) -> RustusResult<HttpResponse> {
     // Checking if request has required headers.
     let check_content_type = |val: &str| val == "application/offset+octet-stream";
@@ -138,8 +137,8 @@ pub async fn write_bytes(
     }
 
     if hook == Hook::PostFinish {
-        active_uploads.gauge.dec();
-        finished_uploads.counter.inc();
+        metrics.active_uploads.dec();
+        metrics.finished_uploads.inc();
     }
 
     Ok(HttpResponse::NoContent()

@@ -3,7 +3,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use actix_cors::Cors;
 use actix_web::{
@@ -19,7 +19,7 @@ use log::{error, LevelFilter};
 
 use config::RustusConf;
 
-use metrics::{ActiveUploads, FinishedUploads, StartedUploads, TerminatedUploads, UploadSizes};
+use metrics::RustusMetrics;
 use wildmatch::WildMatch;
 
 use crate::{
@@ -155,60 +155,26 @@ pub fn create_server(state: State) -> RustusResult<Server> {
         .notification_opts
         .hooks_http_proxy_headers
         .clone();
-    let metrics = actix_web_prom::PrometheusMetricsBuilder::new("")
+    let metrics = RustusMetrics::new()?;
+    let metrics_middleware = actix_web_prom::PrometheusMetricsBuilder::new("")
         .endpoint("/metrics")
+        .registry(metrics.registry.clone())
         .build()
         .map_err(|err| {
             error!("{}", err);
             RustusError::Unknown
         })?;
-    let active_uploads = ActiveUploads::new()?;
-    let upload_sizes = UploadSizes::new()?;
-    let started_uploads = StartedUploads::new()?;
-    let finished_uploads = FinishedUploads::new()?;
-    let terminated_uploads = TerminatedUploads::new()?;
-    let found_errors = prometheus::IntCounterVec::new(
-        prometheus::Opts {
-            namespace: String::new(),
-            subsystem: String::new(),
-            name: "errors".into(),
-            help: "Found errors".into(),
-            const_labels: HashMap::new(),
-            variable_labels: Vec::new(),
-        },
-        &["path", "description"],
-    )?;
-    metrics
-        .registry
-        .register(Box::new(active_uploads.gauge.clone()))?;
-    metrics
-        .registry
-        .register(Box::new(upload_sizes.hist.clone()))?;
-    metrics
-        .registry
-        .register(Box::new(started_uploads.counter.clone()))?;
-    metrics
-        .registry
-        .register(Box::new(finished_uploads.counter.clone()))?;
-    metrics
-        .registry
-        .register(Box::new(terminated_uploads.counter.clone()))?;
-    metrics.registry.register(Box::new(found_errors.clone()))?;
     let mut server = HttpServer::new(move || {
         let mut logger = middleware::Logger::new("\"%r\" \"-\" \"%s\" \"%a\" \"%D\"");
         if disable_health_log {
             logger = logger.exclude("/health");
         }
-        let error_metrics = found_errors.clone();
+        let error_metrics = metrics.found_errors.clone();
         App::new()
-            .app_data(web::Data::new(active_uploads.clone()))
-            .app_data(web::Data::new(started_uploads.clone()))
-            .app_data(web::Data::new(finished_uploads.clone()))
-            .app_data(web::Data::new(terminated_uploads.clone()))
-            .app_data(web::Data::new(upload_sizes.clone()))
+            .app_data(web::Data::new(metrics.clone()))
             .route("/health", web::get().to(routes::health_check))
             .configure(rustus_service(state.clone()))
-            .wrap(metrics.clone())
+            .wrap(metrics_middleware.clone())
             .wrap(logger)
             .wrap(create_cors(cors_hosts.clone(), proxy_headers.clone()))
             // Middleware that overrides method of a request if
