@@ -14,7 +14,7 @@ use crate::{
 pub async fn terminate(
     request: HttpRequest,
     state: web::Data<State>,
-    terminated_uploads: web::Data<metrics::TerminatedUploads>,
+    metrics: web::Data<metrics::RustusMetrics>,
 ) -> RustusResult<HttpResponse> {
     let file_id_opt = request.match_info().get("file_id").map(String::from);
     if let Some(file_id) = file_id_opt {
@@ -36,7 +36,7 @@ pub async fn terminate(
         }
         state.info_storage.remove_info(file_id.as_str()).await?;
         state.data_storage.remove_file(&file_info).await?;
-        terminated_uploads.counter.inc();
+        metrics.terminated_uploads.inc();
         if state.config.hook_is_active(Hook::PostTerminate) {
             let message = state.config.notification_opts.hooks_format.format(
                 &request,
