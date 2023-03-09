@@ -177,6 +177,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
             .wrap(metrics_middleware.clone())
             .wrap(logger)
             .wrap(create_cors(cors_hosts.clone(), proxy_headers.clone()))
+            .wrap(sentry_actix::Sentry::new())
             // Middleware that overrides method of a request if
             // "X-HTTP-Method-Override" header is provided.
             .wrap_fn(|mut req, srv| {
@@ -261,6 +262,21 @@ async fn main() -> std::io::Result<()> {
     // Configuring logging.
     // I may change it to another log system like `fern` later, idk.
     setup_logging(&app_conf)?;
+
+    #[allow(clippy::no_effect_underscore_binding)]
+    let mut _guard = None;
+    if let Some(dsn) = &app_conf.sentry_opts.dsn {
+        log::info!("Setting up sentry .");
+        _guard = Some(sentry::init((
+            dsn.as_str(),
+            sentry::ClientOptions {
+                debug: true,
+                sample_rate: app_conf.sentry_opts.sample_rate,
+                ..Default::default()
+            },
+        )));
+    }
+
     // Printing cool message.
     greeting(&app_conf);
 
