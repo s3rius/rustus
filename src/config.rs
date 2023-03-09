@@ -251,6 +251,20 @@ pub struct NotificationsOptions {
 }
 
 #[derive(Debug, Parser, Clone)]
+pub struct SentryOptions {
+    #[arg(name = "sentry-dsn", long, env = "RUSTUS_SENTRY_DSN")]
+    pub dsn: Option<String>,
+
+    #[arg(
+        name = "sentry-sample-rate",
+        long,
+        default_value = "0.5",
+        env = "RUSTUS_SENTRY_SAMPLE_RATE"
+    )]
+    pub sample_rate: f32,
+}
+
+#[derive(Debug, Parser, Clone)]
 #[command(name = "Rustus")]
 /// Tus protocol implementation.
 ///
@@ -324,6 +338,9 @@ pub struct RustusConf {
 
     #[command(flatten)]
     pub notification_opts: NotificationsOptions,
+
+    #[command(flatten)]
+    pub sentry_opts: SentryOptions,
 }
 
 #[cfg_attr(coverage, no_coverage)]
