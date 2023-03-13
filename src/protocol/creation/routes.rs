@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-
 use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
+use base64::{engine::general_purpose, Engine};
+use std::collections::HashMap;
 
 use crate::{
     info_storages::FileInfo,
@@ -38,8 +38,9 @@ fn get_metadata(request: &HttpRequest) -> Option<HashMap<String, String>> {
                 if key.is_none() || b64val.is_none() {
                     continue;
                 }
-                let value =
-                    base64::decode(b64val.unwrap()).map(|value| match String::from_utf8(value) {
+                let value = general_purpose::STANDARD
+                    .decode(b64val.unwrap())
+                    .map(|value| match String::from_utf8(value) {
                         Ok(val) => Some(val),
                         Err(_) => None,
                     });
@@ -72,9 +73,7 @@ fn get_upload_parts(request: &HttpRequest) -> Vec<String> {
 /// extension is enabled.
 #[allow(clippy::too_many_lines)]
 pub async fn create_file(
-    active_uploads: web::Data<metrics::ActiveUploads>,
-    file_sizes: web::Data<metrics::UploadSizes>,
-    started_uploads: web::Data<metrics::StartedUploads>,
+    metrics: web::Data<metrics::RustusMetrics>,
     state: web::Data<State>,
     request: HttpRequest,
     bytes: Bytes,
@@ -151,12 +150,12 @@ pub async fn create_file(
 
     // Incrementing number of active uploads
 
-    active_uploads.gauge.inc();
-    started_uploads.counter.inc();
+    metrics.active_uploads.inc();
+    metrics.started_uploads.inc();
 
     if let Some(length) = file_info.length {
         #[allow(clippy::cast_precision_loss)]
-        file_sizes.hist.observe(length as f64);
+        metrics.upload_sizes.observe(length as f64);
     }
 
     if file_info.is_final {
@@ -258,6 +257,7 @@ mod tests {
         test::{call_service, TestRequest},
         web,
     };
+    use base64::{engine::general_purpose, Engine};
 
     #[actix_rt::test]
     async fn success() {
@@ -459,8 +459,8 @@ mod tests {
                 "Upload-Metadata",
                 format!(
                     "test {}, pest {}",
-                    base64::encode("data1"),
-                    base64::encode("data2")
+                    general_purpose::STANDARD.encode("data1"),
+                    general_purpose::STANDARD.encode("data2")
                 ),
             ))
             .to_request();
@@ -492,7 +492,10 @@ mod tests {
             .insert_header(("Upload-Length", 100))
             .insert_header((
                 "Upload-Metadata",
-                format!("test data1, pest {}", base64::encode("data")),
+                format!(
+                    "test data1, pest {}",
+                    general_purpose::STANDARD.encode("data")
+                ),
             ))
             .to_request();
         let resp = call_service(&mut rustus, request).await;

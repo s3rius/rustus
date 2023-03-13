@@ -4,14 +4,14 @@ use crate::{
 };
 use actix_web::http::header::HeaderMap;
 use async_trait::async_trait;
+use bb8::Pool;
+use bb8_lapin::LapinConnectionManager;
 use lapin::{
     options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
     types::{AMQPValue, FieldTable, LongString},
     BasicProperties, ConnectionProperties, ExchangeKind,
 };
-use mobc_lapin::{mobc::Pool, RMQConnectionManager};
 use strum::IntoEnumIterator;
-use tokio_amqp::LapinTokioExt;
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Clone)]
@@ -25,7 +25,7 @@ pub struct DeclareOptions {
 #[derive(Clone)]
 pub struct AMQPNotifier {
     exchange_name: String,
-    pool: Pool<RMQConnectionManager>,
+    pool: Pool<LapinConnectionManager>,
     queues_prefix: String,
     exchange_kind: String,
     routing_key: Option<String>,
@@ -35,7 +35,7 @@ pub struct AMQPNotifier {
 
 impl AMQPNotifier {
     #[allow(clippy::fn_params_excessive_bools)]
-    pub fn new(
+    pub async fn new(
         amqp_url: &str,
         exchange: &str,
         queues_prefix: &str,
@@ -43,13 +43,11 @@ impl AMQPNotifier {
         routing_key: Option<String>,
         declare_options: DeclareOptions,
         celery: bool,
-    ) -> Self {
-        let manager = RMQConnectionManager::new(
-            amqp_url.into(),
-            ConnectionProperties::default().with_tokio(),
-        );
-        let pool = Pool::<RMQConnectionManager>::builder().build(manager);
-        Self {
+    ) -> RustusResult<Self> {
+        let manager = LapinConnectionManager::new(amqp_url, ConnectionProperties::default());
+        let pool = bb8::Pool::builder().build(manager).await?;
+
+        Ok(Self {
             pool,
             celery,
             routing_key,
@@ -57,7 +55,7 @@ impl AMQPNotifier {
             exchange_kind: exchange_kind.into(),
             exchange_name: exchange.into(),
             queues_prefix: queues_prefix.into(),
-        }
+        })
     }
 
     /// Generate queue name based on hook type.
@@ -143,7 +141,7 @@ impl Notifier for AMQPNotifier {
             self.exchange_name.as_str(),
             routing_key.as_str(),
             BasicPublishOptions::default(),
-            payload,
+            payload.as_slice(),
             BasicProperties::default()
                 .with_headers(headers)
                 .with_content_type("application/json".into())
@@ -177,7 +175,9 @@ mod tests {
                 durable_exchange: false,
             },
             true,
-        );
+        )
+        .await
+        .unwrap();
         notifier.prepare().await.unwrap();
         notifier
     }
@@ -208,7 +208,7 @@ mod tests {
             .unwrap();
         assert!(message.is_some());
         assert_eq!(
-            String::from_utf8(message.clone().unwrap().data.clone()).unwrap(),
+            String::from_utf8(message.as_ref().unwrap().data.clone()).unwrap(),
             format!("[[{}], {{}}, {{}}]", test_msg)
         );
         message
@@ -233,7 +233,9 @@ mod tests {
                 durable_exchange: false,
             },
             false,
-        );
+        )
+        .await
+        .unwrap();
         let res = notifier
             .send_message("Test Message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;

@@ -28,10 +28,10 @@ pub enum RustusError {
     DatabaseError(#[from] rbatis::error::Error),
     #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
-    RedisError(#[from] mobc_redis::redis::RedisError),
+    RedisError(#[from] redis::RedisError),
     #[cfg(feature = "redis_info_storage")]
-    #[error("Redis error: {0}")]
-    MobcError(#[from] mobc_redis::mobc::Error<mobc_redis::redis::RedisError>),
+    #[error("Redis pooling error: {0}")]
+    MobcError(#[from] bb8::RunError<redis::RedisError>),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]
@@ -54,8 +54,8 @@ pub enum RustusError {
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
     #[cfg(feature = "amqp_notifier")]
-    #[error("AMQP error: {0}")]
-    AMQPPoolError(#[from] mobc_lapin::mobc::Error<lapin::Error>),
+    #[error("AMQP pooling error error: {0}")]
+    AMQPPoolError(#[from] bb8::RunError<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
     #[error("Can't spawn task: {0}")]
