@@ -1,12 +1,12 @@
 <div align="center">
-    <img src="./imgs/logo_horizontal.svg" alt="logo" width="500">
+    <img src="https://raw.githubusercontent.com/s3rius/rustus/master/imgs/logo_horizontal.svg" alt="logo" width="500">
     <div>
         <p></p>
-        <img alt="Docker Image Size (latest by date)" src="https://img.shields.io/docker/image-size/s3rius/rustus?sort=date&style=for-the-badge">
-        <img alt="Docker Image Version (latest semver)" src="https://img.shields.io/docker/v/s3rius/rustus?style=for-the-badge">
-        <img alt="GitHub" src="https://img.shields.io/github/license/s3rius/rustus?style=for-the-badge">
+        <a href="https://hub.docker.com/r/s3rius/rustus/"><img alt="Docker Image Size (latest by date)" src="https://img.shields.io/docker/image-size/s3rius/rustus?sort=date&style=for-the-badge"></a>
+        <a href="https://hub.docker.com/r/s3rius/rustus/"><img alt="Docker Image Version (latest semver)" src="https://img.shields.io/docker/v/s3rius/rustus?style=for-the-badge"></a>
+        <a href="https://github.com/s3rius/rustus/blob/master/LICENSE"><img alt="GitHub" src="https://img.shields.io/github/license/s3rius/rustus?style=for-the-badge"></a>
     </div>
-    <p><a href="https://tus.io/">TUS</a> protocol implementation written in Rust.</p>
+    <p>Production-ready <a href="https://tus.io/">TUS</a> protocol implementation written in Rust.</p>
 </div>
 
 ## Features
