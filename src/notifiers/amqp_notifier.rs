@@ -35,6 +35,13 @@ pub struct AMQPNotifier {
     celery: bool,
 }
 
+/// Channel manager for lapin channels.
+///
+/// This manager is used with bb8 pool,
+/// so it maintains opened channels for every connections.
+///
+/// This pool uses connection pool
+/// and issues new connections from it.
 #[derive(Clone)]
 pub struct ChannelPool {
     pool: Pool<LapinConnectionManager>,
@@ -46,6 +53,9 @@ impl ChannelPool {
     }
 }
 
+/// ManagerConnection for ChannelPool.
+///
+/// This manager helps you maintain opened channels.
 #[async_trait::async_trait]
 impl bb8::ManageConnection for ChannelPool {
     type Connection = lapin::Channel;
@@ -231,7 +241,7 @@ mod tests {
             hooks_amqp_declare_queues: true,
             hooks_amqp_durable_exchange: false,
             hooks_amqp_durable_queues: false,
-            hooks_amqp_celery: false,
+            hooks_amqp_celery: true,
             hooks_amqp_exchange: uuid::Uuid::new_v4().to_string(),
             hooks_amqp_exchange_kind: String::from("topic"),
             hooks_amqp_routing_key: None,
