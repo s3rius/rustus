@@ -19,7 +19,7 @@
         <link rel="next" href="../deploy/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.2">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.7bf56d0a.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.240905d7.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
@@ -757,20 +757,24 @@ storing information about uploads. But if you don't plan to have many uploads, i
 you must provide connection string for master Redis server.
 Since rustus need to have latest information and it writes a lot.</p>
 </div>
-<p><code>--info-db-dsn</code> - connection string for your Redis database.
-It's required if <code>redis-info-storage</code> is chosen.</p>
+<p>Configuration parameters:
+* <code>--info-db-dsn</code> - connection string for your Redis database.
+    It's required if <code>redis-info-storage</code> is chosen.
+* <code>--redis-info-expiration</code> - number of seconds when key will expire.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">CLI</label><label for="__tabbed_6_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>rustus<span class="w"> </span>--info-storage<span class="w"> </span><span class="s2">&quot;redis-info-storage&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--info-db-dsn<span class="w"> </span><span class="s2">&quot;redis://localhost/0&quot;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span>--info-db-dsn<span class="w"> </span><span class="s2">&quot;redis://localhost/0&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span>--redis-info-expiration<span class="w"> </span><span class="m">100</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
 <a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;redis://localhost&quot;</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>rustus
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_REDIS_INFO_EXPIRATION</span><span class="o">=</span><span class="s2">&quot;100&quot;</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>rustus
 </code></pre></div>
 </div>
 </div>
@@ -871,7 +875,7 @@ connect to database.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.expand", "search.suggest", "header.autohide"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.fc8c2696.min.js"></script>
+      <script src="../assets/javascripts/bundle.19047be9.min.js"></script>
       
     
   </body>

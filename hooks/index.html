@@ -17,7 +17,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.2">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.4">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.7bf56d0a.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.240905d7.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
@@ -1361,7 +1361,11 @@ handles uploads using <a href="https://fastapi.tiangolo.com/">FastAPI</a>.</p>
 <li><code>--hooks-amqp-durable-exchange</code> - adds durability to created exchange;</li>
 <li><code>--hooks-amqp-durable-queues</code> - adds durability to created;</li>
 <li><code>--hooks-amqp-celery</code> - adds headers required by <a href="https://docs.celeryq.dev/en/stable/index.html">Celery</a>;</li>
-<li><code>--hooks-amqp-routing-key</code> - routing key for all messages passed to exchange.</li>
+<li><code>--hooks-amqp-routing-key</code> - routing key for all messages passed to exchange;</li>
+<li><code>--hooks-amqp-connection-pool-size</code> - maximum number of opened connections to RabbitMQ;</li>
+<li><code>--hooks-amqp-channel-pool-size</code> - maximum number of opened channels for each connection to RabbitMQ;</li>
+<li><code>--hooks-amqp-idle-connection-timeout</code> - timeout for idle connection in seconds. If the connection isn't used, it's dropped;</li>
+<li><code>--hooks-amqp-idle-channels-timeout</code> - timeout for idle channels in seconds. If the channel isn't used, it's dropped.</li>
 </ul>
 <p>If no hooks_amqp_routing_key specified, rustus will send all messages with
 different routing keys. Named like <code>{prefix}.{event type}</code>. Eg <code>rustus.pre-create</code> and so on.
@@ -1383,7 +1387,11 @@ Rustus won't stop a current upload in any case.</p>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="w">    </span>--hooks-amqp-declare-queues<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="w">    </span>--hooks-amqp-durable-exchange<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="w">    </span>--hooks-amqp-durable-queues<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="w">    </span>--hooks-amqp-celery
+<a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="w">    </span>--hooks-amqp-celery<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a><span class="w">    </span>--hooks-amqp-connection-pool-size<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">    </span>--hooks-amqp-channel-pool-size<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">    </span>--hooks-amqp-idle-connection-timeout<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-24-14" name="__codelineno-24-14" href="#__codelineno-24-14"></a><span class="w">    </span>--hooks-amqp-idle-channels-timeout<span class="w"> </span><span class="m">10</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -1397,8 +1405,12 @@ Rustus won't stop a current upload in any case.</p>
 <a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_DURABLE_QUEUES</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_CELERY</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>rustus
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE</span><span class="o">=</span><span class="s2">&quot;10&quot;</span>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE</span><span class="o">=</span><span class="s2">&quot;10&quot;</span>
+<a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT</span><span class="o">=</span><span class="s2">&quot;20&quot;</span>
+<a id="__codelineno-25-14" name="__codelineno-25-14" href="#__codelineno-25-14"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT</span><span class="o">=</span><span class="s2">&quot;10&quot;</span>
+<a id="__codelineno-25-15" name="__codelineno-25-15" href="#__codelineno-25-15"></a>
+<a id="__codelineno-25-16" name="__codelineno-25-16" href="#__codelineno-25-16"></a>rustus
 </code></pre></div>
 </div>
 </div>
@@ -1517,7 +1529,7 @@ adds required by Celery headers to every message.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.expand", "search.suggest", "header.autohide"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.fc8c2696.min.js"></script>
+      <script src="../assets/javascripts/bundle.19047be9.min.js"></script>
       
     
   </body>
