@@ -146,6 +146,10 @@ pub struct InfoStoreOptions {
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
+
+    #[cfg(feature = "redis_info_storage")]
+    #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
+    pub redis_info_expiration: Option<usize>,
 }
 #[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
