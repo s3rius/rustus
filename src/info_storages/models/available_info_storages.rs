@@ -61,6 +61,7 @@ impl AvailableInfoStores {
                         .clone()
                         .unwrap()
                         .as_str(),
+                    config.info_storage_opts.redis_info_expiration,
                 )
                 .await?,
             )),

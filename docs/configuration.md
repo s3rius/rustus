@@ -264,14 +264,17 @@ Redis db is a good way to store information.
     you must provide connection string for master Redis server.
     Since rustus need to have latest information and it writes a lot.
 
-`--info-db-dsn` - connection string for your Redis database.
-It's required if `redis-info-storage` is chosen.
+Configuration parameters:
+* `--info-db-dsn` - connection string for your Redis database.
+    It's required if `redis-info-storage` is chosen.
+* `--redis-info-expiration` - number of seconds when key will expire.
 
 === "CLI"
 
     ``` bash
     rustus --info-storage "redis-info-storage" \
-        --info-db-dsn "redis://localhost/0"
+        --info-db-dsn "redis://localhost/0" \
+        --redis-info-expiration 100
     ```
 
 === "ENV"
@@ -279,6 +282,7 @@ It's required if `redis-info-storage` is chosen.
     ``` bash
     export RUSTUS_INFO_STORAGE="redis-info-storage"
     export RUSTUS_INFO_DB_DSN="redis://localhost"
+    export RUSTUS_REDIS_INFO_EXPIRATION="100"
 
     rustus
     ```
