@@ -894,7 +894,11 @@ Configuration parameters:
 * `--hooks-amqp-durable-exchange` - adds durability to created exchange;
 * `--hooks-amqp-durable-queues` - adds durability to created;
 * `--hooks-amqp-celery` - adds headers required by [Celery](https://docs.celeryq.dev/en/stable/index.html);
-* `--hooks-amqp-routing-key` - routing key for all messages passed to exchange.
+* `--hooks-amqp-routing-key` - routing key for all messages passed to exchange;
+* `--hooks-amqp-connection-pool-size` - maximum number of opened connections to RabbitMQ;
+* `--hooks-amqp-channel-pool-size` - maximum number of opened channels for each connection to RabbitMQ;
+* `--hooks-amqp-idle-connection-timeout` - timeout for idle connection in seconds. If the connection isn't used, it's dropped;
+* `--hooks-amqp-idle-channels-timeout` - timeout for idle channels in seconds. If the channel isn't used, it's dropped.
 
 If no hooks_amqp_routing_key specified, rustus will send all messages with
 different routing keys. Named like `{prefix}.{event type}`. Eg `rustus.pre-create` and so on.
@@ -917,7 +921,11 @@ Otherwise, it will use only one routing key and only one queue!
         --hooks-amqp-declare-queues \
         --hooks-amqp-durable-exchange \
         --hooks-amqp-durable-queues \
-        --hooks-amqp-celery
+        --hooks-amqp-celery \
+        --hooks-amqp-connection-pool-size 10 \
+        --hooks-amqp-channel-pool-size 10 \
+        --hooks-amqp-idle-connection-timeout 20 \
+        --hooks-amqp-idle-channels-timeout 10
     ```
 
 === "ENV"
@@ -933,6 +941,10 @@ Otherwise, it will use only one routing key and only one queue!
     export RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE="true"
     export RUSTUS_HOOKS_AMQP_DURABLE_QUEUES="true"
     export RUSTUS_HOOKS_AMQP_CELERY="true"
+    export RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE="10"
+    export RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE="10"
+    export RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT="20"
+    export RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT="10"
 
     rustus
     ```

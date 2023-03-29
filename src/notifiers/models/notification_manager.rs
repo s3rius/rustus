@@ -46,39 +46,16 @@ impl NotificationManager {
                 )));
         }
         #[cfg(feature = "amqp_notifier")]
-        if rustus_config.notification_opts.hooks_amqp_url.is_some() {
+        if rustus_config
+            .notification_opts
+            .amqp_hook_opts
+            .hooks_amqp_url
+            .is_some()
+        {
             debug!("Found AMQP notifier.");
             manager.notifiers.push(Box::new(
                 amqp_notifier::AMQPNotifier::new(
-                    rustus_config
-                        .notification_opts
-                        .hooks_amqp_url
-                        .as_ref()
-                        .unwrap(),
-                    rustus_config.notification_opts.hooks_amqp_exchange.as_str(),
-                    rustus_config
-                        .notification_opts
-                        .hooks_amqp_queues_prefix
-                        .as_str(),
-                    rustus_config
-                        .notification_opts
-                        .hooks_amqp_exchange_kind
-                        .as_str(),
-                    rustus_config
-                        .notification_opts
-                        .hooks_amqp_routing_key
-                        .clone(),
-                    amqp_notifier::DeclareOptions {
-                        declare_exchange: rustus_config
-                            .notification_opts
-                            .hooks_amqp_declare_exchange,
-                        declare_queues: rustus_config.notification_opts.hooks_amqp_declare_queues,
-                        durable_exchange: rustus_config
-                            .notification_opts
-                            .hooks_amqp_durable_exchange,
-                        durable_queues: rustus_config.notification_opts.hooks_amqp_durable_queues,
-                    },
-                    rustus_config.notification_opts.hooks_amqp_celery,
+                    rustus_config.notification_opts.amqp_hook_opts.clone(),
                 )
                 .await?,
             ));

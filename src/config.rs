@@ -146,44 +146,15 @@ pub struct InfoStoreOptions {
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
-}
 
+    #[cfg(feature = "redis_info_storage")]
+    #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
+    pub redis_info_expiration: Option<usize>,
+}
 #[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
-pub struct NotificationsOptions {
-    /// Notifications format.
-    ///
-    /// This format will be used in all
-    /// messages about hooks.
-    #[arg(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
-    pub hooks_format: Format,
 
-    /// Enabled hooks for notifications.
-    #[arg(
-        long,
-        default_value = "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish",
-        env = "RUSTUS_HOOKS",
-        use_value_delimiter = true
-    )]
-    pub hooks: Vec<Hook>,
-
-    /// Use this option if you use rustus
-    /// behind any proxy. Like Nginx or Traefik.
-    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
-    pub behind_proxy: bool,
-
-    /// List of URLS to send webhooks to.
-    #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
-    pub hooks_http_urls: Vec<String>,
-
-    // List of headers to forward from client.
-    #[arg(
-        long,
-        env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS",
-        use_value_delimiter = true
-    )]
-    pub hooks_http_proxy_headers: Vec<String>,
-
+pub struct AMQPHooksOptions {
     /// Url for AMQP server.
     #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
@@ -239,6 +210,71 @@ pub struct NotificationsOptions {
     )]
     pub hooks_amqp_queues_prefix: String,
 
+    /// Maximum number of connections for RabbitMQ.
+    #[cfg(feature = "amqp_notifier")]
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
+        default_value = "10"
+    )]
+    pub hooks_amqp_connection_pool_size: u32,
+
+    /// Maximum number of opened channels for each connection.
+    #[cfg(feature = "amqp_notifier")]
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE",
+        default_value = "10"
+    )]
+    pub hooks_amqp_channel_pool_size: u32,
+
+    /// After this amount of time the connection will be dropped.
+    #[cfg(feature = "amqp_notifier")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT")]
+    pub hooks_amqp_idle_connection_timeout: Option<u64>,
+
+    /// After this amount of time in seconds, the channel will be closed.
+    #[cfg(feature = "amqp_notifier")]
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT")]
+    pub hooks_amqp_idle_channels_timeout: Option<u64>,
+}
+
+#[derive(Parser, Debug, Clone)]
+#[allow(clippy::struct_excessive_bools)]
+pub struct NotificationsOptions {
+    /// Notifications format.
+    ///
+    /// This format will be used in all
+    /// messages about hooks.
+    #[arg(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
+    pub hooks_format: Format,
+
+    /// Enabled hooks for notifications.
+    #[arg(
+        long,
+        default_value = "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish",
+        env = "RUSTUS_HOOKS",
+        use_value_delimiter = true
+    )]
+    pub hooks: Vec<Hook>,
+
+    /// Use this option if you use rustus
+    /// behind any proxy. Like Nginx or Traefik.
+    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
+    pub behind_proxy: bool,
+
+    /// List of URLS to send webhooks to.
+    #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
+    pub hooks_http_urls: Vec<String>,
+
+    // List of headers to forward from client.
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS",
+        use_value_delimiter = true
+    )]
+    pub hooks_http_proxy_headers: Vec<String>,
+
     /// Directory for executable hook files.
     /// This parameter is used to call executables from dir.
     #[arg(long, env = "RUSTUS_HOOKS_DIR")]
@@ -248,6 +284,9 @@ pub struct NotificationsOptions {
     /// notifying about upload status.
     #[arg(long, env = "RUSTUS_HOOKS_FILE")]
     pub hooks_file: Option<String>,
+
+    #[command(flatten)]
+    pub amqp_hook_opts: AMQPHooksOptions,
 }
 
 #[derive(Debug, Parser, Clone)]

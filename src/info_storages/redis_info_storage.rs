@@ -14,14 +14,15 @@ use crate::{
 #[derive(Clone)]
 pub struct RedisStorage {
     pool: Pool<RedisConnectionManager>,
+    expiration: Option<usize>,
 }
 
 impl RedisStorage {
     #[allow(clippy::unused_async)]
-    pub async fn new(db_dsn: &str) -> RustusResult<Self> {
+    pub async fn new(db_dsn: &str, expiration: Option<usize>) -> RustusResult<Self> {
         let manager = RedisConnectionManager::new(db_dsn)?;
         let pool = bb8::Pool::builder().max_size(100).build(manager).await?;
-        Ok(Self { pool })
+        Ok(Self { pool, expiration })
     }
 }
 
@@ -33,10 +34,14 @@ impl InfoStorage for RedisStorage {
 
     async fn set_info(&self, file_info: &FileInfo, _create: bool) -> RustusResult<()> {
         let mut conn = self.pool.get().await?;
-        redis::cmd("SET")
+        let mut cmd = redis::cmd("SET");
+        let mut cmd = cmd
             .arg(file_info.id.as_str())
-            .arg(file_info.json().await?.as_str())
-            .query_async::<Connection, String>(&mut conn)
+            .arg(file_info.json().await?.as_str());
+        if let Some(expiration) = self.expiration.as_ref() {
+            cmd = cmd.arg("EX").arg(expiration);
+        }
+        cmd.query_async::<Connection, String>(&mut conn)
             .await
             .map_err(RustusError::from)?;
         Ok(())
@@ -76,7 +81,7 @@ mod tests {
 
     async fn get_storage() -> RedisStorage {
         let redis_url = std::env::var("TEST_REDIS_URL").unwrap();
-        RedisStorage::new(redis_url.as_str()).await.unwrap()
+        RedisStorage::new(redis_url.as_str(), None).await.unwrap()
     }
 
     async fn get_redis() -> redis::aio::Connection {
@@ -103,7 +108,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn no_connection() {
-        let info_storage = RedisStorage::new("redis://unknonwn_url/0").await.unwrap();
+        let info_storage = RedisStorage::new("redis://unknonwn_url/0", None)
+            .await
+            .unwrap();
         let file_info = FileInfo::new_test();
         let res = info_storage.set_info(&file_info, true).await;
         assert!(res.is_err());
@@ -119,22 +126,22 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn deletion_success() {
+    async fn expiration() {
         let info_storage = get_storage().await;
-        let mut redis = get_redis().await;
-        let res = info_storage.remove_info("unknown").await;
+        let res = info_storage
+            .get_info(uuid::Uuid::new_v4().to_string().as_str())
+            .await;
         assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn deletion_success() {
+        let mut info_storage = get_storage().await;
+        info_storage.expiration = Some(1);
+        let mut redis = get_redis().await;
         let file_info = FileInfo::new_test();
         info_storage.set_info(&file_info, true).await.unwrap();
-        assert!(redis
-            .get::<&str, Option<String>>(file_info.id.as_str())
-            .await
-            .unwrap()
-            .is_some());
-        info_storage
-            .remove_info(file_info.id.as_str())
-            .await
-            .unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         assert!(redis
             .get::<&str, Option<String>>(file_info.id.as_str())
             .await
