@@ -33,7 +33,7 @@ wildmatch = "2.1.0"
 md-5 = "^0.10.1"
 digest = "0.10.3"
 mimalloc = { version = "~0.1.30", default-features = false }
-clap = { version = "4.1.8", features = ["derive", "env"] }
+clap = { version = "4.2.7", features = ["derive", "env"] }
 dotenvy = { version = "0.15.6", features = ["clap"] }
 sentry = "0.30.0"
 sentry-actix = "0.30.0"
