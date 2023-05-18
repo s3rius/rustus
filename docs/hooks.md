@@ -802,6 +802,7 @@ Configuration parameters:
 
 * `--hooks-http-proxy-headers` - list of headers to proxy (separated by commas) to listener's endpoint;
 * `--hooks-http-urls` - list of absolute urls to send request to (separated by commas).
+* `--http-hook-timeout` - Timeout for all http requests in seconds. By default it's 2 seconds.
 
 !!! note
     Hook names are passed as header called `Hook-Name`.
@@ -810,7 +811,8 @@ Configuration parameters:
 
     ``` bash
     rustus --hooks-http-urls "https://httpbin.org/post" \
-        --hooks-http-proxy-headers "Authorization"
+        --hooks-http-proxy-headers "Authorization" \
+        --http-hook-timeout 1
     ```
 
 === "ENV"
@@ -818,6 +820,7 @@ Configuration parameters:
     ``` bash
     export RUSTUS_HOOKS_HTTP_URLS="https://httpbin.org/post"
     export RUSTUS_HOOKS_HTTP_PROXY_HEADERS="Authorization"
+    export RUSTUS_HTTP_HOOK_TIMEOUT="1"
 
     rustus
     ```
