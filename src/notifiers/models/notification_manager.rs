@@ -43,6 +43,7 @@ impl NotificationManager {
                         .notification_opts
                         .hooks_http_proxy_headers
                         .clone(),
+                    rustus_config.notification_opts.http_hook_timeout,
                 )));
         }
         #[cfg(feature = "amqp_notifier")]

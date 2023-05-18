@@ -13,15 +13,17 @@ pub struct HttpNotifier {
     urls: Vec<String>,
     client: Client,
     forward_headers: Vec<String>,
+    timeout_secs: u64,
 }
 
 impl HttpNotifier {
-    pub fn new(urls: Vec<String>, forward_headers: Vec<String>) -> Self {
+    pub fn new(urls: Vec<String>, forward_headers: Vec<String>, timeout_secs: Option<u64>) -> Self {
         let client = Client::new();
         Self {
             urls,
             client,
             forward_headers,
+            timeout_secs: timeout_secs.unwrap_or(2),
         }
     }
 }
@@ -49,7 +51,7 @@ impl Notifier for HttpNotifier {
                 .header("Idempotency-Key", idempotency_key.as_str())
                 .header("Hook-Name", hook.to_string())
                 .header("Content-Type", "application/json")
-                .timeout(Duration::from_secs(2));
+                .timeout(Duration::from_secs(self.timeout_secs));
             for item in &self.forward_headers {
                 if let Some(value) = header_map.get(item.as_str()) {
                     request = request.header(item.as_str(), value.as_bytes());
@@ -94,7 +96,7 @@ mod tests {
         );
         let hook_url = server.url_str("/hook");
 
-        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         notifier
             .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
             .await
@@ -115,7 +117,7 @@ mod tests {
         );
         let hook_url = server.url_str("/hook");
 
-        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         let result = notifier
             .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;
@@ -133,7 +135,7 @@ mod tests {
         );
         let hook_url = server.url_str("/hook");
 
-        let notifier = HttpNotifier::new(vec![hook_url], vec![]);
+        let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         let result = notifier
             .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;
@@ -151,7 +153,7 @@ mod tests {
             .respond_with(httptest::responders::status_code(200)),
         );
         let hook_url = server.url_str("/hook");
-        let notifier = HttpNotifier::new(vec![hook_url], vec!["X-TEST-HEADER".into()]);
+        let notifier = HttpNotifier::new(vec![hook_url], vec!["X-TEST-HEADER".into()], None);
         let mut header_map = HeaderMap::new();
         header_map.insert(
             HeaderName::from_str("X-TEST-HEADER").unwrap(),

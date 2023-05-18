@@ -267,6 +267,10 @@ pub struct NotificationsOptions {
     #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
     pub hooks_http_urls: Vec<String>,
 
+    /// Timeout for all HTTP requests in seconds.
+    #[arg(long, env = "RUSTUS_HTTP_HOOK_TIMEOUT")]
+    pub http_hook_timeout: Option<u64>,
+
     // List of headers to forward from client.
     #[arg(
         long,
