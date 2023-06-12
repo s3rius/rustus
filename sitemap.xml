@@ -2,22 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://s3rius.github.io/rustus/</loc>
-         <lastmod>2023-05-18</lastmod>
+         <lastmod>2023-06-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://s3rius.github.io/rustus/configuration/</loc>
-         <lastmod>2023-05-18</lastmod>
+         <lastmod>2023-06-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://s3rius.github.io/rustus/deploy/</loc>
-         <lastmod>2023-05-18</lastmod>
+         <lastmod>2023-06-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://s3rius.github.io/rustus/hooks/</loc>
-         <lastmod>2023-05-18</lastmod>
+         <lastmod>2023-06-12</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>

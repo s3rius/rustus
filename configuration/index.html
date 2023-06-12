@@ -19,7 +19,7 @@
         <link rel="next" href="../deploy/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.13">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
@@ -27,10 +27,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.85bb2934.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.a6bdf11c.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
       
       
 
@@ -547,6 +547,8 @@ Also you can configure number of actix <code>workers</code> that handle connecti
 <p><code>--workers</code> by default is equal to number of physical CPU cores. Edit it carefully.</p>
 <p><code>--cors</code> is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
 You can define which hosts are allowed for your particular application.</p>
+<p><code>--allow-empty</code> is a parameter that allows users to upload empty files. Empty
+file means that while creation 0 bytes was passed as an <code>Upload-Length</code>.</p>
 <p>For example if you add <code>--cors "*.staging.domain,*.prod.domain"</code>, it allows all origins
 like <code>my.staging.domain</code> or <code>my.prod.domain</code>, but it will refuse to serve other origins.</p>
 <p>Also you can disable access log for <code>/health</code> endpoint, by using <code>--disable-health-access-log</code>.</p>
@@ -560,7 +562,8 @@ like <code>my.staging.domain</code> or <code>my.prod.domain</code>, but it will 
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span>--url<span class="w"> </span><span class="s2">&quot;/files&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span>--log-level<span class="w"> </span><span class="s2">&quot;INFO&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span>--cors<span class="w"> </span><span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span>--disable-health-access-log
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span>--disable-health-access-log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span>--allow-empty
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -572,8 +575,9 @@ like <code>my.staging.domain</code> or <code>my.prod.domain</code>, but it will 
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_LOG_LEVEL</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_CORS</span><span class="o">=</span><span class="s2">&quot;my.*.domain.com,your.*.domain.com&quot;</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DISABLE_HEALTH_ACCESS_LOG</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>rustus
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_ALLOW_EMPTY</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>rustus
 </code></pre></div>
 </div>
 </div>
@@ -674,7 +678,9 @@ also applied to it.</p>
 <li><code>--s3-bucket</code> - name of a bucket to use;</li>
 <li><code>--s3-region</code> - AWS region to use;</li>
 <li><code>--s3-access-key</code> - S3 access key;</li>
+<li><code>--s3-access-key-path</code> - S3 access key path;</li>
 <li><code>--s3-secret-key</code> - S3 secret key;</li>
+<li><code>--s3-secret-key-path</code> - S3 secret key path;</li>
 <li><code>--s3-security-token</code> - s3 secrity token;</li>
 <li><code>--s3-session-token</code> - S3 session token;</li>
 <li><code>--s3-profile</code> - Name of the section from <code>~/.aws/credentials</code> file;</li>
@@ -690,15 +696,17 @@ also applied to it.</p>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">    </span>--s3-bucket<span class="w"> </span><span class="s2">&quot;bucket&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">    </span>--s3-region<span class="w"> </span><span class="s2">&quot;eu-central1&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span>--s3-access-key<span class="w"> </span><span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--s3-secret-key<span class="w"> </span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span>--s3-profile<span class="w"> </span><span class="s2">&quot;my_profile&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span>--s3-security-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span>--s3-session-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span>--s3-force-path-style<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span>--s3-headers<span class="w"> </span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span>--force-fsync<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span>--data-dir<span class="w"> </span><span class="s2">&quot;./data/&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span>--dir-structure<span class="w"> </span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">    </span>--s3-access-key-path<span class="w"> </span><span class="s2">&quot;/run/agenix/S3_ACCESS_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">    </span>--s3-secret-key<span class="w"> </span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">    </span>--s3-secret-key-path<span class="w"> </span><span class="s2">&quot;/run/agenix/S3_SECRET_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">    </span>--s3-profile<span class="w"> </span><span class="s2">&quot;my_profile&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">    </span>--s3-security-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">    </span>--s3-session-token<span class="w"> </span><span class="s2">&quot;token&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">    </span>--s3-force-path-style<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">    </span>--s3-headers<span class="w"> </span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">    </span>--force-fsync<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">    </span>--data-dir<span class="w"> </span><span class="s2">&quot;./data/&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">    </span>--dir-structure<span class="w"> </span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -707,16 +715,18 @@ also applied to it.</p>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_BUCKET</span><span class="o">=</span><span class="s2">&quot;bucket&quot;</span>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_REGION</span><span class="o">=</span><span class="s2">&quot;eu-central1&quot;</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;fJljHcXo07rqIOzh&quot;</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECRET_KEY</span><span class="o">=</span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECURITY_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_PROFILE</span><span class="o">=</span><span class="s2">&quot;my_profile&quot;</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_HEADERS</span><span class="o">=</span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>rustus
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_ACCESS_KEY_PATH</span><span class="o">=</span><span class="s2">&quot;/run/agenix/S3_ACCESS_KEY&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECRET_KEY</span><span class="o">=</span><span class="s2">&quot;6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECRET_KEY_PATH</span><span class="o">=</span><span class="s2">&quot;/run/agenix/S3_SECCRET_KEY&quot;</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SECURITY_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_SESSION_TOKEN</span><span class="o">=</span><span class="s2">&quot;token&quot;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_PROFILE</span><span class="o">=</span><span class="s2">&quot;my_profile&quot;</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_S3_HEADERS</span><span class="o">=</span><span class="s1">&#39;{&quot;x-amz-acl&quot;: &quot;public-read&quot;}&#39;</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./data/&quot;</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_DIR_STRUCTURE</span><span class="o">=</span><span class="s2">&quot;{year}/{month}/{day}&quot;</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_FORCE_FSYNC</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>rustus
 </code></pre></div>
 </div>
 </div>
