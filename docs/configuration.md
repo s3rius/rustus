@@ -24,6 +24,9 @@ Also you can configure number of actix `workers` that handle connections.
 `--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
 You can define which hosts are allowed for your particular application.
 
+`--allow-empty` is a parameter that allows users to upload empty files. Empty
+file means that while creation 0 bytes was passed as an `Upload-Length`.
+
 For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
 like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
 
@@ -39,7 +42,8 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
         --url "/files" \
         --log-level "INFO" \
         --cors "my.*.domain.com,your.*.domain.com" \
-        --disable-health-access-log
+        --disable-health-access-log \
+        --allow-empty
     ```
 
 === "ENV"
@@ -53,6 +57,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
     export RUSTUS_LOG_LEVEL="INFO"
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
     export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="true"
+    export RUSTUS_ALLOW_EMPTY="true"
 
     rustus
     ```

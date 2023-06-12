@@ -80,6 +80,15 @@ pub async fn create_file(
 ) -> actix_web::Result<HttpResponse> {
     // Getting Upload-Length header value as usize.
     let length = parse_header(&request, "Upload-Length");
+
+    // With this option enabled,
+    // we have to check whether length is a non-zero number.
+    if !state.config.allow_empty {
+        if let Some(0) = length {
+            return Ok(HttpResponse::BadRequest().body("Upload-Length should be greater than zero"));
+        }
+    }
+
     // Checking Upload-Defer-Length header.
     let defer_size = check_header(&request, "Upload-Defer-Length", |val| val == "1");
 
@@ -282,6 +291,31 @@ mod tests {
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
         assert_eq!(file_info.offset, 0);
+    }
+
+    #[actix_rt::test]
+    async fn wrong_length() {
+        let state = State::test_new().await;
+        let mut rustus = get_service(state.clone()).await;
+        let request = TestRequest::post()
+            .uri(state.config.test_url().as_str())
+            .insert_header(("Upload-Length", 0))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_rt::test]
+    async fn allow_empty() {
+        let mut state = State::test_new().await;
+        state.config.allow_empty = true;
+        let mut rustus = get_service(state.clone()).await;
+        let request = TestRequest::post()
+            .uri(state.config.test_url().as_str())
+            .insert_header(("Upload-Length", 0))
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::CREATED);
     }
 
     #[actix_rt::test]
