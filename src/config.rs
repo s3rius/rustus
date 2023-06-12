@@ -380,6 +380,12 @@ pub struct RustusConf {
     )]
     pub tus_extensions: Vec<Extensions>,
 
+    /// Enabling this parameter
+    /// Will allow creation of empty files
+    /// when Upload-Length header equals to 0.
+    #[arg(long, env = "RUSTUS_ALLOW_EMPTY")]
+    pub allow_empty: bool,
+
     /// Remove part files after concatenation is done.
     /// By default rustus does nothing with part files after concatenation.
     ///
