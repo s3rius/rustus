@@ -166,7 +166,9 @@ Parameters:
 * `--s3-bucket` - name of a bucket to use;
 * `--s3-region` - AWS region to use;
 * `--s3-access-key` - S3 access key;
+* `--s3-access-key-path` - S3 access key path;
 * `--s3-secret-key` - S3 secret key;
+* `--s3-secret-key-path` - S3 secret key path;
 * `--s3-security-token` - s3 secrity token;
 * `--s3-session-token` - S3 session token;
 * `--s3-profile` - Name of the section from `~/.aws/credentials` file;
@@ -183,7 +185,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
         --s3-bucket "bucket" \
         --s3-region "eu-central1" \
         --s3-access-key "fJljHcXo07rqIOzh" \
+        --s3-access-key-path "/run/agenix/S3_ACCESS_KEY" \
         --s3-secret-key "6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB" \
+        --s3-secret-key-path "/run/agenix/S3_SECRET_KEY" \
         --s3-profile "my_profile" \
         --s3-security-token "token" \
         --s3-session-token "token" \
@@ -202,7 +206,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_S3_BUCKET="bucket"
     export RUSTUS_S3_REGION="eu-central1"
     export RUSTUS_S3_ACCESS_KEY="fJljHcXo07rqIOzh"
+    export RUSTUS_S3_ACCESS_KEY_PATH="/run/agenix/S3_ACCESS_KEY"
     export RUSTUS_S3_SECRET_KEY="6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB"
+    export RUSTUS_S3_SECRET_KEY_PATH="/run/agenix/S3_SECCRET_KEY"
     export RUSTUS_S3_SECURITY_TOKEN="token"
     export RUSTUS_S3_SESSION_TOKEN="token"
     export RUSTUS_S3_PROFILE="my_profile"
