@@ -66,11 +66,15 @@ impl Notifier for HttpNotifier {
                     .headers()
                     .get("Content-Type")
                     .and_then(|hval| hval.to_str().ok().map(String::from));
-                return Err(RustusError::HTTPHookError(
-                    real_resp.status().as_u16(),
-                    real_resp.text().await.unwrap_or_default(),
-                    content_type,
-                ));
+                let status = real_resp.status().as_u16();
+                let text = real_resp.text().await.unwrap_or_default();
+                log::warn!(
+                    "Got wrong response for `{hook}`. Status code: `{status}`, body: `{body}`",
+                    hook = hook,
+                    status = status,
+                    body = text,
+                );
+                return Err(RustusError::HTTPHookError(status, text, content_type));
             }
         }
         Ok(())
