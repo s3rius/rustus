@@ -24,6 +24,9 @@ Also you can configure number of actix `workers` that handle connections.
 `--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
 You can define which hosts are allowed for your particular application.
 
+`--allow-empty` is a parameter that allows users to upload empty files. Empty
+file means that while creation 0 bytes was passed as an `Upload-Length`.
+
 For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
 like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
 
@@ -39,7 +42,8 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
         --url "/files" \
         --log-level "INFO" \
         --cors "my.*.domain.com,your.*.domain.com" \
-        --disable-health-access-log
+        --disable-health-access-log \
+        --allow-empty
     ```
 
 === "ENV"
@@ -53,6 +57,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
     export RUSTUS_LOG_LEVEL="INFO"
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
     export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="true"
+    export RUSTUS_ALLOW_EMPTY="true"
 
     rustus
     ```
@@ -166,7 +171,9 @@ Parameters:
 * `--s3-bucket` - name of a bucket to use;
 * `--s3-region` - AWS region to use;
 * `--s3-access-key` - S3 access key;
+* `--s3-access-key-path` - S3 access key path;
 * `--s3-secret-key` - S3 secret key;
+* `--s3-secret-key-path` - S3 secret key path;
 * `--s3-security-token` - s3 secrity token;
 * `--s3-session-token` - S3 session token;
 * `--s3-profile` - Name of the section from `~/.aws/credentials` file;
@@ -183,7 +190,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
         --s3-bucket "bucket" \
         --s3-region "eu-central1" \
         --s3-access-key "fJljHcXo07rqIOzh" \
+        --s3-access-key-path "/run/agenix/S3_ACCESS_KEY" \
         --s3-secret-key "6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB" \
+        --s3-secret-key-path "/run/agenix/S3_SECRET_KEY" \
         --s3-profile "my_profile" \
         --s3-security-token "token" \
         --s3-session-token "token" \
@@ -202,7 +211,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_S3_BUCKET="bucket"
     export RUSTUS_S3_REGION="eu-central1"
     export RUSTUS_S3_ACCESS_KEY="fJljHcXo07rqIOzh"
+    export RUSTUS_S3_ACCESS_KEY_PATH="/run/agenix/S3_ACCESS_KEY"
     export RUSTUS_S3_SECRET_KEY="6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB"
+    export RUSTUS_S3_SECRET_KEY_PATH="/run/agenix/S3_SECCRET_KEY"
     export RUSTUS_S3_SECURITY_TOKEN="token"
     export RUSTUS_S3_SESSION_TOKEN="token"
     export RUSTUS_S3_PROFILE="my_profile"

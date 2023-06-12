@@ -4,6 +4,11 @@ use crate::{
     RustusConf, Storage,
 };
 use derive_more::{Display, From};
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::PathBuf,
+};
 use strum::EnumIter;
 
 /// Enum of available Storage implementations.
@@ -35,11 +40,19 @@ impl AvailableStores {
             )),
             Self::HybridS3 => {
                 log::warn!("Hybrid S3 is an unstable feature. If you ecounter a problem, please raise an issue: https://github.com/s3rius/rustus/issues.");
+                let access_key = from_string_or_path(
+                    &config.storage_opts.s3_access_key,
+                    &config.storage_opts.s3_access_key_path,
+                );
+                let secret_key = from_string_or_path(
+                    &config.storage_opts.s3_secret_key,
+                    &config.storage_opts.s3_secret_key_path,
+                );
                 Box::new(s3_hybrid_storage::S3HybridStorage::new(
                     config.storage_opts.s3_url.clone().unwrap(),
                     config.storage_opts.s3_region.clone().unwrap(),
-                    &config.storage_opts.s3_access_key,
-                    &config.storage_opts.s3_secret_key,
+                    &Some(access_key),
+                    &Some(secret_key),
                     &config.storage_opts.s3_security_token,
                     &config.storage_opts.s3_session_token,
                     &config.storage_opts.s3_profile,
@@ -52,5 +65,22 @@ impl AvailableStores {
                 ))
             }
         }
+    }
+}
+
+// TODO this should probably be a COW
+fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+    if let Some(variable) = variable {
+        variable.to_string()
+    } else if let Some(path) = path {
+        let file = File::open("path_to_your_file")
+            .unwrap_or_else(|_| panic!("failed to open path {}", path.display()));
+        let mut contents = String::new();
+        BufReader::new(file)
+            .read_to_string(&mut contents)
+            .unwrap_or_else(|_| panic!("failed to read from path {}", path.display()));
+        contents
+    } else {
+        panic!("can't find {variable:?} or path {path:?}")
     }
 }

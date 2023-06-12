@@ -74,6 +74,7 @@ impl NotificationManager {
         hook: Hook,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
+        log::debug!("Sending a `{}` hook with body `{}`", hook, message);
         for notifier in &self.notifiers {
             notifier
                 .send_message(message.clone(), hook, header_map)

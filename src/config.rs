@@ -62,11 +62,25 @@ pub struct StorageOptions {
     #[arg(long, env = "RUSTUS_S3_ACCESS_KEY")]
     pub s3_access_key: Option<String>,
 
+    /// S3 access key path.
+    ///
+    /// This parameter is used fo s3-based storages.
+    /// path to file that has s3-access-key inside.
+    #[arg(long, env = "RUSTUS_S3_ACCESS_KEY_PATH")]
+    pub s3_access_key_path: Option<PathBuf>,
+
     /// S3 secret key.
     ///
     /// This parameter is required fo s3-based storages.
     #[arg(long, env = "RUSTUS_S3_SECRET_KEY")]
     pub s3_secret_key: Option<String>,
+
+    /// S3 secret key path.
+    ///
+    /// This parameter is required fo s3-based storages.
+    /// path to file that has s3-secret-key inside.
+    #[arg(long, env = "RUSTUS_S3_SECRET_KEY_PATH")]
+    pub s3_secret_key_path: Option<PathBuf>,
 
     /// S3 URL.
     ///
@@ -365,6 +379,12 @@ pub struct RustusConf {
         use_value_delimiter = true
     )]
     pub tus_extensions: Vec<Extensions>,
+
+    /// Enabling this parameter
+    /// Will allow creation of empty files
+    /// when Upload-Length header equals to 0.
+    #[arg(long, env = "RUSTUS_ALLOW_EMPTY")]
+    pub allow_empty: bool,
 
     /// Remove part files after concatenation is done.
     /// By default rustus does nothing with part files after concatenation.
