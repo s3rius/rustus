@@ -73,8 +73,8 @@ fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> Str
     if let Some(variable) = variable {
         variable.to_string()
     } else if let Some(path) = path {
-        let file = File::open("path_to_your_file")
-            .unwrap_or_else(|_| panic!("failed to open path {}", path.display()));
+        let file =
+            File::open(path).unwrap_or_else(|_| panic!("failed to open path {}", path.display()));
         let mut contents = String::new();
         BufReader::new(file)
             .read_to_string(&mut contents)
