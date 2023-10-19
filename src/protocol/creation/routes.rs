@@ -112,6 +112,13 @@ pub async fn create_file(
         return Ok(HttpResponse::BadRequest().body("Upload-Length header is required"));
     }
 
+    if state.config.max_file_size.is_some() && state.config.max_file_size < length {
+        return Ok(HttpResponse::BadRequest().body(format!(
+            "Upload-Length should be less than or equal to {}",
+            state.config.max_file_size.unwrap()
+        )));
+    }
+
     let meta = get_metadata(&request);
 
     let file_id = uuid::Uuid::new_v4().to_string();
@@ -557,6 +564,19 @@ mod tests {
         let mut rustus = get_service(state.clone()).await;
         let request = TestRequest::post()
             .uri(state.config.test_url().as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_rt::test]
+    async fn max_file_size_exceeded() {
+        let mut state = State::test_new().await;
+        state.config.max_file_size = Some(1000);
+        let mut rustus = get_service(state.clone()).await;
+        let request = TestRequest::post()
+            .uri(state.config.test_url().as_str())
+            .insert_header(("Upload-Length", 1001))
             .to_request();
         let resp = call_service(&mut rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);

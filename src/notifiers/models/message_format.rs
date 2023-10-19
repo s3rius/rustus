@@ -83,7 +83,7 @@ impl From<&FileInfo> for TusdFileInfo {
 /// arrays.
 fn headers_to_value_map(headers: &HeaderMap, use_arrays: bool) -> HashMap<String, Value> {
     let mut headers_map = HashMap::new();
-    for (name, value) in headers.iter() {
+    for (name, value) in headers {
         if let Ok(header_val) = value.to_str().map(String::from) {
             if use_arrays {
                 headers_map.insert(
