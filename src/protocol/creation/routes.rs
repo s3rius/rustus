@@ -112,10 +112,7 @@ pub async fn create_file(
         return Ok(HttpResponse::BadRequest().body("Upload-Length header is required"));
     }
 
-    if state.config.max_file_size.is_some()
-        && length.is_some()
-        && state.config.max_file_size < length
-    {
+    if state.config.max_file_size.is_some() && state.config.max_file_size < length {
         return Ok(HttpResponse::BadRequest().body(format!(
             "Upload-Length should be less than or equal to {}",
             state.config.max_file_size.unwrap()
