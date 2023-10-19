@@ -89,6 +89,13 @@ pub async fn create_file(
         }
     }
 
+    if let Some(max_file_size) = state.config.max_file_size {
+        if Some(max_file_size) < length {
+            return Ok(HttpResponse::BadRequest()
+                .body(format!("Upload-Length should be less than or equal to {}", max_file_size)));
+        }
+    }
+
     // Checking Upload-Defer-Length header.
     let defer_size = check_header(&request, "Upload-Defer-Length", |val| val == "1");
 
@@ -557,6 +564,19 @@ mod tests {
         let mut rustus = get_service(state.clone()).await;
         let request = TestRequest::post()
             .uri(state.config.test_url().as_str())
+            .to_request();
+        let resp = call_service(&mut rustus, request).await;
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[actix_rt::test]
+    async fn max_file_size_exceeded() {
+        let mut state = State::test_new().await;
+        state.config.max_file_size = Some(1000);
+        let mut rustus = get_service(state.clone()).await;
+        let request = TestRequest::post()
+            .uri(state.config.test_url().as_str())
+            .insert_header(("Upload-Length", 1001))
             .to_request();
         let resp = call_service(&mut rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);

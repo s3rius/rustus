@@ -44,6 +44,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
         --cors "my.*.domain.com,your.*.domain.com" \
         --disable-health-access-log \
         --allow-empty
+        --max-file-size 10000000
     ```
 
 === "ENV"
@@ -58,6 +59,7 @@ Also you can disable access log for `/health` endpoint, by using `--disable-heal
     export RUSTUS_CORS="my.*.domain.com,your.*.domain.com"
     export RUSTUS_DISABLE_HEALTH_ACCESS_LOG="true"
     export RUSTUS_ALLOW_EMPTY="true"
+    export RUSTUS_MAX_FILE_SIZE="10000000"
 
     rustus
     ```
