@@ -89,13 +89,6 @@ pub async fn create_file(
         }
     }
 
-    if let Some(max_file_size) = state.config.max_file_size {
-        if Some(max_file_size) < length {
-            return Ok(HttpResponse::BadRequest()
-                .body(format!("Upload-Length should be less than or equal to {}", max_file_size)));
-        }
-    }
-
     // Checking Upload-Defer-Length header.
     let defer_size = check_header(&request, "Upload-Defer-Length", |val| val == "1");
 
@@ -117,6 +110,11 @@ pub async fn create_file(
     // and header provided.
     if length.is_none() && !((defer_ext && defer_size) || (concat_ext && is_final)) {
         return Ok(HttpResponse::BadRequest().body("Upload-Length header is required"));
+    }
+
+    if state.config.max_file_size.is_some() && length.is_some() && state.config.max_file_size < length {
+        return Ok(HttpResponse::BadRequest()
+            .body(format!("Upload-Length should be less than or equal to {}", state.config.max_file_size.unwrap())));
     }
 
     let meta = get_metadata(&request);
