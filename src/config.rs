@@ -393,6 +393,12 @@ pub struct RustusConf {
     #[arg(long, env = "RUSTUS_REMOVE_PARTS")]
     pub remove_parts: bool,
 
+    /// Maximum size of file that can be uploaded.
+    ///
+    /// If not set, file size is unlimited.
+    #[arg(long, env = "RUSTUS_MAX_FILE_SIZE")]
+    pub max_file_size: Option<usize>,
+
     #[command(flatten)]
     pub storage_opts: StorageOptions,
 

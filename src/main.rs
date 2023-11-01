@@ -96,7 +96,7 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
             "X-Request-ID",
             "X-HTTP-Method-Override",
         ])
-        .allowed_headers(additional_headers.into_iter())
+        .allowed_headers(additional_headers)
         .expose_headers(vec![
             "Location",
             "Tus-Version",
