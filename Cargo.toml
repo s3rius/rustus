@@ -37,6 +37,8 @@ clap = { version = "4.1.8", features = ["derive", "env"] }
 dotenvy = { version = "0.15.6", features = ["clap"] }
 sentry = "0.30.0"
 sentry-actix = "0.30.0"
+mime = "0.3.17"
+mime_guess = "2.0.4"
 
 [dependencies.sha1]
 version = "^0.10.1"

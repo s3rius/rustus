@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-use actix_web::HttpRequest;
+use actix_web::{
+    http::header::{ContentDisposition, DispositionParam, DispositionType},
+    HttpRequest,
+};
 
 /// Parse header's value.
 ///
@@ -40,6 +43,26 @@ pub fn check_header(request: &HttpRequest, header_name: &str, expr: fn(&str) -> 
             Err(_) => None,
         })
         .unwrap_or(false)
+}
+
+/// This function generates content disposition
+/// based on file name.
+pub fn generate_disposition(filename: &str) -> ContentDisposition {
+    let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
+    let disposition = match mime_type.type_() {
+        mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DispositionType::Inline,
+        mime::APPLICATION => match mime_type.subtype() {
+            mime::JAVASCRIPT | mime::JSON => DispositionType::Inline,
+            name if name == "wasm" => DispositionType::Inline,
+            _ => DispositionType::Attachment,
+        },
+        _ => DispositionType::Attachment,
+    };
+
+    ContentDisposition {
+        disposition,
+        parameters: vec![DispositionParam::Filename(String::from(filename))],
+    }
 }
 
 #[cfg(test)]

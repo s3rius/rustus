@@ -3,11 +3,13 @@ use std::{collections::HashMap, path::PathBuf};
 use crate::{
     errors::{RustusError, RustusResult},
     info_storages::FileInfo,
+    utils::headers::generate_disposition,
 };
 
 use super::Storage;
 use crate::{storages::file_storage::FileStorage, utils::dir_struct::substr_time};
-use actix_web::{http::header::ContentDisposition, HttpRequest, HttpResponse, HttpResponseBuilder};
+
+use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use async_trait::async_trait;
 use bytes::Bytes;
 use derive_more::Display;
@@ -136,9 +138,8 @@ impl Storage for S3HybridStorage {
         let s3_request = Reqwest::new(&self.bucket, &key, command);
         let s3_response = s3_request.response().await?;
         let mut response = HttpResponseBuilder::new(actix_web::http::StatusCode::OK);
-        let disposition = ContentDisposition::attachment(file_info.get_filename());
         Ok(response
-            .insert_header(disposition)
+            .insert_header(generate_disposition(file_info.get_filename()))
             .streaming(s3_response.bytes_stream()))
     }
 
