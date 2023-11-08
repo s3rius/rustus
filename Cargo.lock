@@ -2067,9 +2067,9 @@ dependencies = [
 
 [[package]]
 name = "mime"
-version = "0.3.16"
+version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
+checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "mime_guess"
@@ -3164,7 +3164,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.7.5"
+version = "0.7.6"
 dependencies = [
  "actix-cors",
  "actix-files",
@@ -3191,6 +3191,8 @@ dependencies = [
  "log",
  "md-5",
  "mimalloc",
+ "mime",
+ "mime_guess",
  "openssl",
  "prometheus",
  "rbatis",
