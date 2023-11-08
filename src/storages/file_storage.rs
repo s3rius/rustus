@@ -1,4 +1,4 @@
-use std::{io::Write, path::PathBuf};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use actix_files::NamedFile;
 use actix_web::{HttpRequest, HttpResponse};
@@ -76,8 +76,11 @@ impl Storage for FileStorage {
         request: &HttpRequest,
     ) -> RustusResult<HttpResponse> {
         if let Some(path) = &file_info.path {
-            Ok(NamedFile::open_async(path)
-                .await
+            let file = File::open(path).map_err(|err| {
+                error!("{:?}", err);
+                RustusError::FileNotFound
+            })?;
+            Ok(NamedFile::from_file(file, file_info.get_filename())
                 .map_err(|err| {
                     error!("{:?}", err);
                     RustusError::FileNotFound
