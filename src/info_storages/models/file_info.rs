@@ -90,6 +90,10 @@ impl FileInfo {
         }
     }
 
+    pub fn get_filename(&self) -> &str {
+        self.metadata.get("filename").unwrap_or(&self.id)
+    }
+
     pub async fn json(&self) -> RustusResult<String> {
         let info_clone = self.clone();
         tokio::task::spawn_blocking(move || {
