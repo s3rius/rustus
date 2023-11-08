@@ -137,8 +137,9 @@ impl Storage for S3HybridStorage {
         let s3_response = s3_request.response().await?;
         let mut response = HttpResponseBuilder::new(actix_web::http::StatusCode::OK);
         let disposition = ContentDisposition::attachment(file_info.get_filename());
-        response.insert_header(disposition);
-        Ok(response.streaming(s3_response.bytes_stream()))
+        Ok(response
+            .insert_header(disposition)
+            .streaming(s3_response.bytes_stream()))
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
