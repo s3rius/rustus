@@ -11,7 +11,7 @@ pub enum DataStorageImpl {
 }
 
 impl DataStorageImpl {
-    pub fn new(config: &Config) -> anyhow::Result<Self> {
+    pub fn new(_config: &Config) -> anyhow::Result<Self> {
         Ok(Self::File(file_storage::FileStorage::new(
             "./data".into(),
             "{year}/{month}/{day}/".into(),

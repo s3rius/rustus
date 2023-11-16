@@ -23,7 +23,7 @@ pub enum InfoStorageImpl {
 }
 
 impl InfoStorageImpl {
-    pub async fn new(config: &Config) -> anyhow::Result<Self> {
+    pub async fn new(_config: &Config) -> anyhow::Result<Self> {
         Ok(Self::Redis(
             redis_info_storage::RedisStorage::new("redis://localhost", None).await?,
         ))

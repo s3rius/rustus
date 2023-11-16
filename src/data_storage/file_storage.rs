@@ -62,7 +62,7 @@ impl Storage for FileStorage {
     async fn get_contents(
         &self,
         file_info: &FileInfo,
-        request: &axum::extract::Request,
+        _request: &axum::extract::Request,
     ) -> RustusResult<Response> {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound.into());

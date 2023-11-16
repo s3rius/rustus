@@ -12,7 +12,7 @@ use crate::{errors::RustusResult, state::RustusState};
 pub async fn create_route(
     State(ref state): State<RustusState>,
     headers: HeaderMap,
-    body: Bytes,
+    _body: Bytes,
 ) -> RustusResult<Response> {
     let upload_len: Option<usize> = headers.parse("Upload-Length");
     if !state.config.allow_empty {

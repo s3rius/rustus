@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    data_storage::{self, DataStorageImpl},
+    data_storage::{DataStorageImpl},
     info_storages::InfoStorageImpl,
 };
 

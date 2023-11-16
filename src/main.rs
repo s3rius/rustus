@@ -1,6 +1,5 @@
 #![allow(async_fn_in_trait)]
 
-use clap::Parser;
 use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
