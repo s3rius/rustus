@@ -30,8 +30,7 @@ mod tests {
     use std::str::FromStr;
 
     use crate::from_str;
-    use strum::Display;
-    use strum::EnumIter;
+    use strum::{Display, EnumIter};
 
     #[derive(PartialEq, Debug, Display, EnumIter, Clone, Eq)]
     pub enum TestEnum {

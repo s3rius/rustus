@@ -1,13 +1,14 @@
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::{extract::State, http::HeaderMap};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
+};
 use bytes::Bytes;
 
-use crate::extensions::TusExtensions;
-use crate::info_storages::base::InfoStorage;
-use crate::models::file_info::FileInfo;
-use crate::utils::headers::HeaderMapExt;
-use crate::{errors::RustusResult, state::RustusState};
+use crate::{
+    errors::RustusResult, extensions::TusExtensions, info_storages::base::InfoStorage,
+    models::file_info::FileInfo, state::RustusState, utils::headers::HeaderMapExt,
+};
 
 pub async fn create_route(
     State(ref state): State<RustusState>,

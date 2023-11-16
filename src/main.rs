@@ -11,16 +11,15 @@ use crate::{config::Config, server::start_server};
 pub mod config;
 pub mod data_storage;
 pub mod errors;
+pub mod extensions;
 pub mod info_storages;
 pub mod models;
 pub mod server;
 pub mod state;
 pub mod utils;
-pub mod extensions;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 
 #[cfg_attr(coverage, no_coverage)]
 fn setup_logging(app_config: &Config) -> anyhow::Result<()> {

@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    hash::{BuildHasherDefault},
-    str::FromStr,
-};
+use std::{collections::HashMap, hash::BuildHasherDefault, str::FromStr};
 
 use axum::http::HeaderMap;
 use base64::{engine::general_purpose, Engine};

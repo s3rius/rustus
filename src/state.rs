@@ -1,8 +1,4 @@
-use crate::{
-    config::Config,
-    data_storage::{DataStorageImpl},
-    info_storages::InfoStorageImpl,
-};
+use crate::{config::Config, data_storage::DataStorageImpl, info_storages::InfoStorageImpl};
 
 #[derive(Clone)]
 pub struct RustusState {

@@ -1,7 +1,3 @@
-
-
-
-
 use crate::{config::Config, state::RustusState};
 
 mod routes;
