@@ -18,6 +18,10 @@ pub mod server;
 pub mod state;
 pub mod utils;
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+
 #[cfg_attr(coverage, no_coverage)]
 fn setup_logging(app_config: &Config) -> anyhow::Result<()> {
     let colors = ColoredLevelConfig::new()
