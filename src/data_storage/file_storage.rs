@@ -1,6 +1,6 @@
 use std::{io::Write, path::PathBuf};
 
-use axum::response::IntoResponse;
+use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
 use log::error;
 use std::{
@@ -13,12 +13,10 @@ use crate::{
     models::file_info::FileInfo,
     utils::{dir_struct::substr_now, headers::generate_disposition},
 };
-use derive_more::Display;
 
 use super::base::Storage;
 
-#[derive(Display, Clone)]
-#[display(fmt = "file_storage")]
+#[derive(Clone)]
 pub struct FileStorage {
     data_dir: PathBuf,
     dir_struct: String,
@@ -46,6 +44,10 @@ impl FileStorage {
 }
 
 impl Storage for FileStorage {
+    fn get_name(&self) -> &'static str {
+        "file"
+    }
+
     async fn prepare(&mut self) -> anyhow::Result<()> {
         // We're creating directory for new files
         // if it doesn't already exist.
@@ -61,7 +63,7 @@ impl Storage for FileStorage {
         &self,
         file_info: &FileInfo,
         request: &axum::extract::Request,
-    ) -> RustusResult<impl IntoResponse> {
+    ) -> RustusResult<Response> {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound.into());
         };
@@ -73,7 +75,7 @@ impl Storage for FileStorage {
         let body = axum::body::Body::from_stream(reader);
         let disp = generate_disposition(file_info.get_filename());
         let headers = [disp.0, disp.1];
-        Ok((headers, body))
+        Ok((headers, body).into_response())
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> anyhow::Result<()> {

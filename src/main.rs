@@ -17,6 +17,7 @@ pub mod models;
 pub mod server;
 pub mod state;
 pub mod utils;
+pub mod extensions;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;

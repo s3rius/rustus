@@ -6,10 +6,14 @@ pub type RustusResult<T> = Result<T, RustusError>;
 pub enum RustusError {
     #[error("Unable to prepare info storage: {0}")]
     UnableToRemove(String),
+    #[error("Cannot write: {0}")]
+    UnableToWrite(String),
     #[error("File not found.")]
     FileNotFound,
-    #[error("Something bad happened: {0}")]
-    AnyHowShit(#[from] anyhow::Error),
+    #[error("Something really bad happened: {0}")]
+    AnyHowError(#[from] anyhow::Error),
+    #[error("Unimplemented: {0}")]
+    Unimplemented(String),
 }
 
 impl IntoResponse for RustusError {

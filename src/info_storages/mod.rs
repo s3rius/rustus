@@ -1,8 +1,20 @@
-use crate::config::Config;
+use crate::{config::Config, from_str};
 
 pub mod base;
 pub mod file_info_storage;
 pub mod redis_info_storage;
+
+use strum::{Display, EnumIter};
+
+#[derive(Clone, Display, Debug, EnumIter)]
+pub enum AvailableInfoStorages {
+    #[strum(serialize = "redis")]
+    Redis,
+    #[strum(serialize = "file")]
+    File,
+}
+
+from_str!(AvailableInfoStorages, "info storage");
 
 #[derive(Clone)]
 pub enum InfoStorageImpl {

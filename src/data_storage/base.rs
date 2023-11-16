@@ -3,6 +3,12 @@ use bytes::Bytes;
 use crate::{errors::RustusResult, models::file_info::FileInfo};
 
 pub trait Storage {
+    /// Get name of a storage.
+    ///
+    /// Used to store storage reference in
+    /// file information.
+    fn get_name(&self) -> &'static str;
+
     /// Prepare storage before starting up server.
     ///
     /// Function to check if configuration is correct
@@ -26,7 +32,7 @@ pub trait Storage {
         &self,
         file_info: &FileInfo,
         request: &axum::extract::Request,
-    ) -> RustusResult<impl axum::response::IntoResponse>;
+    ) -> RustusResult<axum::response::Response>;
 
     /// Add bytes to the file.
     ///

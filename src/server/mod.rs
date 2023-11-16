@@ -39,7 +39,7 @@ pub async fn start_server(config: Config) -> anyhow::Result<()> {
     axum::serve(
         listener,
         axum::Router::new()
-            .nest(&config.base_path, app)
+            .nest(&config.url, app)
             .fallback(fallback)
             .layer(axum::middleware::from_fn(logger)),
     )

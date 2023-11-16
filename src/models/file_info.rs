@@ -1,7 +1,11 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    hash::{BuildHasherDefault, DefaultHasher},
+};
 
 use base64::{engine::general_purpose, Engine};
 use chrono::{serde::ts_seconds, DateTime, Utc};
+use rustc_hash::{FxHashMap, FxHasher};
 use serde::{Deserialize, Serialize};
 
 /// Information about file.
@@ -19,7 +23,7 @@ pub struct FileInfo {
     pub is_final: bool,
     pub parts: Option<Vec<String>>,
     pub storage: String,
-    pub metadata: HashMap<String, String>,
+    pub metadata: FxHashMap<String, String>,
 }
 
 impl FileInfo {
@@ -37,7 +41,7 @@ impl FileInfo {
         length: Option<usize>,
         path: Option<String>,
         storage: String,
-        initial_metadata: Option<HashMap<String, String>>,
+        initial_metadata: Option<FxHashMap<String, String>>,
     ) -> FileInfo {
         let id = String::from(file_id);
 
@@ -47,7 +51,7 @@ impl FileInfo {
         }
         let metadata = match initial_metadata {
             Some(meta) => meta,
-            None => HashMap::new(),
+            None => FxHashMap::default(),
         };
 
         FileInfo {
