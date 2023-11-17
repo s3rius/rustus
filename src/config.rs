@@ -34,6 +34,17 @@ pub struct Config {
     #[arg(long, env = "RUSTUS_REMOVE_PARTS")]
     pub remove_parts: bool,
 
+    /// Maximum payload size in bytes.
+    ///
+    /// This limit used to reduce amount of consumed memory.
+    #[arg(
+        long,
+        short = 'm',
+        default_value = "262144",
+        env = "RUSTUS_MAX_BODY_SIZE"
+    )]
+    pub max_body_size: usize,
+
     /// Maximum size of file that can be uploaded.
     ///
     /// If not set, file size is unlimited.

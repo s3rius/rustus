@@ -56,7 +56,13 @@ pub async fn create_route(
     let meta = headers.get_metadata();
 
     let file_id = uuid::Uuid::new_v4().to_string();
-    let mut file_info = FileInfo::new(file_id.as_str(), upload_len, None, "storage".into(), meta);
+    let mut file_info = FileInfo::new(
+        file_id.as_str(),
+        upload_len,
+        None,
+        state.data_storage.get_name().to_string(),
+        meta,
+    );
 
     let is_partial = headers.check("Upload-Concat", |val| val == "partial");
 

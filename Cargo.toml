@@ -41,3 +41,11 @@ sha2 = { version = "^0.10.1", features = ["compress"] }
 md-5 = "^0.10.1"
 digest = "^0.10.1"
 reqwest = "0.11.22"
+
+
+[profile.release]
+opt-level = 3
+debug = false
+codegen-units = 1
+lto = true
+panic = "abort"

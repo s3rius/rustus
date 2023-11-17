@@ -8,10 +8,7 @@ use crate::{
 
 use crate::utils::dir_struct::substr_time;
 
-use axum::{
-    extract::Request,
-    response::{IntoResponse, Response},
-};
+use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
 use s3::{
     command::Command,
@@ -132,14 +129,10 @@ impl Storage for S3HybridStorage {
         Ok(())
     }
 
-    async fn get_contents(
-        &self,
-        file_info: &FileInfo,
-        request: &Request,
-    ) -> RustusResult<Response> {
+    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<Response> {
         if file_info.length != Some(file_info.offset) {
             log::debug!("File isn't uploaded. Returning from local storage.");
-            return self.local_storage.get_contents(file_info, request).await;
+            return self.local_storage.get_contents(file_info).await;
         }
         let key = self.get_s3_key(file_info);
         let command = Command::GetObject;

@@ -27,12 +27,7 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_info` - info about current file.
-    /// `request` - this parameter is needed to construct responses in some case
-    async fn get_contents(
-        &self,
-        file_info: &FileInfo,
-        request: &axum::extract::Request,
-    ) -> RustusResult<axum::response::Response>;
+    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<axum::response::Response>;
 
     /// Add bytes to the file.
     ///

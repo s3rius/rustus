@@ -63,14 +63,12 @@ pub enum RustusError {
     WrongChecksum,
     #[error("The header value is incorrect")]
     WrongHeaderValue,
-    // #[error("Metrics error: {0}")]
-    // PrometheusError(#[from] prometheus::Error),
     #[error("HTTP hook error. Returned status: {0}, Response text: {1}")]
     HTTPHookError(u16, String, Option<String>),
     #[error("Found S3 error: {0}")]
     S3Error(#[from] s3::error::S3Error),
-    #[error("Missing offset header")]
-    MissingOffset,
+    #[error("Found invalid header: {0}")]
+    InvalidHeader(#[from] axum::http::header::InvalidHeaderValue),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

@@ -1,8 +1,15 @@
-use axum::{extract::State, http::StatusCode};
+use axum::{
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+};
 
-use crate::state::RustusState;
+use crate::{errors::RustusResult, extensions::TusExtensions, state::RustusState};
 
-pub async fn info_route(State(ref state): State<RustusState>) -> impl axum::response::IntoResponse {
+pub async fn info_route(
+    State(ref state): State<RustusState>,
+) -> RustusResult<impl axum::response::IntoResponse> {
+    let mut headers = HeaderMap::new();
     let extensions = state
         .config
         .tus_extensions
@@ -11,5 +18,15 @@ pub async fn info_route(State(ref state): State<RustusState>) -> impl axum::resp
         .collect::<Vec<String>>()
         .join(",");
 
-    (StatusCode::NO_CONTENT, [("Tus-Extension", extensions)])
+    headers.insert("Tus-Extension", extensions.parse()?);
+
+    if state
+        .config
+        .tus_extensions
+        .contains(&TusExtensions::Checksum)
+    {
+        headers.insert("Tus-Checksum-Algorithm", "md5,sha1,sha256,sha512".parse()?);
+    }
+
+    Ok((StatusCode::NO_CONTENT, headers).into_response())
 }

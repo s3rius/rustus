@@ -38,11 +38,10 @@ impl base::Storage for DataStorageImpl {
     async fn get_contents(
         &self,
         file_info: &crate::models::file_info::FileInfo,
-        request: &axum::extract::Request,
     ) -> crate::errors::RustusResult<axum::response::Response> {
         match self {
-            Self::File(file) => file.get_contents(file_info, request).await,
-            Self::S3Hybrid(s3) => s3.get_contents(file_info, request).await,
+            Self::File(file) => file.get_contents(file_info).await,
+            Self::S3Hybrid(s3) => s3.get_contents(file_info).await,
         }
     }
 

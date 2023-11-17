@@ -1,7 +1,11 @@
 use crate::{
     config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
 };
-use axum::{extract::State, http::HeaderValue, ServiceExt};
+use axum::{
+    extract::{DefaultBodyLimit, State},
+    http::HeaderValue,
+    ServiceExt,
+};
 use tower::Layer;
 
 mod routes;
@@ -86,11 +90,16 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
             "/:upload_id",
             axum::routing::patch(routes::upload::upload_chunk_route),
         )
+        .route(
+            "/:upload_id",
+            axum::routing::get(routes::get_file::get_file),
+        )
         .with_state(state)
         .route_layer(axum::middleware::from_fn_with_state(
             config.clone(),
             add_tus_header,
-        ));
+        ))
+        .route_layer(DefaultBodyLimit::max(config.max_body_size));
     let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
     log::info!("Starting server at http://{}:{}", config.host, config.port);
 
