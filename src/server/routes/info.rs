@@ -6,7 +6,7 @@ use axum::{
 
 use crate::{errors::RustusResult, extensions::TusExtensions, state::RustusState};
 
-pub async fn info_route(
+pub async fn get_server_info(
     State(ref state): State<RustusState>,
 ) -> RustusResult<impl axum::response::IntoResponse> {
     let mut headers = HeaderMap::new();

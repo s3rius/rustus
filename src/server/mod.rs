@@ -84,15 +84,15 @@ async fn fallback() -> impl axum::response::IntoResponse {
 pub async fn start_server(config: Config) -> RustusResult<()> {
     let state = RustusState::from_config(&config).await?;
     let app = axum::Router::new()
-        .route("/", axum::routing::post(routes::create::create_route))
-        .route("/", axum::routing::options(routes::info::info_route))
+        .route("/", axum::routing::post(routes::create::create_upload))
+        .route("/", axum::routing::options(routes::info::get_server_info))
         .route(
             "/:upload_id",
-            axum::routing::patch(routes::upload::upload_chunk_route),
+            axum::routing::patch(routes::upload::upload_chunk),
         )
         .route(
             "/:upload_id",
-            axum::routing::get(routes::get_file::get_file),
+            axum::routing::get(routes::get_file::get_upload),
         )
         .route(
             "/:upload_id",

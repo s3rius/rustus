@@ -11,7 +11,7 @@ use crate::{
     utils::headers::HeaderMapExt,
 };
 
-pub async fn create_route(
+pub async fn create_upload(
     State(ref state): State<RustusState>,
     headers: HeaderMap,
     _body: Bytes,

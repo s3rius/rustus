@@ -14,7 +14,7 @@ use crate::{
     utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt},
 };
 
-pub async fn upload_chunk_route(
+pub async fn upload_chunk(
     Path(upload_id): Path<String>,
     State(state): State<RustusState>,
     headers: HeaderMap,

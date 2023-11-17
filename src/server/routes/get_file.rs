@@ -12,7 +12,7 @@ use crate::{
     state::RustusState,
 };
 
-pub async fn get_file(
+pub async fn get_upload(
     State(state): State<RustusState>,
     Path(upload_id): Path<String>,
 ) -> RustusResult<Response> {
