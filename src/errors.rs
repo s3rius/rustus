@@ -69,6 +69,8 @@ pub enum RustusError {
     S3Error(#[from] s3::error::S3Error),
     #[error("Found invalid header: {0}")]
     InvalidHeader(#[from] axum::http::header::InvalidHeaderValue),
+    #[error("HTTP error: {0}")]
+    AxumHTTPError(#[from] axum::http::Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

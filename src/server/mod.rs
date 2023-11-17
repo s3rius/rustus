@@ -98,6 +98,10 @@ pub fn get_router(state: RustusState) -> Router {
             "/:upload_id",
             axum::routing::delete(routes::delete::delete_upload),
         )
+        .route(
+            "/:upload_id",
+            axum::routing::head(routes::file_info::get_file_info),
+        )
         .with_state(state)
         .route_layer(axum::middleware::from_fn_with_state(
             config.clone(),
