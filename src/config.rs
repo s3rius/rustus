@@ -74,13 +74,21 @@ pub struct DataStorageConfig {
     /// S3 bucket to upload files to.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(long, required_if_eq("data_storage", "hybrid-s3"), env = "RUSTUS_S3_BUCKET")]
+    #[arg(
+        long,
+        required_if_eq("data_storage", "hybrid-s3"),
+        env = "RUSTUS_S3_BUCKET"
+    )]
     pub s3_bucket: Option<String>,
 
     /// S3 region.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(long, required_if_eq("data_storage", "hybrid-s3"), env = "RUSTUS_S3_REGION")]
+    #[arg(
+        long,
+        required_if_eq("data_storage", "hybrid-s3"),
+        env = "RUSTUS_S3_REGION"
+    )]
     pub s3_region: Option<String>,
 
     /// S3 access key.
@@ -112,7 +120,11 @@ pub struct DataStorageConfig {
     /// S3 URL.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(long, required_if_eq("data_storage", "hybrid-s3"), env = "RUSTUS_S3_URL")]
+    #[arg(
+        long,
+        required_if_eq("data_storage", "hybrid-s3"),
+        env = "RUSTUS_S3_URL"
+    )]
     pub s3_url: Option<String>,
 
     /// S3 force path style.
@@ -146,6 +158,78 @@ pub struct DataStorageConfig {
     /// This parameter is required fo s3-based storages.
     #[arg(long, env = "RUSTUS_S3_HEADERS")]
     pub s3_headers: Option<String>,
+}
+
+#[derive(Parser, Clone, Debug)]
+pub struct AMQPHooksOptions {
+    /// Url for AMQP server.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
+    pub hooks_amqp_url: Option<String>,
+
+    /// Rustus will create exchange if enabled.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
+    pub hooks_amqp_declare_exchange: bool,
+
+    /// Rustus will create all queues for communication and bind them
+    /// to exchange if enabled.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
+    pub hooks_amqp_declare_queues: bool,
+
+    /// Durability type of exchange.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
+    pub hooks_amqp_durable_exchange: bool,
+
+    /// Durability type of queues.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
+    pub hooks_amqp_durable_queues: bool,
+
+    /// Adds celery specific headers.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
+    pub hooks_amqp_celery: bool,
+
+    /// Name of amqp exchange.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
+    pub hooks_amqp_exchange: String,
+
+    /// Exchange kind.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
+    pub hooks_amqp_exchange_kind: String,
+
+    /// Routing key to use when sending message to an exchange.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
+    pub hooks_amqp_routing_key: Option<String>,
+
+    /// Prefix for all AMQP queues.
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
+        default_value = "rustus"
+    )]
+    pub hooks_amqp_queues_prefix: String,
+
+    /// Maximum number of connections for RabbitMQ.
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
+        default_value = "10"
+    )]
+    pub hooks_amqp_connection_pool_size: u64,
+
+    /// Maximum number of opened channels for each connection.
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE",
+        default_value = "10"
+    )]
+    pub hooks_amqp_channel_pool_size: u64,
+
+    /// After this amount of time the connection will be dropped.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT")]
+    pub hooks_amqp_idle_connection_timeout: Option<u64>,
+
+    /// After this amount of time in seconds, the channel will be closed.
+    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT")]
+    pub hooks_amqp_idle_channels_timeout: Option<u64>,
 }
 
 #[derive(Parser, Clone, Debug)]

@@ -47,12 +47,10 @@ pub enum RustusError {
     HookError(String),
     #[error("Unable to configure logging: {0}")]
     LogConfigError(#[from] log::SetLoggerError),
-    #[cfg(feature = "amqp_notifier")]
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
-    #[cfg(feature = "amqp_notifier")]
     #[error("AMQP pooling error error: {0}")]
-    AMQPPoolError(#[from] bb8::RunError<lapin::Error>),
+    AMQPPoolError(#[from] mobc::Error<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
     #[error("Can't spawn task: {0}")]
