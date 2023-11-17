@@ -94,6 +94,10 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
             "/:upload_id",
             axum::routing::get(routes::get_file::get_file),
         )
+        .route(
+            "/:upload_id",
+            axum::routing::delete(routes::delete::delete_upload),
+        )
         .with_state(state)
         .route_layer(axum::middleware::from_fn_with_state(
             config.clone(),
