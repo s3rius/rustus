@@ -3,10 +3,9 @@ use redis::aio::Connection;
 
 use crate::{
     errors::{RustusError, RustusResult},
+    info_storages::base::InfoStorage,
     models::file_info::FileInfo,
 };
-
-use super::base::InfoStorage;
 
 struct RedisConnectionManager {
     client: redis::Client,

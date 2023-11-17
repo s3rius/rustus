@@ -15,10 +15,10 @@ pub mod errors;
 pub mod extensions;
 pub mod info_storages;
 pub mod models;
+pub mod notifiers;
 pub mod server;
 pub mod state;
 pub mod utils;
-pub mod notifiers;
 
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;

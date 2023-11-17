@@ -1,13 +1,11 @@
 use std::{collections::HashMap, hash::BuildHasherDefault, str::FromStr};
 
-use axum::http::HeaderMap;
+use axum::http::{HeaderMap, HeaderValue};
 use base64::{engine::general_purpose, Engine};
 use rustc_hash::{FxHashMap, FxHasher};
 
 static DISPOSITION_TYPE_INLINE: &str = "inline";
 static DISPOSITION_TYPE_ATTACHMENT: &str = "attachment";
-
-type Header = (axum::http::header::HeaderName, String);
 
 pub trait HeaderMapExt {
     fn parse<T: FromStr>(&self, name: &str) -> Option<T>;
@@ -15,6 +13,7 @@ pub trait HeaderMapExt {
     fn get_metadata(&self) -> Option<FxHashMap<String, String>>;
     fn get_upload_parts(&self) -> Vec<String>;
     fn get_method_override(&self) -> Option<axum::http::Method>;
+    fn generate_disposition(&mut self, filename: &str);
 }
 
 impl HeaderMapExt for HeaderMap {
@@ -72,26 +71,30 @@ impl HeaderMapExt for HeaderMap {
             .and_then(|header| header.to_str().ok())
             .and_then(|header| header.trim().parse().ok())
     }
-}
 
-pub fn generate_disposition(filename: &str) -> (Header, Header) {
-    let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
+    fn generate_disposition(&mut self, filename: &str) {
+        let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
 
-    let disposition = match mime_type.type_() {
-        mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DISPOSITION_TYPE_INLINE,
-        mime::APPLICATION => match mime_type.subtype() {
-            mime::JAVASCRIPT | mime::JSON => DISPOSITION_TYPE_INLINE,
-            name if name == "wasm" => DISPOSITION_TYPE_INLINE,
+        let disposition = match mime_type.type_() {
+            mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DISPOSITION_TYPE_INLINE,
+            mime::APPLICATION => match mime_type.subtype() {
+                mime::JAVASCRIPT | mime::JSON => DISPOSITION_TYPE_INLINE,
+                name if name == "wasm" => DISPOSITION_TYPE_INLINE,
+                _ => DISPOSITION_TYPE_ATTACHMENT,
+            },
             _ => DISPOSITION_TYPE_ATTACHMENT,
-        },
-        _ => DISPOSITION_TYPE_ATTACHMENT,
-    };
+        };
 
-    return (
-        (
-            axum::http::header::CONTENT_DISPOSITION,
-            format!("{}; filename=\"{}\"", disposition, filename),
-        ),
-        (axum::http::header::CONTENT_TYPE, mime_type.to_string()),
-    );
+        format!("{}; filename=\"{}\"", disposition, filename)
+            .parse::<HeaderValue>()
+            .map(|val| {
+                self.insert(axum::http::header::CONTENT_DISPOSITION, val);
+            })
+            .ok();
+        mime_type
+            .to_string()
+            .parse::<HeaderValue>()
+            .map(|val| self.insert(axum::http::header::CONTENT_TYPE, val))
+            .ok();
+    }
 }

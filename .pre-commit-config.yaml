@@ -27,7 +27,6 @@ repos:
         entry: cargo
         args:
           - clippy
-          - --features=all
           - --all
           - -p
           - rustus
@@ -58,4 +57,3 @@ repos:
         pass_filenames: false
         args:
           - check
-          - --features=all

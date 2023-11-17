@@ -1,9 +1,10 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
+    data_storage::base::Storage,
     errors::{RustusError, RustusResult},
     models::file_info::FileInfo,
-    utils::headers::generate_disposition,
+    utils::headers::HeaderMapExt,
 };
 
 use crate::utils::dir_struct::substr_time;
@@ -16,7 +17,7 @@ use s3::{
     Bucket,
 };
 
-use super::{base::Storage, file_storage::FileStorage};
+use super::file_storage::FileStorage;
 
 /// This storage is useful for small files when you have chunks less than 5MB.
 /// This restriction is based on the S3 API limitations.
@@ -138,9 +139,10 @@ impl Storage for S3HybridStorage {
         let command = Command::GetObject;
         let s3_request = Reqwest::new(&self.bucket, &key, command).unwrap();
         let s3_response = s3_request.response().await.unwrap();
-        let body = axum::body::Body::from_stream(s3_response.bytes_stream());
-        let disp = generate_disposition(file_info.get_filename());
-        Ok(([disp.0, disp.1], body).into_response())
+        let mut resp = axum::body::Body::from_stream(s3_response.bytes_stream()).into_response();
+        resp.headers_mut()
+            .generate_disposition(file_info.get_filename());
+        Ok(resp)
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {

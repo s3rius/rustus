@@ -2,9 +2,8 @@ use std::path::PathBuf;
 
 use tokio::fs::DirBuilder;
 
-use crate::{errors::RustusResult, models::file_info::FileInfo};
+use crate::{errors::RustusResult, models::file_info::FileInfo, info_storages::base::InfoStorage};
 
-use super::base::InfoStorage;
 
 #[derive(Clone)]
 pub struct FileInfoStorage {

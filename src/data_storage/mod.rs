@@ -1,22 +1,63 @@
-use crate::{config::Config, errors::RustusResult};
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::PathBuf,
+};
+
+use crate::{config::Config, errors::RustusResult, from_str};
+
+use self::impls::{file_storage::FileStorage, s3_hybrid::S3HybridStorage};
 
 pub mod base;
-pub mod file_storage;
-pub mod s3_hybrid;
+pub mod impls;
+
+#[derive(Clone, Debug, strum::Display, strum::EnumIter)]
+pub enum AvailableStorages {
+    #[strum(serialize = "file")]
+    File,
+    #[strum(serialize = "s3-hybrid")]
+    S3Hybrid,
+}
+
+from_str!(AvailableStorages, "storages");
 
 #[derive(Clone)]
 pub enum DataStorageImpl {
-    File(file_storage::FileStorage),
-    S3Hybrid(s3_hybrid::S3HybridStorage),
+    File(FileStorage),
+    S3Hybrid(S3HybridStorage),
 }
 
 impl DataStorageImpl {
-    pub fn new(_config: &Config) -> RustusResult<Self> {
-        Ok(Self::File(file_storage::FileStorage::new(
-            "./data".into(),
-            "{year}/{month}/{day}/".into(),
-            false,
-        )))
+    pub fn new(config: &Config) -> RustusResult<Self> {
+        let data_conf = config.data_storage_config.clone();
+        match data_conf.data_storage {
+            AvailableStorages::File => Ok(Self::File(FileStorage::new(
+                data_conf.data_dir,
+                data_conf.dir_structure,
+                data_conf.force_fsync,
+            ))),
+            AvailableStorages::S3Hybrid => {
+                let access_key =
+                    from_string_or_path(&data_conf.s3_access_key, &data_conf.s3_access_key_path);
+                let secret_key =
+                    from_string_or_path(&data_conf.s3_secret_key, &data_conf.s3_secret_key_path);
+                Ok(Self::S3Hybrid(S3HybridStorage::new(
+                    data_conf.s3_url.clone().unwrap(),
+                    data_conf.s3_region.clone().unwrap(),
+                    &Some(access_key),
+                    &Some(secret_key),
+                    &data_conf.s3_security_token,
+                    &data_conf.s3_session_token,
+                    &data_conf.s3_profile,
+                    &data_conf.s3_headers,
+                    data_conf.s3_bucket.clone().unwrap().as_str(),
+                    data_conf.s3_force_path_style,
+                    data_conf.data_dir.clone(),
+                    data_conf.dir_structure.clone(),
+                    data_conf.force_fsync,
+                )))
+            }
+        }
     }
 }
 
@@ -85,5 +126,20 @@ impl base::Storage for DataStorageImpl {
             Self::File(file) => file.remove_file(file_info).await,
             Self::S3Hybrid(s3) => s3.remove_file(file_info).await,
         }
+    }
+}
+fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+    if let Some(variable) = variable {
+        variable.to_string()
+    } else if let Some(path) = path {
+        let file =
+            File::open(path).unwrap_or_else(|_| panic!("failed to open path {}", path.display()));
+        let mut contents = String::new();
+        BufReader::new(file)
+            .read_to_string(&mut contents)
+            .unwrap_or_else(|_| panic!("failed to read from path {}", path.display()));
+        contents
+    } else {
+        panic!("can't find {variable:?} or path {path:?}")
     }
 }

@@ -11,10 +11,9 @@ use std::{
 use crate::{
     errors::{RustusError, RustusResult},
     models::file_info::FileInfo,
-    utils::{dir_struct::substr_now, headers::generate_disposition},
+    utils::{dir_struct::substr_now, headers::HeaderMapExt}, data_storage::base::Storage,
 };
 
-use super::base::Storage;
 
 #[derive(Clone)]
 pub struct FileStorage {
@@ -59,10 +58,7 @@ impl Storage for FileStorage {
         Ok(())
     }
 
-    async fn get_contents(
-        &self,
-        file_info: &FileInfo,
-    ) -> RustusResult<Response> {
+    async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<Response> {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound.into());
         };
@@ -71,10 +67,10 @@ impl Storage for FileStorage {
             .unwrap();
         let buf_file = tokio::io::BufReader::new(file);
         let reader = tokio_util::io::ReaderStream::new(buf_file);
-        let body = axum::body::Body::from_stream(reader);
-        let disp = generate_disposition(file_info.get_filename());
-        let headers = [disp.0, disp.1];
-        Ok((headers, body).into_response())
+        let mut resp = axum::body::Body::from_stream(reader).into_response();
+        resp.headers_mut()
+            .generate_disposition(file_info.get_filename());
+        Ok(resp)
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
@@ -110,17 +106,13 @@ impl Storage for FileStorage {
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str())?;
-        tokio::task::spawn_blocking(move || {
-            // Creating new file.
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .create_new(true)
-                .open(file_path.as_path())?;
-            Ok(file_path.display().to_string())
-        })
-        .await?
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .create_new(true)
+            .open(file_path.as_path())?;
+        Ok(file_path.display().to_string())
     }
 
     async fn concat_files(

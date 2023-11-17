@@ -1,10 +1,11 @@
 use crate::{config::Config, errors::RustusResult, from_str};
 
 pub mod base;
-pub mod file_info_storage;
-pub mod redis_info_storage;
+pub mod impls;
 
 use strum::{Display, EnumIter};
+
+use self::impls::{redis_info_storage::RedisStorage, file_info_storage::FileInfoStorage};
 
 #[derive(Clone, Display, Debug, EnumIter)]
 pub enum AvailableInfoStorages {
@@ -18,15 +19,25 @@ from_str!(AvailableInfoStorages, "info storage");
 
 #[derive(Clone)]
 pub enum InfoStorageImpl {
-    Redis(redis_info_storage::RedisStorage),
-    File(file_info_storage::FileInfoStorage),
+    Redis(RedisStorage),
+    File(FileInfoStorage),
 }
 
 impl InfoStorageImpl {
-    pub async fn new(_config: &Config) -> RustusResult<Self> {
-        Ok(Self::File(file_info_storage::FileInfoStorage::new(
-            "./data".into(),
-        )))
+    pub async fn new(config: &Config) -> RustusResult<Self> {
+        let info_conf = config.info_storage_config.clone();
+        match info_conf.info_storage {
+            AvailableInfoStorages::Redis => Ok(Self::Redis(
+                RedisStorage::new(
+                    info_conf.info_db_dsn.unwrap().as_str(),
+                    info_conf.redis_info_expiration,
+                )
+                .await?,
+            )),
+            AvailableInfoStorages::File => Ok(Self::File(FileInfoStorage::new(
+                info_conf.info_dir,
+            ))),
+        }
     }
 }
 
