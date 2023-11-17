@@ -1,7 +1,7 @@
 use mobc::{Manager, Pool};
 use redis::aio::Connection;
 
-use crate::{errors::RustusError, models::file_info::FileInfo};
+use crate::{errors::{RustusError, RustusResult}, models::file_info::FileInfo};
 
 use super::base::InfoStorage;
 
@@ -41,7 +41,7 @@ pub struct RedisStorage {
 
 impl RedisStorage {
     #[allow(clippy::unused_async)]
-    pub async fn new(db_dsn: &str, expiration: Option<usize>) -> anyhow::Result<Self> {
+    pub async fn new(db_dsn: &str, expiration: Option<usize>) -> RustusResult<Self> {
         let client = redis::Client::open(db_dsn)?;
         let manager = RedisConnectionManager::new(client);
         let pool = mobc::Pool::builder().max_open(100).build(manager);
@@ -50,11 +50,11 @@ impl RedisStorage {
 }
 
 impl InfoStorage for RedisStorage {
-    async fn prepare(&mut self) -> anyhow::Result<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
 
-    async fn set_info(&self, file_info: &FileInfo, _create: bool) -> anyhow::Result<()> {
+    async fn set_info(&self, file_info: &FileInfo, _create: bool) -> RustusResult<()> {
         let mut conn = self.pool.get().await?;
         let mut cmd = redis::cmd("SET");
         let mut cmd = cmd
@@ -67,7 +67,7 @@ impl InfoStorage for RedisStorage {
         Ok(())
     }
 
-    async fn get_info(&self, file_id: &str) -> anyhow::Result<FileInfo> {
+    async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let mut conn = self.pool.get().await?;
         let res = redis::cmd("GET")
             .arg(file_id)
@@ -79,7 +79,7 @@ impl InfoStorage for RedisStorage {
         FileInfo::from_json(res.unwrap())
     }
 
-    async fn remove_info(&self, file_id: &str) -> anyhow::Result<()> {
+    async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         let mut conn = self.pool.get().await?;
         let resp = redis::cmd("DEL")
             .arg(file_id)

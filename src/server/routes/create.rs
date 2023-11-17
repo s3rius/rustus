@@ -6,8 +6,9 @@ use axum::{
 use bytes::Bytes;
 
 use crate::{
-    errors::RustusResult, extensions::TusExtensions, info_storages::base::InfoStorage,
-    models::file_info::FileInfo, state::RustusState, utils::headers::HeaderMapExt,
+    data_storage::base::Storage, errors::RustusResult, extensions::TusExtensions,
+    info_storages::base::InfoStorage, models::file_info::FileInfo, state::RustusState,
+    utils::headers::HeaderMapExt,
 };
 
 pub async fn create_route(
@@ -78,7 +79,53 @@ pub async fn create_route(
         }
     }
 
-    state.info_storage.set_info(&file_info, true).await?;
+    file_info.path = Some(state.data_storage.create_file(&file_info).await?);
 
-    Ok(().into_response())
+    if file_info.is_final {
+        let mut final_size = 0;
+        let mut parts_info = Vec::new();
+        for part_id in file_info.clone().parts.unwrap() {
+            let part = state.info_storage.get_info(part_id.as_str()).await?;
+            if part.length != Some(part.offset) {
+                return Ok((
+                    StatusCode::BAD_REQUEST,
+                    format!("{} upload is not complete.", part.id),
+                )
+                    .into_response());
+            }
+            if !part.is_partial {
+                return Ok((
+                    StatusCode::BAD_REQUEST,
+                    format!("{} upload is not partial.", part.id),
+                )
+                    .into_response());
+            }
+            final_size += &part.length.unwrap();
+            parts_info.push(part.clone());
+        }
+        state
+            .data_storage
+            .concat_files(&file_info, parts_info.clone())
+            .await?;
+        file_info.offset = final_size;
+        file_info.length = Some(final_size);
+        if state.config.remove_parts {
+            for part in parts_info {
+                state.data_storage.remove_file(&part).await?;
+                state.info_storage.remove_info(part.id.as_str()).await?;
+            }
+        }
+    }
+
+    state.info_storage.set_info(&file_info, true).await?;
+    let upload_url = state.config.get_url(&file_info.id);
+
+    Ok((
+        StatusCode::CREATED,
+        [
+            ("Location", upload_url.as_str()),
+            ("Upload-Offset", file_info.offset.to_string().as_str()),
+        ],
+    )
+        .into_response())
 }

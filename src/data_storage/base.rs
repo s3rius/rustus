@@ -18,7 +18,7 @@ pub trait Storage {
     /// It MUST throw errors if connection can't
     /// be established or in any other case that might
     /// be a problem later on.
-    async fn prepare(&mut self) -> anyhow::Result<()>;
+    async fn prepare(&mut self) -> RustusResult<()>;
 
     /// Get contents of a file.
     ///
@@ -48,7 +48,7 @@ pub trait Storage {
     /// # Params
     /// `file_info` - info about current file.
     /// `bytes` - bytes to append to the file.
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> anyhow::Result<()>;
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()>;
 
     /// Create file in storage.
     ///
@@ -58,7 +58,7 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_info` - info about current file.
-    async fn create_file(&self, file_info: &FileInfo) -> anyhow::Result<String>;
+    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String>;
 
     /// Concatenate files.
     ///
@@ -73,7 +73,7 @@ pub trait Storage {
         &self,
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
-    ) -> anyhow::Result<()>;
+    ) -> RustusResult<()>;
 
     /// Remove file from storage
     ///
@@ -82,5 +82,5 @@ pub trait Storage {
     ///
     /// # Params
     /// `file_info` - info about current file.
-    async fn remove_file(&self, file_info: &FileInfo) -> anyhow::Result<()>;
+    async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()>;
 }

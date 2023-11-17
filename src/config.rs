@@ -82,7 +82,7 @@ impl Config {
         }
     }
 
-    pub fn get_url(&self, url: String) -> String {
+    pub fn get_url(&self, url: &str) -> String {
         format!("{}/{url}", self.url)
     }
 }

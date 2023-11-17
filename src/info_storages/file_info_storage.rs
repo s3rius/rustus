@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use tokio::fs::DirBuilder;
 
-use crate::models::file_info::FileInfo;
+use crate::{models::file_info::FileInfo, errors::RustusResult};
 
 use super::base::InfoStorage;
 
@@ -22,14 +22,14 @@ impl FileInfoStorage {
 }
 
 impl InfoStorage for FileInfoStorage {
-    async fn prepare(&mut self) -> anyhow::Result<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         if !self.info_dir.exists() {
             DirBuilder::new().create(self.info_dir.as_path()).await?;
         }
         Ok(())
     }
 
-    async fn set_info(&self, file_info: &FileInfo, create: bool) -> anyhow::Result<()> {
+    async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()> {
         let info = file_info.clone();
         let path = self.info_file_path(info.id.as_str());
         let file = tokio::fs::OpenOptions::new()
@@ -44,7 +44,7 @@ impl InfoStorage for FileInfoStorage {
         Ok(())
     }
 
-    async fn get_info(&self, file_id: &str) -> anyhow::Result<FileInfo> {
+    async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
         let file = tokio::fs::File::open(info_path).await?;
         let mut reader = tokio::io::BufReader::new(file);
@@ -53,7 +53,7 @@ impl InfoStorage for FileInfoStorage {
         Ok(serde_json::from_slice::<FileInfo>(contents.as_slice())?)
     }
 
-    async fn remove_info(&self, file_id: &str) -> anyhow::Result<()> {
+    async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         let id = String::from(file_id);
         let info_path = self.info_file_path(id.as_str());
         tokio::fs::remove_file(info_path).await?;

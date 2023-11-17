@@ -14,6 +14,7 @@ pub trait HeaderMapExt {
     fn check(&self, name: &str, expr: fn(&str) -> bool) -> bool;
     fn get_metadata(&self) -> Option<FxHashMap<String, String>>;
     fn get_upload_parts(&self) -> Vec<String>;
+    fn get_method_override(&self) -> Option<axum::http::Method>;
 }
 
 impl HeaderMapExt for HeaderMap {
@@ -64,6 +65,12 @@ impl HeaderMapExt for HeaderMap {
                     .collect()
             })
             .unwrap_or_default()
+    }
+
+    fn get_method_override(&self) -> Option<axum::http::Method> {
+        self.get("X-HTTP-Method-Override")
+            .and_then(|header| header.to_str().ok())
+            .and_then(|header| header.trim().parse().ok())
     }
 }
 

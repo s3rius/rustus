@@ -93,12 +93,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.72"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b13c32d80ecc7ab747b80c3784bce54ee8a7a0cc4fbda9bf4cda2cf6fe90854"
-
-[[package]]
 name = "arc-swap"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -993,6 +987,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "md-5"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d89e7ee0cfbedfc4da3340218492196241d89eefb6dab27de5df917a6d2e78cf"
+dependencies = [
+ "cfg-if",
+ "digest",
+]
+
+[[package]]
 name = "md5"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1522,30 +1526,35 @@ dependencies = [
 name = "rustus"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "axum",
  "base64 0.21.5",
  "bytes",
  "chrono",
  "clap",
+ "digest",
  "enum_dispatch",
  "fern",
  "futures",
  "log",
+ "md-5",
  "mimalloc",
  "mime",
  "mime_guess",
  "mobc",
  "redis",
+ "reqwest",
  "rust-s3",
  "rustc-hash",
  "serde",
  "serde_json",
+ "sha1",
+ "sha2",
  "strum",
  "thiserror",
  "tokio",
  "tokio-util",
+ "tower",
  "uuid",
 ]
 
@@ -1667,6 +1676,17 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "sha1"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3bf829a2d51ab4a5ddf1352d8470c140cadc8301b2ae1789db023f01cedd6ba"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
 ]
 
 [[package]]

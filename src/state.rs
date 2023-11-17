@@ -1,4 +1,9 @@
-use crate::{config::Config, data_storage::DataStorageImpl, info_storages::InfoStorageImpl};
+use crate::{
+    config::Config,
+    data_storage::{base::Storage, DataStorageImpl},
+    errors::RustusResult,
+    info_storages::{base::InfoStorage, InfoStorageImpl},
+};
 
 #[derive(Clone)]
 pub struct RustusState {
@@ -8,9 +13,12 @@ pub struct RustusState {
 }
 
 impl RustusState {
-    pub async fn from_config(config: &Config) -> anyhow::Result<Self> {
-        let info_storage = InfoStorageImpl::new(config).await?;
-        let data_storage = DataStorageImpl::new(config)?;
+    pub async fn from_config(config: &Config) -> RustusResult<Self> {
+        let mut info_storage = InfoStorageImpl::new(config).await?;
+        let mut data_storage = DataStorageImpl::new(config)?;
+        info_storage.prepare().await?;
+        data_storage.prepare().await?;
+
         Ok(Self {
             config: config.clone(),
             info_storage,

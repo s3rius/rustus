@@ -1,4 +1,4 @@
-use crate::{config::Config, from_str};
+use crate::{config::Config, errors::RustusResult, from_str};
 
 pub mod base;
 pub mod file_info_storage;
@@ -23,15 +23,15 @@ pub enum InfoStorageImpl {
 }
 
 impl InfoStorageImpl {
-    pub async fn new(_config: &Config) -> anyhow::Result<Self> {
-        Ok(Self::Redis(
-            redis_info_storage::RedisStorage::new("redis://localhost", None).await?,
-        ))
+    pub async fn new(_config: &Config) -> RustusResult<Self> {
+        Ok(Self::File(file_info_storage::FileInfoStorage::new(
+            "./data".into(),
+        )))
     }
 }
 
 impl base::InfoStorage for InfoStorageImpl {
-    async fn prepare(&mut self) -> anyhow::Result<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         match self {
             Self::Redis(redis) => redis.prepare().await,
             Self::File(file) => file.prepare().await,
@@ -42,21 +42,21 @@ impl base::InfoStorage for InfoStorageImpl {
         &self,
         file_info: &crate::models::file_info::FileInfo,
         create: bool,
-    ) -> anyhow::Result<()> {
+    ) -> RustusResult<()> {
         match self {
             Self::Redis(redis) => redis.set_info(file_info, create).await,
             Self::File(file) => file.set_info(file_info, create).await,
         }
     }
 
-    async fn get_info(&self, file_id: &str) -> anyhow::Result<crate::models::file_info::FileInfo> {
+    async fn get_info(&self, file_id: &str) -> RustusResult<crate::models::file_info::FileInfo> {
         match self {
             Self::Redis(redis) => redis.get_info(file_id).await,
             Self::File(file) => file.get_info(file_id).await,
         }
     }
 
-    async fn remove_info(&self, file_id: &str) -> anyhow::Result<()> {
+    async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         match self {
             Self::Redis(redis) => redis.remove_info(file_id).await,
             Self::File(file) => file.remove_info(file_id).await,

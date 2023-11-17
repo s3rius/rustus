@@ -32,7 +32,7 @@ impl FileStorage {
         }
     }
 
-    pub fn data_file_path(&self, file_id: &str) -> anyhow::Result<PathBuf> {
+    pub fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
         let dir = self
             .data_dir
             // We're working wit absolute paths, because tus.io says so.
@@ -48,7 +48,7 @@ impl Storage for FileStorage {
         "file"
     }
 
-    async fn prepare(&mut self) -> anyhow::Result<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         // We're creating directory for new files
         // if it doesn't already exist.
         if !self.data_dir.exists() {
@@ -78,7 +78,7 @@ impl Storage for FileStorage {
         Ok((headers, body).into_response())
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> anyhow::Result<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if file_info.path.is_none() {
@@ -108,7 +108,7 @@ impl Storage for FileStorage {
         .await?
     }
 
-    async fn create_file(&self, file_info: &FileInfo) -> anyhow::Result<String> {
+    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str())?;
         tokio::task::spawn_blocking(move || {
@@ -128,7 +128,7 @@ impl Storage for FileStorage {
         &self,
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
-    ) -> anyhow::Result<()> {
+    ) -> RustusResult<()> {
         let force_fsync = self.force_fsync;
         let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {
@@ -157,7 +157,7 @@ impl Storage for FileStorage {
         .await?
     }
 
-    async fn remove_file(&self, file_info: &FileInfo) -> anyhow::Result<()> {
+    async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         let info = file_info.clone();
         tokio::task::spawn_blocking(move || {
             // Let's remove the file itself.

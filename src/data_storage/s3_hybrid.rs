@@ -99,7 +99,7 @@ impl S3HybridStorage {
     ///
     /// This function is called to upload file to s3 completely.
     /// It streams file directly from disk to s3.
-    async fn upload_file(&self, file_info: &FileInfo) -> anyhow::Result<()> {
+    async fn upload_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if file_info.path.is_none() {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()).into());
         }
@@ -128,7 +128,7 @@ impl Storage for S3HybridStorage {
         "s3_hybrid"
     }
 
-    async fn prepare(&mut self) -> anyhow::Result<()> {
+    async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
 
@@ -150,7 +150,7 @@ impl Storage for S3HybridStorage {
         Ok(([disp.0, disp.1], body).into_response())
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> anyhow::Result<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
         let part_len = bytes.len();
         self.local_storage.add_bytes(file_info, bytes).await?;
         // If upload is complete. Upload the resulting file onto S3.
@@ -161,7 +161,7 @@ impl Storage for S3HybridStorage {
         Ok(())
     }
 
-    async fn create_file(&self, file_info: &FileInfo) -> anyhow::Result<String> {
+    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
         self.local_storage.create_file(file_info).await
     }
 
@@ -169,11 +169,11 @@ impl Storage for S3HybridStorage {
         &self,
         _file_info: &FileInfo,
         _parts_info: Vec<FileInfo>,
-    ) -> anyhow::Result<()> {
+    ) -> RustusResult<()> {
         Err(RustusError::Unimplemented("Hybrid s3 cannot concat files.".into()).into())
     }
 
-    async fn remove_file(&self, file_info: &FileInfo) -> anyhow::Result<()> {
+    async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if Some(file_info.offset) == file_info.length {
             self.bucket
                 .delete_object(self.get_s3_key(file_info))

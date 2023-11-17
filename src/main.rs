@@ -1,5 +1,6 @@
 #![allow(async_fn_in_trait)]
 
+use errors::RustusResult;
 use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
@@ -22,7 +23,7 @@ pub mod utils;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[cfg_attr(coverage, no_coverage)]
-fn setup_logging(app_config: &Config) -> anyhow::Result<()> {
+fn setup_logging(app_config: &Config) -> RustusResult<()> {
     let colors = ColoredLevelConfig::new()
         // use builder methods
         .info(Color::Green)
@@ -47,7 +48,7 @@ fn setup_logging(app_config: &Config) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> RustusResult<()> {
     let args = Config::parse();
     setup_logging(&args)?;
     tokio::runtime::Builder::new_multi_thread()

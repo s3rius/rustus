@@ -1,4 +1,4 @@
-use crate::models::file_info::FileInfo;
+use crate::{models::file_info::FileInfo, errors::RustusResult};
 /// Trait for every info storage.
 ///
 /// This trait defines required functions
@@ -9,7 +9,7 @@ pub trait InfoStorage {
     /// In this function you can prepare
     /// you info storage. E.G. create a table in a database,
     /// or a directory somewhere.
-    async fn prepare(&mut self) -> anyhow::Result<()>;
+    async fn prepare(&mut self) -> RustusResult<()>;
 
     /// Set information about an upload.
     ///
@@ -22,17 +22,17 @@ pub trait InfoStorage {
     /// about a file and actually store it. To bypass it
     /// we can guarantee that this parameter will never be `true`
     /// for any update operation.
-    async fn set_info(&self, file_info: &FileInfo, create: bool) -> anyhow::Result<()>;
+    async fn set_info(&self, file_info: &FileInfo, create: bool) -> RustusResult<()>;
 
     /// Retrieve information from storage.
     ///
     /// This function must return information about file
     /// from the given storage.
-    async fn get_info(&self, file_id: &str) -> anyhow::Result<FileInfo>;
+    async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo>;
 
     /// This function removes information about file completely.
     ///
     /// This function must actually delete any stored information
     /// associated with the given `file_id`.
-    async fn remove_info(&self, file_id: &str) -> anyhow::Result<()>;
+    async fn remove_info(&self, file_id: &str) -> RustusResult<()>;
 }
