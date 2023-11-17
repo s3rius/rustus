@@ -4,7 +4,7 @@ use crate::{
 use axum::{
     extract::{DefaultBodyLimit, State},
     http::HeaderValue,
-    ServiceExt,
+    Router, ServiceExt,
 };
 use tower::Layer;
 
@@ -81,9 +81,9 @@ async fn fallback() -> impl axum::response::IntoResponse {
     (axum::http::StatusCode::NOT_FOUND, "Not found")
 }
 
-pub async fn start_server(config: Config) -> RustusResult<()> {
-    let state = RustusState::from_config(&config).await?;
-    let app = axum::Router::new()
+pub fn get_router(state: RustusState) -> Router {
+    let config = state.config.clone();
+    axum::Router::new()
         .route("/", axum::routing::post(routes::create::create_upload))
         .route("/", axum::routing::options(routes::info::get_server_info))
         .route(
@@ -103,13 +103,18 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
             config.clone(),
             add_tus_header,
         ))
-        .route_layer(DefaultBodyLimit::max(config.max_body_size));
+        .route_layer(DefaultBodyLimit::max(config.max_body_size))
+}
+
+pub async fn start_server(config: Config) -> RustusResult<()> {
     let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
     log::info!("Starting server at http://{}:{}", config.host, config.port);
+    let state = RustusState::from_config(&config).await?;
 
+    let tus_app = get_router(state);
     let main_router = axum::Router::new()
         .route("/health", axum::routing::get(healthcheck))
-        .nest(&config.url, app)
+        .nest(&config.url, tus_app)
         .fallback(fallback);
 
     let service = axum::middleware::from_fn(method_replacer)
