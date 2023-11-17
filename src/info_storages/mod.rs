@@ -5,7 +5,7 @@ pub mod impls;
 
 use strum::{Display, EnumIter};
 
-use self::impls::{redis_info_storage::RedisStorage, file_info_storage::FileInfoStorage};
+use self::impls::{file_info_storage::FileInfoStorage, redis_info_storage::RedisStorage};
 
 #[derive(Clone, Display, Debug, EnumIter)]
 pub enum AvailableInfoStorages {
@@ -34,9 +34,7 @@ impl InfoStorageImpl {
                 )
                 .await?,
             )),
-            AvailableInfoStorages::File => Ok(Self::File(FileInfoStorage::new(
-                info_conf.info_dir,
-            ))),
+            AvailableInfoStorages::File => Ok(Self::File(FileInfoStorage::new(info_conf.info_dir))),
         }
     }
 }

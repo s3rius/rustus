@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use axum::http::HeaderMap;
 use lapin::{
-    options::{ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions, BasicPublishOptions},
+    options::{BasicPublishOptions, ExchangeDeclareOptions, QueueBindOptions, QueueDeclareOptions},
     types::{AMQPValue, FieldTable, LongString},
-    ConnectionProperties, ExchangeKind, BasicProperties,
+    BasicProperties, ConnectionProperties, ExchangeKind,
 };
 use mobc::Pool;
 use strum::IntoEnumIterator;
