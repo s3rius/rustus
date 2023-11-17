@@ -4,7 +4,10 @@ use axum::{
     response::IntoResponse,
 };
 
-use crate::{errors::{RustusResult, RustusError}, utils::headers::HeaderMapExt};
+use crate::{
+    errors::{RustusError, RustusResult},
+    utils::headers::HeaderMapExt,
+};
 
 pub async fn upload_chunk_route(
     Path(upload_id): Path<String>,

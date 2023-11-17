@@ -1,7 +1,10 @@
 use mobc::{Manager, Pool};
 use redis::aio::Connection;
 
-use crate::{errors::{RustusError, RustusResult}, models::file_info::FileInfo};
+use crate::{
+    errors::{RustusError, RustusResult},
+    models::file_info::FileInfo,
+};
 
 use super::base::InfoStorage;
 

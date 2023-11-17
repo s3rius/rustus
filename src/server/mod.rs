@@ -1,4 +1,6 @@
-use crate::{config::Config, state::RustusState, utils::headers::HeaderMapExt, errors::RustusResult};
+use crate::{
+    config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
+};
 use axum::{extract::State, http::HeaderValue, ServiceExt};
 use tower::Layer;
 

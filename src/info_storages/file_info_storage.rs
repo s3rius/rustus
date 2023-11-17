@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use tokio::fs::DirBuilder;
 
-use crate::{models::file_info::FileInfo, errors::RustusResult};
+use crate::{errors::RustusResult, models::file_info::FileInfo};
 
 use super::base::InfoStorage;
 

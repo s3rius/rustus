@@ -1,4 +1,4 @@
-use crate::{models::file_info::FileInfo, errors::RustusResult};
+use crate::{errors::RustusResult, models::file_info::FileInfo};
 /// Trait for every info storage.
 ///
 /// This trait defines required functions
