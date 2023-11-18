@@ -40,8 +40,7 @@ pub struct AMQPNotifier {
 ///
 /// This manager helps you maintain opened channels.
 impl AMQPNotifier {
-    #[allow(clippy::fn_params_excessive_bools)]
-    pub async fn new(options: AMQPHooksOptions) -> RustusResult<Self> {
+    pub fn new(options: AMQPHooksOptions) -> RustusResult<Self> {
         let manager = ConnnectionPool::new(
             options.hooks_amqp_url.unwrap().clone(),
             ConnectionProperties::default(),

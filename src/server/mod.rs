@@ -1,5 +1,8 @@
+use std::net::SocketAddr;
+
 use crate::{
-    config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
+    config::Config, errors::RustusResult, server::cors::cors_layer, state::RustusState,
+    utils::headers::HeaderMapExt,
 };
 use axum::{
     extract::{DefaultBodyLimit, State},
@@ -8,6 +11,7 @@ use axum::{
 };
 use tower::Layer;
 
+mod cors;
 mod routes;
 
 async fn logger(
@@ -85,7 +89,6 @@ pub fn get_router(state: RustusState) -> Router {
     let config = state.config.clone();
     axum::Router::new()
         .route("/", axum::routing::post(routes::create::create_upload))
-        .route("/", axum::routing::options(routes::info::get_server_info))
         .route(
             "/:upload_id",
             axum::routing::patch(routes::upload::upload_chunk),
@@ -102,6 +105,11 @@ pub fn get_router(state: RustusState) -> Router {
             "/:upload_id",
             axum::routing::head(routes::file_info::get_file_info),
         )
+        .route_layer(cors_layer(
+            config.cors.clone(),
+            config.notification_config.hooks_http_proxy_headers.clone(),
+        ))
+        .route("/", axum::routing::options(routes::info::get_server_info))
         .with_state(state)
         .route_layer(axum::middleware::from_fn_with_state(
             config.clone(),
@@ -123,7 +131,10 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
 
     let service = axum::middleware::from_fn(method_replacer)
         .layer(axum::middleware::from_fn(logger).layer(main_router));
-
-    axum::serve(listener, service.into_make_service()).await?;
+    axum::serve(
+        listener,
+        service.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }

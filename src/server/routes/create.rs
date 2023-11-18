@@ -1,20 +1,31 @@
+use std::net::SocketAddr;
+
 use axum::{
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use bytes::Bytes;
+use http::{Method, Uri};
 
 use crate::{
-    data_storage::base::Storage, errors::RustusResult, extensions::TusExtensions,
-    info_storages::base::InfoStorage, models::file_info::FileInfo, state::RustusState,
+    data_storage::base::Storage,
+    errors::RustusResult,
+    extensions::TusExtensions,
+    info_storages::base::InfoStorage,
+    models::file_info::FileInfo,
+    notifiers::{hooks::Hook, serializer::HookData},
+    state::RustusState,
     utils::headers::HeaderMapExt,
 };
 
 pub async fn create_upload(
-    State(ref state): State<RustusState>,
+    uri: Uri,
+    method: Method,
     headers: HeaderMap,
-    _body: Bytes,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(ref state): State<RustusState>,
+    body: Bytes,
 ) -> RustusResult<Response> {
     let upload_len: Option<usize> = headers.parse("Upload-Length");
     if !state.config.allow_empty {
@@ -123,8 +134,61 @@ pub async fn create_upload(
         }
     }
 
+    // Checking if creation-with-upload extension is enabled.
+    let with_upload = state
+        .config
+        .tus_extensions
+        .contains(&TusExtensions::CreationWithUpload);
+    if with_upload && !body.is_empty() && !(concat_ext && is_final) {
+        let octet_stream = |val: &str| val == "application/offset+octet-stream";
+        if headers.check("Content-Type", octet_stream) {
+            // Writing first bytes.
+            let chunk_len = body.len();
+            // Appending bytes to file.
+            state.data_storage.add_bytes(&file_info, body).await?;
+            // Updating offset.
+            file_info.offset += chunk_len;
+        }
+    }
+
     state.info_storage.set_info(&file_info, true).await?;
     let upload_url = state.config.get_url(&file_info.id);
+
+    // It's more intuitive to send post-finish
+    // hook, when final upload is created.
+    // https://github.com/s3rius/rustus/issues/77
+    let mut post_hook = Hook::PostCreate;
+    if file_info.is_final || Some(file_info.offset) == file_info.length {
+        post_hook = Hook::PostFinish;
+    }
+
+    if state.config.notification_hooks_set.contains(&post_hook) {
+        let url = uri
+            .path_and_query()
+            .map(|val| val.to_string())
+            .unwrap_or_default();
+        let remote = headers.get_remote_ip(&addr, state.config.behind_proxy);
+        let message = state
+            .config
+            .notification_config
+            .hooks_format
+            .format(&HookData::new(
+                url.as_str(),
+                method.as_str(),
+                &remote,
+                &headers,
+                &file_info,
+            ));
+        let new_state = state.clone();
+        // Adding send_message task to tokio reactor.
+        // Thin function would be executed in background.
+        tokio::task::spawn_local(async move {
+            new_state
+                .notificator
+                .send_message(message, post_hook, &headers)
+                .await
+        });
+    }
 
     Ok((
         StatusCode::CREATED,

@@ -48,10 +48,36 @@ fn setup_logging(app_config: &Config) -> RustusResult<()> {
         .apply()?;
     Ok(())
 }
+#[cfg_attr(coverage, no_coverage)]
+fn greeting(app_conf: &Config) {
+    let extensions = app_conf
+        .tus_extensions
+        .clone()
+        .into_iter()
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
+        .join(", ");
+    let hooks = app_conf
+        .notification_config
+        .hooks
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<String>>()
+        .join(", ");
+    let rustus_logo = include_str!("../imgs/rustus_startup_logo.txt");
+    eprintln!("\n\n{rustus_logo}");
+    eprintln!("Welcome to rustus!");
+    eprintln!("Base URL: {}", app_conf.get_url(""));
+    eprintln!("Available extensions: {extensions}");
+    eprintln!("Enabled hooks: {hooks}");
+    eprintln!();
+    eprintln!();
+}
 
 fn main() -> RustusResult<()> {
     let args = Config::parse();
     setup_logging(&args)?;
+    greeting(&args);
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?

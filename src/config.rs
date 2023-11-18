@@ -3,8 +3,10 @@ use std::path::PathBuf;
 use clap::Parser;
 
 use crate::{
-    data_storage::AvailableStorages, extensions::TusExtensions,
+    data_storage::AvailableStorages,
+    extensions::TusExtensions,
     info_storages::AvailableInfoStorages,
+    notifiers::{self, hooks::Hook},
 };
 
 #[derive(Parser, Clone, Debug)]
@@ -233,6 +235,54 @@ pub struct AMQPHooksOptions {
 }
 
 #[derive(Parser, Clone, Debug)]
+pub struct NotificationConfig {
+    /// Notifications format.
+    ///
+    /// This format will be used in all
+    /// messages about hooks.
+    #[arg(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
+    pub hooks_format: notifiers::Format,
+
+    /// Enabled hooks for notifications.
+    #[arg(
+        long,
+        default_value = "pre-create,post-create,post-receive,pre-terminate,post-terminate,post-finish",
+        env = "RUSTUS_HOOKS",
+        use_value_delimiter = true
+    )]
+    pub hooks: Vec<Hook>,
+
+    /// List of URLS to send webhooks to.
+    #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
+    pub hooks_http_urls: Vec<String>,
+
+    /// Timeout for all HTTP requests in seconds.
+    #[arg(long, env = "RUSTUS_HTTP_HOOK_TIMEOUT")]
+    pub http_hook_timeout: Option<u64>,
+
+    // List of headers to forward from client.
+    #[arg(
+        long,
+        env = "RUSTUS_HOOKS_HTTP_PROXY_HEADERS",
+        use_value_delimiter = true
+    )]
+    pub hooks_http_proxy_headers: Vec<String>,
+
+    /// Directory for executable hook files.
+    /// This parameter is used to call executables from dir.
+    #[arg(long, env = "RUSTUS_HOOKS_DIR")]
+    pub hooks_dir: Option<PathBuf>,
+
+    /// Executable file which must be called for
+    /// notifying about upload status.
+    #[arg(long, env = "RUSTUS_HOOKS_FILE")]
+    pub hooks_file: Option<String>,
+
+    #[command(flatten)]
+    pub amqp_hook_opts: AMQPHooksOptions,
+}
+
+#[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Config {
     #[arg(long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
@@ -283,17 +333,34 @@ pub struct Config {
     )]
     pub tus_extensions: Vec<TusExtensions>,
 
+    /// Allowed hosts for CORS protocol.
+    ///
+    /// By default all hosts are allowed.
+    #[arg(long, env = "RUSTUS_CORS", use_value_delimiter = true)]
+    pub cors: Vec<String>,
+
+    /// Use this option if you use rustus
+    /// behind any proxy. Like Nginx or Traefik.
+    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
+    pub behind_proxy: bool,
+
     // We skip this argument, because we won't going to
     // fullfill it from CLI. This argument is populated based
     // on `tus_extensions` argument.
     #[arg(skip)]
     pub tus_extensions_set: rustc_hash::FxHashSet<TusExtensions>,
 
+    #[arg(skip)]
+    pub notification_hooks_set: rustc_hash::FxHashSet<Hook>,
+
     #[command(flatten)]
     pub info_storage_config: InfoStorageConfig,
 
     #[command(flatten)]
     pub data_storage_config: DataStorageConfig,
+
+    #[command(flatten)]
+    pub notification_config: NotificationConfig,
 }
 
 impl Config {
@@ -307,6 +374,10 @@ impl Config {
         // Update URL prefix. This is needed to make sure that
         // URLs are correctly generated.
         self.url = self.url.trim_end_matches('/').to_string();
+
+        for hook in &self.notification_config.hooks {
+            self.notification_hooks_set.insert(hook.clone());
+        }
 
         // We want to build a hashmap with all extensions. Because it
         // is going to be much faster to work with in the future.

@@ -4,7 +4,6 @@ use crate::{
 };
 
 use axum::http::HeaderMap;
-use log::debug;
 use reqwest::Client;
 use std::time::Duration;
 
@@ -40,10 +39,10 @@ impl Notifier for HttpNotifier {
         hook: Hook,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
-        debug!("Starting HTTP Hook.");
+        log::debug!("Starting HTTP Hook.");
         let idempotency_key = uuid::Uuid::new_v4().to_string();
         let requests_vec = self.urls.iter().map(|url| {
-            debug!("Preparing request for {}", url);
+            log::debug!("Preparing request for {}", url);
             let mut request = self
                 .client
                 .post(url.as_str())

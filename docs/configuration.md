@@ -6,7 +6,7 @@ description: "How to configure Rusts"
 Rustus is highly configurable. You can adjust it with CLI or you can use environment variables.
 
 !!! info
-    Information about hooks you can find on [Hooks page](../hooks).
+    Information about hooks you can find on [Hooks page](hooks.md).
 
 
 ## Configuring server

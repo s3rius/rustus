@@ -18,14 +18,14 @@ pub async fn get_server_info(
         .collect::<Vec<String>>()
         .join(",");
 
-    headers.insert("Tus-Extension", extensions.parse()?);
+    headers.insert("tus-extension", extensions.parse()?);
 
     if state
         .config
         .tus_extensions
         .contains(&TusExtensions::Checksum)
     {
-        headers.insert("Tus-Checksum-Algorithm", "md5,sha1,sha256,sha512".parse()?);
+        headers.insert("tus-checksum-algorithm", "md5,sha1,sha256,sha512".parse()?);
     }
 
     Ok((StatusCode::NO_CONTENT, headers).into_response())

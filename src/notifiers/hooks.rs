@@ -1,7 +1,7 @@
 use crate::from_str;
 
 /// Hooks for notifications.
-#[derive(Copy, Clone, Debug, strum::Display, strum::EnumIter, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, strum::Display, strum::EnumIter, Eq, PartialEq, Hash)]
 pub enum Hook {
     #[strum(serialize = "pre-create")]
     PreCreate,

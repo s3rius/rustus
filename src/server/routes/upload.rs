@@ -1,5 +1,7 @@
+use std::net::SocketAddr;
+
 use axum::{
-    extract::{Path, State},
+    extract::{ConnectInfo, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -17,10 +19,11 @@ use crate::{
 pub async fn upload_chunk(
     Path(upload_id): Path<String>,
     State(state): State<RustusState>,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     body: Bytes,
 ) -> RustusResult<axum::response::Response> {
-    println!("hehehe {}", upload_id);
+    println!("Got request from {}", addr);
     if !headers.check("Content-Type", |val| {
         val == "application/offset+octet-stream"
     }) {

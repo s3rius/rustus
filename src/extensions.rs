@@ -1,4 +1,4 @@
-#[derive(strum::Display, Debug, strum::EnumIter, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, strum::Display, Debug, strum::EnumIter, Clone, PartialEq, Eq, Hash)]
 pub enum TusExtensions {
     #[strum(serialize = "creation-defer-length")]
     CreationDeferLength,

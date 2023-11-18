@@ -1,7 +1,12 @@
 [package]
 name = "rustus"
-version = "0.1.0"
+version = "0.7.6"
 edition = "2021"
+description = "TUS protocol implementation written in Rust."
+license-file = "LICENSE"
+authors = ["Pavel Kirilin <win10@list.ru>"]
+homepage = "https://github.com/s3rius/rustus"
+readme = "README.md"
 
 [[bin]]
 name = "rustus"
@@ -42,6 +47,9 @@ md-5 = "^0.10.1"
 digest = "^0.10.1"
 reqwest = "0.11.22"
 lapin = "2.3.1"
+tower-http = { version = "0.4.4", features = ["cors"] }
+http = "^0.2"
+wildmatch = "2.1.1"
 
 
 [profile.release]

@@ -1069,9 +1069,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.9"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd6effc99afb63425aff9b05836f029929e345a6148a14b7ecd5ab67af944482"
+checksum = "8947b1a6fad4393052c7ba1f4cd97bed3e953a95c79c92ad9b051a04611d9fbb"
 dependencies = [
  "bytes",
  "fnv",
@@ -1098,6 +1098,12 @@ dependencies = [
  "bytes",
  "http",
 ]
+
+[[package]]
+name = "http-range-header"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "add0ab9360ddbd88cfeb3bd9574a1d85cfdfa14db10b3e21d3700dbc4328758f"
 
 [[package]]
 name = "httparse"
@@ -2113,7 +2119,7 @@ dependencies = [
 
 [[package]]
 name = "rustus"
-version = "0.1.0"
+version = "0.7.6"
 dependencies = [
  "async-trait",
  "axum",
@@ -2125,6 +2131,7 @@ dependencies = [
  "enum_dispatch",
  "fern",
  "futures",
+ "http",
  "lapin",
  "log",
  "md-5",
@@ -2145,7 +2152,9 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tower",
+ "tower-http",
  "uuid",
+ "wildmatch",
 ]
 
 [[package]]
@@ -2671,6 +2680,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "tower-http"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61c5bb1d698276a2443e5ecfabc1008bf15a36c12e6a7176e7bf089ea9131140"
+dependencies = [
+ "bitflags 2.4.0",
+ "bytes",
+ "futures-core",
+ "futures-util",
+ "http",
+ "http-body 0.4.5",
+ "http-range-header",
+ "pin-project-lite",
+ "tower-layer",
+ "tower-service",
+]
+
+[[package]]
 name = "tower-hyper-http-body-compat"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2963,6 +2990,12 @@ dependencies = [
  "js-sys",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "wildmatch"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee583bdc5ff1cf9db20e9db5bb3ff4c3089a8f6b8b31aff265c9aba85812db86"
 
 [[package]]
 name = "winapi"

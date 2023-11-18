@@ -47,13 +47,3 @@ repos:
         pass_filenames: false
         args:
           - check
-
-      - id: check-all
-        types:
-          - rust
-        name: cargo check all
-        language: system
-        entry: cargo
-        pass_filenames: false
-        args:
-          - check

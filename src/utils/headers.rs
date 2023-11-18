@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::BuildHasherDefault, str::FromStr};
+use std::{collections::HashMap, hash::BuildHasherDefault, net::SocketAddr, str::FromStr};
 
 use axum::http::{HeaderMap, HeaderValue};
 use base64::{engine::general_purpose, Engine};
@@ -14,6 +14,7 @@ pub trait HeaderMapExt {
     fn get_upload_parts(&self) -> Vec<String>;
     fn get_method_override(&self) -> Option<axum::http::Method>;
     fn generate_disposition(&mut self, filename: &str);
+    fn get_remote_ip(&self, socket_addr: &SocketAddr, proxy_enabled: bool) -> String;
 }
 
 impl HeaderMapExt for HeaderMap {
@@ -96,5 +97,16 @@ impl HeaderMapExt for HeaderMap {
             .parse::<HeaderValue>()
             .map(|val| self.insert(axum::http::header::CONTENT_TYPE, val))
             .ok();
+    }
+
+    fn get_remote_ip(&self, socket_addr: &SocketAddr, proxy_enabled: bool) -> String {
+        if !proxy_enabled {
+            return socket_addr.to_string();
+        }
+        self.get("Forwarded")
+            .or_else(|| self.get("X-Forwarded-For"))
+            .and_then(|val| val.to_str().ok())
+            .map(|st| st.to_string())
+            .unwrap_or_else(|| socket_addr.to_string())
     }
 }
