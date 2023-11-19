@@ -1,10 +1,10 @@
-FROM rust:1.66.0-bullseye AS builder
+FROM rustlang/rust:nightly-buster AS builder
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY imgs ./imgs
-RUN cargo build --release --bin rustus --features=all
+RUN cargo build --release --bin rustus
 
 FROM debian:bullseye-20211201-slim AS base
 

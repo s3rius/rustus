@@ -12,6 +12,7 @@ use axum::{
     http::HeaderValue,
     Router, ServiceExt,
 };
+use tokio::signal;
 use tower::Layer;
 
 mod cors;
@@ -148,6 +149,7 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
     let service = axum::middleware::from_fn(method_replacer).layer(
         axum::middleware::from_fn_with_state(Arc::new(config.clone()), logger).layer(main_router),
     );
+
     axum::serve(
         listener,
         service.into_make_service_with_connect_info::<SocketAddr>(),
