@@ -42,8 +42,12 @@ pub struct RedisStorage {
 }
 
 impl RedisStorage {
-    #[allow(clippy::unused_async)]
-    pub async fn new(db_dsn: &str, expiration: Option<usize>) -> RustusResult<Self> {
+    /// Create new `RedisStorage`.
+    ///
+    /// # Errors
+    ///
+    /// Might return an error, if redis client cannot be created.
+    pub fn new(db_dsn: &str, expiration: Option<usize>) -> RustusResult<Self> {
         let client = redis::Client::open(db_dsn)?;
         let manager = RedisConnectionManager::new(client);
         let pool = mobc::Pool::builder().max_open(100).build(manager);
@@ -61,7 +65,7 @@ impl InfoStorage for RedisStorage {
         let mut cmd = redis::cmd("SET");
         let mut cmd = cmd
             .arg(file_info.id.as_str())
-            .arg(file_info.json()?.as_str());
+            .arg(serde_json::to_string(file_info)?);
         if let Some(expiration) = self.expiration.as_ref() {
             cmd = cmd.arg("EX").arg(expiration);
         }
@@ -77,7 +81,7 @@ impl InfoStorage for RedisStorage {
             .await?;
 
         if let Some(res) = res {
-            FileInfo::from_json(res.as_str())
+            serde_json::from_str::<FileInfo>(res.as_str()).map_err(RustusError::from)
         } else {
             Err(RustusError::FileNotFound)
         }

@@ -34,6 +34,12 @@ pub struct S3HybridStorage {
 }
 
 impl S3HybridStorage {
+    /// Create new `S3HybridStorage` instance.
+    ///
+    /// # Panics
+    ///
+    /// Might panic if credentials are invalid and cannot be parsed.
+    /// Or if bucket instance cannot be created.
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(

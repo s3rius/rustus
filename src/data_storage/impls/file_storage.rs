@@ -32,6 +32,14 @@ impl FileStorage {
         }
     }
 
+    /// Create path to file in a data directory.
+    ///
+    /// This function is using template from `dir_struct` field
+    /// and based on it creates path to file.
+    ///
+    /// # Errors
+    ///
+    /// Might retur an error, if path is invalid, or directory cannot be created.
     pub fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
         let dir = self
             .data_dir

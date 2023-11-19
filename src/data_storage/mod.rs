@@ -28,20 +28,29 @@ pub enum DataStorageImpl {
 }
 
 impl DataStorageImpl {
-    pub fn new(config: &Config) -> RustusResult<Self> {
+    /// Create `DataStorage` from config.
+    ///
+    /// This function creates a generic storage, which might hold any kind of data storage.
+    ///
+    /// # Panics
+    ///
+    /// Might panic if one of required fields is not set for `S3Hybrid` storage,
+    /// and `S3Hybrid` is selected as data storage.
+    #[must_use]
+    pub fn new(config: &Config) -> Self {
         let data_conf = config.data_storage_config.clone();
         match data_conf.storage {
-            AvailableStorages::File => Ok(Self::File(FileStorage::new(
+            AvailableStorages::File => Self::File(FileStorage::new(
                 data_conf.data_dir,
                 data_conf.dir_structure,
                 data_conf.force_fsync,
-            ))),
+            )),
             AvailableStorages::S3Hybrid => {
                 let access_key =
                     from_string_or_path(&data_conf.s3_access_key, &data_conf.s3_access_key_path);
                 let secret_key =
                     from_string_or_path(&data_conf.s3_secret_key, &data_conf.s3_secret_key_path);
-                Ok(Self::S3Hybrid(S3HybridStorage::new(
+                Self::S3Hybrid(S3HybridStorage::new(
                     data_conf.s3_url.clone().mlog_err("S3 URL").unwrap(),
                     data_conf.s3_region.clone().mlog_err("S3 Region").unwrap(),
                     &Some(access_key),
@@ -60,7 +69,7 @@ impl DataStorageImpl {
                     data_conf.data_dir.clone(),
                     data_conf.dir_structure.clone(),
                     data_conf.force_fsync,
-                )))
+                ))
             }
         }
     }

@@ -37,6 +37,8 @@ repos:
           - clippy::pedantic
           - -D
           - warnings
+          - -A
+          - clippy::module_name_repetitions
 
       - id: check
         types:

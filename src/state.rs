@@ -26,9 +26,9 @@ impl RustusState {
     ///
     /// If aything goes wrong, the error is returned.
     pub async fn from_config(config: &Config) -> RustusResult<Self> {
-        let mut info_storage = InfoStorageImpl::new(config).await?;
-        let mut data_storage = DataStorageImpl::new(config)?;
-        let mut notificator = NotificationManager::new(config)?;
+        let mut info_storage = InfoStorageImpl::new(config)?;
+        let mut data_storage = DataStorageImpl::new(config);
+        let mut notificator = NotificationManager::new(config);
         info_storage.prepare().await?;
         data_storage.prepare().await?;
         notificator.prepare().await?;

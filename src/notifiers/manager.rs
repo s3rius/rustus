@@ -1,6 +1,5 @@
 use crate::{
     config::Config,
-    errors::RustusResult,
     notifiers::impls::{
         amqp_notifier::AMQPNotifier, dir_notifier::DirNotifier, file_notifier::FileNotifier,
         http_notifier::HttpNotifier,
@@ -16,7 +15,13 @@ pub struct NotificationManager {
 }
 
 impl NotificationManager {
-    pub fn new(rustus_config: &Config) -> RustusResult<Self> {
+    /// Construct a new `NotificationManager`.
+    ///
+    /// Manager is used to send notification for hooks.
+    /// It's capable of having multiple notifiers,
+    /// which are used to send messages.
+    #[must_use]
+    pub fn new(rustus_config: &Config) -> Self {
         let mut manager = Self {
             notifiers: Vec::new(),
         };
@@ -53,10 +58,10 @@ impl NotificationManager {
             log::debug!("Found AMQP notifier.");
             manager.notifiers.push(NotifierImpl::Amqp(AMQPNotifier::new(
                 rustus_config.notification_config.amqp_hook_opts.clone(),
-            )?));
+            )));
         }
         log::debug!("Notification manager initialized.");
-        Ok(manager)
+        manager
     }
 
     /// Prepares all notifiers.

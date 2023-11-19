@@ -3,8 +3,6 @@ use chrono::{serde::ts_seconds, DateTime, Utc};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::RustusResult;
-
 /// Information about file.
 /// It has everything about stored file.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -97,15 +95,6 @@ impl FileInfo {
             .get("filename")
             .or_else(|| self.metadata.get("name"))
             .unwrap_or(&self.id)
-    }
-
-    pub fn json(&self) -> RustusResult<String> {
-        let info_clone = self.clone();
-        Ok(serde_json::to_string(&info_clone)?)
-    }
-
-    pub fn from_json(data: &str) -> RustusResult<Self> {
-        Ok(serde_json::from_str::<Self>(data)?)
     }
 
     #[cfg(test)]

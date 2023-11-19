@@ -32,7 +32,7 @@ jobs:
       - name: Adding component
         run: rustup component add rustfmt
       - name: Checking code format
-        run: cargo fmt -- --check --config use_try_shorthand=true,imports_granularity=Crate
+        run: cargo fmt -- --check
 
   code_check:
     needs: pre_job
@@ -49,7 +49,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features -p rustus -- -W clippy::all -W clippy::pedantic -D warnings
+          args: --all-features -p rustus -- -W clippy::all -W clippy::pedantic -D warnings -A clippy::module_name_repetitions
 
   tests:
     needs: pre_job

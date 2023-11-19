@@ -55,7 +55,10 @@ impl AMQPNotifier {
     /// # Panics
     ///
     /// This method will panic if `hooks_amqp_url` is not set.
-    pub fn new(options: AMQPHooksOptions) -> RustusResult<Self> {
+    /// But this should not happen, because it's checked before.
+    ///
+    /// TODO: add separate type for this structure.
+    pub fn new(options: AMQPHooksOptions) -> Self {
         let manager = ConnnectionPool::new(
             options.hooks_amqp_url.mlog_err("AMQP url").unwrap().clone(),
             ConnectionProperties::default(),
@@ -77,7 +80,7 @@ impl AMQPNotifier {
             .max_open(options.hooks_amqp_channel_pool_size)
             .build(ChannelPool::new(connection_pool));
 
-        Ok(Self {
+        Self {
             channel_pool,
             celery: options.hooks_amqp_celery,
             routing_key: options.hooks_amqp_routing_key,
@@ -90,7 +93,7 @@ impl AMQPNotifier {
             exchange_kind: options.hooks_amqp_exchange_kind,
             exchange_name: options.hooks_amqp_exchange,
             queues_prefix: options.hooks_amqp_queues_prefix,
-        })
+        }
     }
 
     /// Generate queue name based on hook type.
