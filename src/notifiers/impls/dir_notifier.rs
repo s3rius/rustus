@@ -14,6 +14,7 @@ pub struct DirNotifier {
 }
 
 impl DirNotifier {
+    #[must_use]
     pub fn new(dir: PathBuf) -> Self {
         Self { dir }
     }

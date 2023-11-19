@@ -4,10 +4,10 @@ use http::{HeaderName, HeaderValue, Method};
 use tower_http::cors::{AllowOrigin, CorsLayer, MaxAge};
 use wildmatch::WildMatch;
 
-pub fn cors_layer(origins: Vec<String>, additional_headers: Vec<String>) -> CorsLayer {
+pub fn layer(origins: Vec<String>, additional_headers: &[String]) -> CorsLayer {
     let mut allow_headers = additional_headers
         .iter()
-        .filter_map(|header| HeaderName::from_str(&header).ok())
+        .filter_map(|header| HeaderName::from_str(header).ok())
         .collect::<Vec<_>>();
     allow_headers.extend_from_slice(&[
         HeaderName::from_static("content-type"),
@@ -59,7 +59,7 @@ pub fn cors_layer(origins: Vec<String>, additional_headers: Vec<String>) -> Cors
         cors = cors.allow_origin(AllowOrigin::predicate(
             move |request_origin: &HeaderValue, _| {
                 for origin in &origins {
-                    if WildMatch::new(&origin) == request_origin.to_str().unwrap_or_default() {
+                    if WildMatch::new(origin) == request_origin.to_str().unwrap_or_default() {
                         return true;
                     }
                 }

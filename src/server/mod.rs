@@ -4,15 +4,13 @@ use std::{
 };
 
 use crate::{
-    config::Config, errors::RustusResult, server::cors::cors_layer, state::RustusState,
-    utils::headers::HeaderMapExt,
+    config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
 };
 use axum::{
     extract::{ConnectInfo, DefaultBodyLimit, State},
     http::HeaderValue,
     Router, ServiceExt,
 };
-use tokio::signal;
 use tower::Layer;
 
 mod cors;
@@ -41,14 +39,15 @@ async fn logger(
 
     let time = std::time::Instant::now();
     let version = req.version();
-    let res = next.run(req).await;
+    let response = next.run(req).await;
+    #[allow(clippy::cast_precision_loss)]
     let elapsed = (time.elapsed().as_micros() as f64) / 1000.0;
-    let status = res.status().as_u16();
+    let status = response.status().as_u16();
 
     // log::log!(log::Level::Info, "ememe");
     if uri != "/health" {
         let mut level = log::Level::Info;
-        if !res.status().is_success() {
+        if !response.status().is_success() {
             level = log::Level::Error;
         }
         log::log!(
@@ -57,7 +56,7 @@ async fn logger(
         );
     }
 
-    res
+    response
 }
 
 async fn method_replacer(
@@ -91,7 +90,7 @@ async fn add_tus_header(
         resp.headers_mut().insert("Tus-Max-Size", max_size);
     }
 
-    return resp;
+    resp
 }
 
 async fn healthcheck() -> impl axum::response::IntoResponse {
@@ -105,28 +104,22 @@ async fn fallback() -> impl axum::response::IntoResponse {
 pub fn get_router(state: Arc<RustusState>) -> Router {
     let config = state.config.clone();
     axum::Router::new()
-        .route("/", axum::routing::post(routes::create::create_upload))
+        .route("/", axum::routing::post(routes::create::handler))
+        .route("/:upload_id", axum::routing::patch(routes::upload::handler))
+        .route("/:upload_id", axum::routing::get(routes::get_file::handler))
         .route(
             "/:upload_id",
-            axum::routing::patch(routes::upload::upload_chunk),
+            axum::routing::delete(routes::delete::handler),
         )
         .route(
             "/:upload_id",
-            axum::routing::get(routes::get_file::get_upload),
+            axum::routing::head(routes::file_info::handler),
         )
-        .route(
-            "/:upload_id",
-            axum::routing::delete(routes::delete::delete_upload),
-        )
-        .route(
-            "/:upload_id",
-            axum::routing::head(routes::file_info::get_file_info),
-        )
-        .route_layer(cors_layer(
+        .route_layer(cors::layer(
             config.cors.clone(),
-            config.notification_config.hooks_http_proxy_headers.clone(),
+            &config.notification_config.hooks_http_proxy_headers,
         ))
-        .route("/", axum::routing::options(routes::info::get_server_info))
+        .route("/", axum::routing::options(routes::info::handler))
         .with_state(state)
         .route_layer(axum::middleware::from_fn_with_state(
             config.clone(),
@@ -135,7 +128,15 @@ pub fn get_router(state: Arc<RustusState>) -> Router {
         .route_layer(DefaultBodyLimit::max(config.max_body_size))
 }
 
-pub async fn start_server(config: Config) -> RustusResult<()> {
+/// Start the server.
+/// Here we just create a state and router with all routes and middlewares.
+///
+/// Then we start accepting incoming requests.
+///
+/// # Errors
+///
+/// This function returns an error if the server fails to start.
+pub async fn start(config: Config) -> RustusResult<()> {
     let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
     log::info!("Starting server at http://{}:{}", config.host, config.port);
     let state = Arc::new(RustusState::from_config(&config).await?);

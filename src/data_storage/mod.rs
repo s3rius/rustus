@@ -13,9 +13,9 @@ pub mod impls;
 
 #[derive(Clone, Debug, strum::Display, strum::EnumIter)]
 pub enum AvailableStorages {
-    #[strum(serialize = "file")]
+    #[strum(serialize = "file-storage")]
     File,
-    #[strum(serialize = "s3-hybrid")]
+    #[strum(serialize = "hybrid-s3")]
     S3Hybrid,
 }
 
@@ -30,7 +30,7 @@ pub enum DataStorageImpl {
 impl DataStorageImpl {
     pub fn new(config: &Config) -> RustusResult<Self> {
         let data_conf = config.data_storage_config.clone();
-        match data_conf.data_storage {
+        match data_conf.storage {
             AvailableStorages::File => Ok(Self::File(FileStorage::new(
                 data_conf.data_dir,
                 data_conf.dir_structure,

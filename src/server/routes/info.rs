@@ -8,7 +8,7 @@ use axum::{
 
 use crate::{errors::RustusResult, extensions::TusExtensions, state::RustusState};
 
-pub async fn get_server_info(
+pub async fn handler(
     State(ref state): State<Arc<RustusState>>,
 ) -> RustusResult<impl axum::response::IntoResponse> {
     let mut headers = HeaderMap::new();
@@ -16,7 +16,7 @@ pub async fn get_server_info(
         .config
         .tus_extensions
         .iter()
-        .map(|ext| ext.to_string())
+        .map(ToString::to_string)
         .collect::<Vec<String>>()
         .join(",");
 

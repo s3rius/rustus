@@ -33,6 +33,7 @@ impl FileInfo {
     /// `file_size` - Size of a file if it's known;
     /// `path` - local path of a file;
     /// `initial_metadata` - meta information, that could be omitted.
+    #[must_use]
     pub fn new(
         file_id: &str,
         length: Option<usize>,
@@ -71,6 +72,7 @@ impl FileInfo {
     ///
     /// This algorithm can be found at
     /// [protocol page](https://tus.io/protocols/resumable-upload.html#upload-metadata).
+    #[must_use]
     pub fn get_metadata_string(&self) -> Option<String> {
         let mut result = Vec::new();
 
@@ -89,8 +91,12 @@ impl FileInfo {
         }
     }
 
+    #[must_use]
     pub fn get_filename(&self) -> &str {
-        self.metadata.get("filename").unwrap_or(&self.id)
+        self.metadata
+            .get("filename")
+            .or_else(|| self.metadata.get("name"))
+            .unwrap_or(&self.id)
     }
 
     pub fn json(&self) -> RustusResult<String> {
@@ -98,8 +104,8 @@ impl FileInfo {
         Ok(serde_json::to_string(&info_clone)?)
     }
 
-    pub fn from_json(data: String) -> RustusResult<Self> {
-        Ok(serde_json::from_str::<Self>(data.as_str())?)
+    pub fn from_json(data: &str) -> RustusResult<Self> {
+        Ok(serde_json::from_str::<Self>(data)?)
     }
 
     #[cfg(test)]

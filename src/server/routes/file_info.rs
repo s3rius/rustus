@@ -11,7 +11,7 @@ use crate::{
     state::RustusState,
 };
 
-pub async fn get_file_info(
+pub async fn handler(
     State(state): State<Arc<RustusState>>,
     Path(upload_id): Path<String>,
 ) -> RustusResult<Response> {

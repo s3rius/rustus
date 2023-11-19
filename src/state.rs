@@ -7,6 +7,7 @@ use crate::{
 };
 
 #[derive(Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct RustusState {
     pub config: Config,
     pub info_storage: InfoStorageImpl,
@@ -15,6 +16,15 @@ pub struct RustusState {
 }
 
 impl RustusState {
+    /// Creates a new `RustusState` from a Config
+    ///
+    /// This function will create the necessary storages and notificator instances.
+    ///
+    /// Also it prepares everything before returning new state.
+    ///
+    /// # Errors
+    ///
+    /// If aything goes wrong, the error is returned.
     pub async fn from_config(config: &Config) -> RustusResult<Self> {
         let mut info_storage = InfoStorageImpl::new(config).await?;
         let mut data_storage = DataStorageImpl::new(config)?;

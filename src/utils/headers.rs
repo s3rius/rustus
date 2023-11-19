@@ -37,9 +37,9 @@ impl HeaderMapExt for HeaderMap {
         let mut meta_map =
             HashMap::with_capacity_and_hasher(shint, BuildHasherDefault::<FxHasher>::default());
         for meta_entry in meta_split {
-            let mut kval = meta_entry.trim().split(' ');
-            let key = kval.next();
-            let val = kval.next();
+            let mut entry_split = meta_entry.trim().split(' ');
+            let key = entry_split.next();
+            let val = entry_split.next();
             if key.is_none() || val.is_none() {
                 continue;
             }
@@ -79,14 +79,14 @@ impl HeaderMapExt for HeaderMap {
         let disposition = match mime_type.type_() {
             mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DISPOSITION_TYPE_INLINE,
             mime::APPLICATION => match mime_type.subtype() {
-                mime::JAVASCRIPT | mime::JSON => DISPOSITION_TYPE_INLINE,
+                mime::JAVASCRIPT | mime::JSON | mime::PDF => DISPOSITION_TYPE_INLINE,
                 name if name == "wasm" => DISPOSITION_TYPE_INLINE,
                 _ => DISPOSITION_TYPE_ATTACHMENT,
             },
             _ => DISPOSITION_TYPE_ATTACHMENT,
         };
 
-        format!("{}; filename=\"{}\"", disposition, filename)
+        format!("{disposition}; filename=\"{filename}\"")
             .parse::<HeaderValue>()
             .map(|val| {
                 self.insert(axum::http::header::CONTENT_DISPOSITION, val);
@@ -106,7 +106,6 @@ impl HeaderMapExt for HeaderMap {
         self.get("Forwarded")
             .or_else(|| self.get("X-Forwarded-For"))
             .and_then(|val| val.to_str().ok())
-            .map(|st| st.to_string())
-            .unwrap_or_else(|| socket_addr.ip().to_string())
+            .map_or_else(|| socket_addr.ip().to_string(), ToString::to_string)
     }
 }

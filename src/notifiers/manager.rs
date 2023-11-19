@@ -21,21 +21,17 @@ impl NotificationManager {
             notifiers: Vec::new(),
         };
         log::debug!("Initializing notification manager.");
-        if rustus_config.notification_config.hooks_file.is_some() {
+        if let Some(hooks_file) = &rustus_config.notification_config.hooks_file {
             log::debug!("Found hooks file");
-            manager.notifiers.push(NotifierImpl::File(FileNotifier::new(
-                rustus_config
-                    .notification_config
-                    .hooks_file
-                    .clone()
-                    .unwrap(),
-            )));
+            manager
+                .notifiers
+                .push(NotifierImpl::File(FileNotifier::new(hooks_file.clone())));
         }
-        if rustus_config.notification_config.hooks_dir.is_some() {
+        if let Some(hooks_dir) = &rustus_config.notification_config.hooks_dir {
             log::debug!("Found hooks directory");
-            manager.notifiers.push(NotifierImpl::Dir(DirNotifier::new(
-                rustus_config.notification_config.hooks_dir.clone().unwrap(),
-            )));
+            manager
+                .notifiers
+                .push(NotifierImpl::Dir(DirNotifier::new(hooks_dir.clone())));
         }
         if !rustus_config.notification_config.hooks_http_urls.is_empty() {
             log::debug!("Found http hook urls.");
@@ -63,6 +59,13 @@ impl NotificationManager {
         Ok(manager)
     }
 
+    /// Prepares all notifiers.
+    ///
+    /// This function prepares all notifiers for sending messages.
+    ///
+    /// # Errors
+    ///
+    /// This method might fail in case if any of the notifiers fails.
     pub async fn prepare(&mut self) -> crate::errors::RustusResult<()> {
         for notifier in &mut self.notifiers {
             notifier.prepare().await?;
@@ -70,6 +73,11 @@ impl NotificationManager {
         Ok(())
     }
 
+    /// Sends a message to all notifiers.
+    ///
+    /// # Errors
+    ///
+    /// This method might fail in case if any of the notifiers fails.
     pub async fn send_message(
         &self,
         message: String,

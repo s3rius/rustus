@@ -7,8 +7,6 @@ use fern::{
 };
 use log::LevelFilter;
 
-use crate::{config::Config, server::start_server};
-
 pub mod config;
 pub mod data_storage;
 pub mod errors;
@@ -24,7 +22,7 @@ pub mod utils;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 #[cfg_attr(coverage, no_coverage)]
-fn setup_logging(app_config: &Config) -> RustusResult<()> {
+fn setup_logging(app_config: &config::Config) -> RustusResult<()> {
     let colors = ColoredLevelConfig::new()
         // use builder methods
         .info(Color::Green)
@@ -49,7 +47,7 @@ fn setup_logging(app_config: &Config) -> RustusResult<()> {
     Ok(())
 }
 #[cfg_attr(coverage, no_coverage)]
-fn greeting(app_conf: &Config) {
+fn greeting(app_conf: &config::Config) {
     let extensions = app_conf
         .tus_extensions
         .clone()
@@ -75,18 +73,21 @@ fn greeting(app_conf: &Config) {
 }
 
 fn main() -> RustusResult<()> {
-    let args = Config::parse();
+    let args = config::Config::parse();
     setup_logging(&args)?;
     greeting(&args);
     let mut builder = if Some(1) == args.workers {
-        tokio::runtime::Builder::new_multi_thread()
+        tokio::runtime::Builder::new_current_thread()
     } else {
-        let mut mtbuilder = tokio::runtime::Builder::new_current_thread();
+        let mut mtbuilder = tokio::runtime::Builder::new_multi_thread();
         if let Some(workers) = args.workers {
             mtbuilder.worker_threads(workers);
         }
         mtbuilder
     };
-    builder.enable_all().build()?.block_on(start_server(args))?;
+    builder
+        .enable_all()
+        .build()?
+        .block_on(server::start(args))?;
     Ok(())
 }

@@ -15,10 +15,12 @@ pub struct FileInfoStorage {
 }
 
 impl FileInfoStorage {
+    #[must_use]
     pub fn new(info_dir: PathBuf) -> Self {
         Self { info_dir }
     }
 
+    #[must_use]
     pub fn info_file_path(&self, file_id: &str) -> PathBuf {
         self.info_dir.join(format!("{file_id}.info"))
     }

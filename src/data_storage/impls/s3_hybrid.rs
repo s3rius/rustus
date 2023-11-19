@@ -35,6 +35,7 @@ pub struct S3HybridStorage {
 
 impl S3HybridStorage {
     #[allow(clippy::too_many_arguments)]
+    #[must_use]
     pub fn new(
         endpoint: String,
         region: String,
@@ -93,7 +94,7 @@ impl S3HybridStorage {
     /// It streams file directly from disk to s3.
     async fn upload_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if file_info.path.is_none() {
-            return Err(RustusError::UnableToWrite("Cannot get upload path.".into()).into());
+            return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
         }
         let s3_path = self.get_s3_key(file_info);
         log::debug!(
@@ -159,7 +160,9 @@ impl Storage for S3HybridStorage {
         _file_info: &FileInfo,
         _parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        Err(RustusError::Unimplemented("Hybrid s3 cannot concat files.".into()).into())
+        Err(RustusError::Unimplemented(
+            "Hybrid s3 cannot concat files.".into(),
+        ))
     }
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {

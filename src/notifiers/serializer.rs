@@ -40,7 +40,7 @@ impl Format {
                 .map(ToString::to_string)
                 .unwrap_or_default(),
             method.as_str(),
-            headers.get_remote_ip(&addr, proxy_enabled),
+            headers.get_remote_ip(addr, proxy_enabled),
             headers,
             file_info,
         );
@@ -53,6 +53,7 @@ impl Format {
 }
 
 impl<'a> HookData<'a> {
+    #[must_use]
     pub fn new(
         uri: String,
         method: &'a str,
@@ -92,6 +93,7 @@ fn headers_to_value_map(
     headers_map
 }
 
+#[must_use]
 pub fn default_format(hook_data: &HookData) -> String {
     json!({
         "upload": {
@@ -117,6 +119,7 @@ pub fn default_format(hook_data: &HookData) -> String {
     .to_string()
 }
 
+#[must_use]
 pub fn v2_format(hook_data: &HookData) -> String {
     json!({
         "upload": {
@@ -142,6 +145,7 @@ pub fn v2_format(hook_data: &HookData) -> String {
     .to_string()
 }
 
+#[must_use]
 pub fn tusd_format(hook_data: &HookData) -> String {
     json!({
         "upload": {

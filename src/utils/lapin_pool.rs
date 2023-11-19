@@ -10,12 +10,14 @@ pub struct ChannelPool {
 }
 
 impl ChannelPool {
+    #[must_use]
     pub fn new(pool: mobc::Pool<ConnnectionPool>) -> Self {
         ChannelPool { pool }
     }
 }
 
 impl ConnnectionPool {
+    #[must_use]
     pub fn new(url: String, properties: ConnectionProperties) -> Self {
         ConnnectionPool { url, properties }
     }

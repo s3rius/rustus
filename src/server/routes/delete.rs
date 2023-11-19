@@ -17,7 +17,7 @@ use crate::{
     utils::result::MonadLogger,
 };
 
-pub async fn delete_upload(
+pub async fn handler(
     uri: Uri,
     method: Method,
     headers: HeaderMap,

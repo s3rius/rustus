@@ -23,6 +23,7 @@ pub struct FileStorage {
 }
 
 impl FileStorage {
+    #[must_use]
     pub fn new(data_dir: PathBuf, dir_struct: String, force_fsync: bool) -> FileStorage {
         FileStorage {
             data_dir,

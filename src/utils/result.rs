@@ -1,9 +1,13 @@
 use std::fmt::Display;
 
 pub trait MonadLogger {
+    #[must_use]
     fn mlog(self, level: log::Level, msg: &str) -> Self;
+    #[must_use]
     fn mlog_err(self, msg: &str) -> Self;
+    #[must_use]
     fn mlog_warn(self, msg: &str) -> Self;
+    #[must_use]
     fn mlog_dbg(self, msg: &str) -> Self;
 }
 

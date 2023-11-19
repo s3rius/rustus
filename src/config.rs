@@ -11,7 +11,11 @@ use crate::{
 
 #[derive(Parser, Clone, Debug)]
 pub struct InfoStorageConfig {
-    #[arg(long, default_value = "file", env = "RUSTUS_INFO_STORAGE")]
+    /// Rustus info storage type.
+    ///
+    /// Info storages are used to store
+    /// information about uploads.
+    #[arg(long, default_value = "file-info-storage", env = "RUSTUS_INFO_STORAGE")]
     pub info_storage: AvailableInfoStorages,
 
     /// Rustus info directory
@@ -30,11 +34,12 @@ pub struct InfoStorageConfig {
     /// Value must include all connection details.
     #[arg(
         long,
-        required_if_eq_any([("info_storage", "redis")]),
+        required_if_eq_any([("info_storage", "redis-info-storage")]),
         env = "RUSTUS_INFO_DB_DSN"
     )]
     pub info_db_dsn: Option<String>,
 
+    /// How long results are stored in Redis info storage in seconds.
     #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
     pub redis_info_expiration: Option<usize>,
 }
@@ -45,8 +50,8 @@ pub struct DataStorageConfig {
     ///
     /// Storages are used to store
     /// uploads.
-    #[arg(long, short, default_value = "file", env = "RUSTUS_STORAGE")]
-    pub data_storage: AvailableStorages,
+    #[arg(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
+    pub storage: AvailableStorages,
 
     /// Rustus data directory
     ///
@@ -76,21 +81,13 @@ pub struct DataStorageConfig {
     /// S3 bucket to upload files to.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(
-        long,
-        required_if_eq("data_storage", "hybrid-s3"),
-        env = "RUSTUS_S3_BUCKET"
-    )]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_BUCKET")]
     pub s3_bucket: Option<String>,
 
     /// S3 region.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(
-        long,
-        required_if_eq("data_storage", "hybrid-s3"),
-        env = "RUSTUS_S3_REGION"
-    )]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_REGION")]
     pub s3_region: Option<String>,
 
     /// S3 access key.
@@ -122,11 +119,7 @@ pub struct DataStorageConfig {
     /// S3 URL.
     ///
     /// This parameter is required fo s3-based storages.
-    #[arg(
-        long,
-        required_if_eq("data_storage", "hybrid-s3"),
-        env = "RUSTUS_S3_URL"
-    )]
+    #[arg(long, required_if_eq("storage", "hybrid-s3"), env = "RUSTUS_S3_URL")]
     pub s3_url: Option<String>,
 
     /// S3 force path style.
@@ -163,6 +156,7 @@ pub struct DataStorageConfig {
 }
 
 #[derive(Parser, Clone, Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct AMQPHooksOptions {
     /// Url for AMQP server.
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
@@ -284,20 +278,36 @@ pub struct NotificationConfig {
 
 #[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Config {
+    /// Rustus server host.
     #[arg(long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
     pub host: String,
+
+    /// Rustus server port.
     #[arg(long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
     pub port: u16,
+
+    /// Log level for the server.
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
+    /// Number of worker threads for the server.
+    ///
+    /// By default it is equal to the number of cores.
     #[arg(long, env = "RUSTUS_WORKERS")]
     pub workers: Option<usize>,
 
+    /// Base URL for all endpoints.
     #[arg(long, default_value = "/files", env = "RUSTUS_PREFIX")]
     pub url: String,
 
+    /// Disable access log for health endpoint.
+    /// By default it is enabled.
+    #[arg(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
+    pub disable_health_access_log: bool,
+
+    /// Log level for the server.
     /// Enabling this parameter
     /// Will allow creation of empty files
     /// when Upload-Length header equals to 0.
@@ -367,6 +377,7 @@ pub struct Config {
 }
 
 impl Config {
+    #[must_use]
     pub fn parse() -> Self {
         let mut config = <Self as Parser>::parse();
         config.prepare();
@@ -379,7 +390,7 @@ impl Config {
         self.url = self.url.trim_end_matches('/').to_string();
 
         for hook in &self.notification_config.hooks {
-            self.notification_hooks_set.insert(hook.clone());
+            self.notification_hooks_set.insert(*hook);
         }
 
         // We want to build a hashmap with all extensions. Because it
@@ -394,6 +405,7 @@ impl Config {
         }
     }
 
+    #[must_use]
     pub fn get_url(&self, url: &str) -> String {
         format!("{}/{url}", self.url)
     }

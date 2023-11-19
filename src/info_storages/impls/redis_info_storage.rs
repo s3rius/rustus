@@ -75,10 +75,12 @@ impl InfoStorage for RedisStorage {
             .arg(file_id)
             .query_async::<Connection, Option<String>>(&mut conn)
             .await?;
-        if res.is_none() {
-            return Err(RustusError::FileNotFound);
+
+        if let Some(res) = res {
+            FileInfo::from_json(res.as_str())
+        } else {
+            Err(RustusError::FileNotFound)
         }
-        FileInfo::from_json(res.unwrap())
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {

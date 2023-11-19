@@ -16,6 +16,7 @@ pub struct HttpNotifier {
 }
 
 impl HttpNotifier {
+    #[must_use]
     pub fn new(urls: Vec<String>, forward_headers: Vec<String>, timeout_secs: Option<u64>) -> Self {
         let client = Client::new();
         Self {

@@ -14,7 +14,7 @@ pub trait InfoStorage {
     /// Set information about an upload.
     ///
     /// This function **must** persist information
-    /// about given upload so it can be accessed again by file_id.
+    /// about given upload so it can be accessed again by `file_id`.
     ///
     /// The `create` parameter is for optimizations.
     /// It's here, because some storages like databases have to

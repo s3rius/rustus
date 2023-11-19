@@ -13,7 +13,10 @@ use crate::{
     config::AMQPHooksOptions,
     errors::RustusResult,
     notifiers::{base::Notifier, hooks::Hook},
-    utils::lapin_pool::{ChannelPool, ConnnectionPool},
+    utils::{
+        lapin_pool::{ChannelPool, ConnnectionPool},
+        result::MonadLogger,
+    },
 };
 
 #[allow(clippy::struct_excessive_bools)]
@@ -36,13 +39,25 @@ pub struct AMQPNotifier {
     celery: bool,
 }
 
-/// ManagerConnection for ChannelPool.
+/// `ManagerConnection` for `ChannelPool`.
 ///
 /// This manager helps you maintain opened channels.
 impl AMQPNotifier {
+    /// Create new `AMQPNotifier`.
+    ///
+    /// This method will create two connection pools for AMQP:
+    /// * `connection_pool` - for connections
+    /// * `channel_pool` - for channels
+    ///
+    /// The channels pool uses connection pool to get connections
+    /// sometimes.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `hooks_amqp_url` is not set.
     pub fn new(options: AMQPHooksOptions) -> RustusResult<Self> {
         let manager = ConnnectionPool::new(
-            options.hooks_amqp_url.unwrap().clone(),
+            options.hooks_amqp_url.mlog_err("AMQP url").unwrap().clone(),
             ConnectionProperties::default(),
         );
         let connection_pool = mobc::Pool::builder()
@@ -82,6 +97,7 @@ impl AMQPNotifier {
     ///
     /// If specific routing key is not empty, it returns it.
     /// Otherwise it will generate queue name based on hook name.
+    #[must_use]
     pub fn get_queue_name(&self, hook: &Hook) -> String {
         if let Some(routing_key) = self.routing_key.as_ref() {
             routing_key.into()

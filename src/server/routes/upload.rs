@@ -18,7 +18,7 @@ use crate::{
     utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt, result::MonadLogger},
 };
 
-pub async fn upload_chunk(
+pub async fn handler(
     uri: Uri,
     method: Method,
     headers: HeaderMap,

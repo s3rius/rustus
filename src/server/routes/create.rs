@@ -19,7 +19,8 @@ use crate::{
     utils::{headers::HeaderMapExt, result::MonadLogger},
 };
 
-pub async fn create_upload(
+#[allow(clippy::too_many_lines)]
+pub async fn handler(
     uri: Uri,
     method: Method,
     headers: HeaderMap,

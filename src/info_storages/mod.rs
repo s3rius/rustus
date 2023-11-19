@@ -1,4 +1,4 @@
-use crate::{config::Config, errors::RustusResult, from_str};
+use crate::{config::Config, errors::RustusResult, from_str, utils::result::MonadLogger};
 
 pub mod base;
 pub mod impls;
@@ -9,9 +9,9 @@ use self::impls::{file_info_storage::FileInfoStorage, redis_info_storage::RedisS
 
 #[derive(Clone, Display, Debug, EnumIter)]
 pub enum AvailableInfoStorages {
-    #[strum(serialize = "redis")]
+    #[strum(serialize = "redis-info-storage")]
     Redis,
-    #[strum(serialize = "file")]
+    #[strum(serialize = "file-info-storage")]
     File,
 }
 
@@ -29,7 +29,11 @@ impl InfoStorageImpl {
         match info_conf.info_storage {
             AvailableInfoStorages::Redis => Ok(Self::Redis(
                 RedisStorage::new(
-                    info_conf.info_db_dsn.unwrap().as_str(),
+                    info_conf
+                        .info_db_dsn
+                        .mlog_err("Redis db DSN")
+                        .unwrap()
+                        .as_str(),
                     info_conf.redis_info_expiration,
                 )
                 .await?,
