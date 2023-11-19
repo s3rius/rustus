@@ -1,11 +1,14 @@
-use std::net::SocketAddr;
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    sync::Arc,
+};
 
 use crate::{
     config::Config, errors::RustusResult, server::cors::cors_layer, state::RustusState,
     utils::headers::HeaderMapExt,
 };
 use axum::{
-    extract::{DefaultBodyLimit, State},
+    extract::{ConnectInfo, DefaultBodyLimit, State},
     http::HeaderValue,
     Router, ServiceExt,
 };
@@ -15,9 +18,19 @@ mod cors;
 mod routes;
 
 async fn logger(
+    State(config): State<Arc<Config>>,
     req: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> impl axum::response::IntoResponse {
+    let default_addr = ConnectInfo(SocketAddr::V4(SocketAddrV4::new(
+        Ipv4Addr::new(0, 0, 0, 0),
+        8000,
+    )));
+    let socket = req
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .unwrap_or(&default_addr);
+    let remote = req.headers().get_remote_ip(socket, config.behind_proxy);
     let method = req.method().to_string();
     let uri = req
         .uri()
@@ -26,18 +39,21 @@ async fn logger(
         .unwrap_or_default();
 
     let time = std::time::Instant::now();
+    let version = req.version();
     let res = next.run(req).await;
-    let elapsed = time.elapsed().as_micros();
+    let elapsed = (time.elapsed().as_micros() as f64) / 1000.0;
     let status = res.status().as_u16();
 
     // log::log!(log::Level::Info, "ememe");
     if uri != "/health" {
         let mut level = log::Level::Info;
-        if res.status().is_server_error() {
+        if !res.status().is_success() {
             level = log::Level::Error;
-            log::error!("{:#?}", res.body());
         }
-        log::log!(level, "{method} {uri} {status} {elapsed}");
+        log::log!(
+            level,
+            "\"{method} {uri} {version:?}\" \"-\" \"{status}\" \"{remote}\" \"{elapsed}\""
+        );
     }
 
     res
@@ -85,7 +101,7 @@ async fn fallback() -> impl axum::response::IntoResponse {
     (axum::http::StatusCode::NOT_FOUND, "Not found")
 }
 
-pub fn get_router(state: RustusState) -> Router {
+pub fn get_router(state: Arc<RustusState>) -> Router {
     let config = state.config.clone();
     axum::Router::new()
         .route("/", axum::routing::post(routes::create::create_upload))
@@ -121,7 +137,7 @@ pub fn get_router(state: RustusState) -> Router {
 pub async fn start_server(config: Config) -> RustusResult<()> {
     let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
     log::info!("Starting server at http://{}:{}", config.host, config.port);
-    let state = RustusState::from_config(&config).await?;
+    let state = Arc::new(RustusState::from_config(&config).await?);
 
     let tus_app = get_router(state);
     let main_router = axum::Router::new()
@@ -129,8 +145,9 @@ pub async fn start_server(config: Config) -> RustusResult<()> {
         .nest(&config.url, tus_app)
         .fallback(fallback);
 
-    let service = axum::middleware::from_fn(method_replacer)
-        .layer(axum::middleware::from_fn(logger).layer(main_router));
+    let service = axum::middleware::from_fn(method_replacer).layer(
+        axum::middleware::from_fn_with_state(Arc::new(config.clone()), logger).layer(main_router),
+    );
     axum::serve(
         listener,
         service.into_make_service_with_connect_info::<SocketAddr>(),

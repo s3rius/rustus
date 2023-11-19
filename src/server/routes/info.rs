@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
@@ -7,7 +9,7 @@ use axum::{
 use crate::{errors::RustusResult, extensions::TusExtensions, state::RustusState};
 
 pub async fn get_server_info(
-    State(ref state): State<RustusState>,
+    State(ref state): State<Arc<RustusState>>,
 ) -> RustusResult<impl axum::response::IntoResponse> {
     let mut headers = HeaderMap::new();
     let extensions = state

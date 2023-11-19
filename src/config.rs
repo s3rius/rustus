@@ -292,6 +292,9 @@ pub struct Config {
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
+    #[arg(long, env = "RUSTUS_WORKERS")]
+    pub workers: Option<usize>,
+
     #[arg(long, default_value = "/files", env = "RUSTUS_PREFIX")]
     pub url: String,
 

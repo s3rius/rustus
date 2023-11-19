@@ -60,11 +60,11 @@ impl Storage for FileStorage {
 
     async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<Response> {
         if file_info.path.is_none() {
-            return Err(RustusError::FileNotFound.into());
+            return Err(RustusError::FileNotFound);
         };
         let file = tokio::fs::File::open(file_info.path.clone().unwrap().as_str())
             .await
-            .unwrap();
+            .map_err(|_| RustusError::FileNotFound)?;
         let buf_file = tokio::io::BufReader::new(file);
         let reader = tokio_util::io::ReaderStream::new(buf_file);
         let mut resp = axum::body::Body::from_stream(reader).into_response();
@@ -77,7 +77,7 @@ impl Storage for FileStorage {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if file_info.path.is_none() {
-            return Err(RustusError::FileNotFound.into());
+            return Err(RustusError::FileNotFound);
         }
         let path = file_info.path.as_ref().unwrap().clone();
         let force_sync = self.force_fsync;
@@ -121,6 +121,9 @@ impl Storage for FileStorage {
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
         let force_fsync = self.force_fsync;
+        if file_info.path.is_none() {
+            return Err(RustusError::FileNotFound);
+        }
         let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
@@ -131,7 +134,7 @@ impl Storage for FileStorage {
             let mut writer = BufWriter::new(file);
             for part in parts_info {
                 if part.path.is_none() {
-                    return Err(RustusError::FileNotFound.into());
+                    return Err(RustusError::FileNotFound);
                 }
                 let part_file = OpenOptions::new()
                     .read(true)
@@ -150,11 +153,14 @@ impl Storage for FileStorage {
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         let info = file_info.clone();
+        if info.path.is_none() {
+            return Err(RustusError::FileNotFound);
+        }
         tokio::task::spawn_blocking(move || {
             // Let's remove the file itself.
             let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
             if !data_path.exists() {
-                return Err(RustusError::FileNotFound.into());
+                return Err(RustusError::FileNotFound);
             }
             remove_file(data_path).map_err(|err| {
                 error!("{:?}", err);

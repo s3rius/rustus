@@ -101,12 +101,12 @@ impl HeaderMapExt for HeaderMap {
 
     fn get_remote_ip(&self, socket_addr: &SocketAddr, proxy_enabled: bool) -> String {
         if !proxy_enabled {
-            return socket_addr.to_string();
+            return socket_addr.ip().to_string();
         }
         self.get("Forwarded")
             .or_else(|| self.get("X-Forwarded-For"))
             .and_then(|val| val.to_str().ok())
             .map(|st| st.to_string())
-            .unwrap_or_else(|| socket_addr.to_string())
+            .unwrap_or_else(|| socket_addr.ip().to_string())
     }
 }

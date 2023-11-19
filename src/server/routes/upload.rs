@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{ConnectInfo, Path, State},
@@ -6,24 +6,27 @@ use axum::{
     response::IntoResponse,
 };
 use bytes::Bytes;
+use http::{Method, Uri};
 
 use crate::{
     data_storage::base::Storage,
     errors::{RustusError, RustusResult},
     extensions::TusExtensions,
     info_storages::base::InfoStorage,
+    notifiers::hooks::Hook,
     state::RustusState,
-    utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt},
+    utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt, result::MonadLogger},
 };
 
 pub async fn upload_chunk(
-    Path(upload_id): Path<String>,
-    State(state): State<RustusState>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    uri: Uri,
+    method: Method,
     headers: HeaderMap,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<Arc<RustusState>>,
+    Path(upload_id): Path<String>,
     body: Bytes,
 ) -> RustusResult<axum::response::Response> {
-    println!("Got request from {}", addr);
     if !headers.check("Content-Type", |val| {
         val == "application/offset+octet-stream"
     }) {
@@ -104,6 +107,7 @@ pub async fn upload_chunk(
         return Err(RustusError::FrozenFile);
     }
     let chunk_len = body.len();
+
     // Appending bytes to file.
     state.data_storage.add_bytes(&file_info, body).await?;
     // bytes.clear()
@@ -111,6 +115,40 @@ pub async fn upload_chunk(
     file_info.offset += chunk_len;
     // Saving info to info storage.
     state.info_storage.set_info(&file_info, false).await?;
+
+    let mut hook = Hook::PostReceive;
+
+    if file_info.length == Some(file_info.offset) {
+        hook = Hook::PostFinish;
+    }
+
+    if state.config.notification_hooks_set.contains(&hook) {
+        let state_clone = state.clone();
+        let msg = state.config.notification_config.hooks_format.format(
+            &uri,
+            &method,
+            &addr,
+            &headers,
+            state.config.behind_proxy,
+            &file_info,
+        );
+        let headers_clone = headers.clone();
+
+        tokio::spawn(async move {
+            state_clone
+                .notificator
+                .send_message(msg, hook, &headers_clone)
+                .await
+                .mlog_warn(
+                    format!(
+                        "Failed to send PostReceive hook for upload {}",
+                        file_info.id
+                    )
+                    .as_str(),
+                )
+                .ok();
+        });
+    }
 
     Ok((
         StatusCode::NO_CONTENT,

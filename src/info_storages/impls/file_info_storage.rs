@@ -2,7 +2,12 @@ use std::path::PathBuf;
 
 use tokio::fs::DirBuilder;
 
-use crate::{errors::RustusResult, info_storages::base::InfoStorage, models::file_info::FileInfo};
+use crate::{
+    errors::{RustusError, RustusResult},
+    info_storages::base::InfoStorage,
+    models::file_info::FileInfo,
+    utils::result::MonadLogger,
+};
 
 #[derive(Clone)]
 pub struct FileInfoStorage {
@@ -44,17 +49,24 @@ impl InfoStorage for FileInfoStorage {
 
     async fn get_info(&self, file_id: &str) -> RustusResult<FileInfo> {
         let info_path = self.info_file_path(file_id);
-        let file = tokio::fs::File::open(info_path).await?;
+        let file = tokio::fs::File::open(info_path)
+            .await
+            .mlog_dbg("Cannot get info")
+            .map_err(|_| RustusError::FileNotFound)?;
         let mut reader = tokio::io::BufReader::new(file);
         let mut contents: Vec<u8> = vec![];
-        tokio::io::copy_buf(&mut reader, &mut contents).await?;
+        tokio::io::copy_buf(&mut reader, &mut contents)
+            .await
+            .mlog_dbg("Cannot write bytes")?;
         Ok(serde_json::from_slice::<FileInfo>(contents.as_slice())?)
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         let id = String::from(file_id);
         let info_path = self.info_file_path(id.as_str());
-        tokio::fs::remove_file(info_path).await?;
+        tokio::fs::remove_file(info_path)
+            .await
+            .map_err(|_| RustusError::FileNotFound)?;
         Ok(())
     }
 }

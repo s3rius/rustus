@@ -78,9 +78,15 @@ fn main() -> RustusResult<()> {
     let args = Config::parse();
     setup_logging(&args)?;
     greeting(&args);
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()?
-        .block_on(start_server(args))?;
+    let mut builder = if Some(1) == args.workers {
+        tokio::runtime::Builder::new_multi_thread()
+    } else {
+        let mut mtbuilder = tokio::runtime::Builder::new_current_thread();
+        if let Some(workers) = args.workers {
+            mtbuilder.worker_threads(workers);
+        }
+        mtbuilder
+    };
+    builder.enable_all().build()?.block_on(start_server(args))?;
     Ok(())
 }

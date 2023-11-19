@@ -1,10 +1,10 @@
-use std::{collections::HashMap, hash::BuildHasherDefault};
+use std::{collections::HashMap, hash::BuildHasherDefault, net::SocketAddr};
 
-use http::HeaderMap;
+use http::{HeaderMap, Uri};
 use rustc_hash::FxHasher;
 use serde_json::{json, Value};
 
-use crate::models::file_info::FileInfo;
+use crate::{models::file_info::FileInfo, utils::headers::HeaderMapExt};
 
 #[derive(Clone, Debug, Eq, strum::Display, PartialEq, strum::EnumIter)]
 pub enum Format {
@@ -17,16 +17,33 @@ pub enum Format {
 }
 
 pub struct HookData<'a> {
-    pub uri: &'a str,
+    pub uri: String,
     pub method: &'a str,
-    pub remote_addr: &'a str,
+    pub remote_addr: String,
     pub headers: &'a HeaderMap,
 
     pub file_info: &'a FileInfo,
 }
 
 impl Format {
-    pub fn format(&self, hook_data: &HookData) -> String {
+    pub fn format(
+        &self,
+        uri: &Uri,
+        method: &http::Method,
+        addr: &SocketAddr,
+        headers: &HeaderMap,
+        proxy_enabled: bool,
+        file_info: &FileInfo,
+    ) -> String {
+        let hook_data = &HookData::new(
+            uri.path_and_query()
+                .map(ToString::to_string)
+                .unwrap_or_default(),
+            method.as_str(),
+            headers.get_remote_ip(&addr, proxy_enabled),
+            headers,
+            file_info,
+        );
         match self {
             Format::Default => default_format(hook_data),
             Format::Tusd => tusd_format(hook_data),
@@ -37,9 +54,9 @@ impl Format {
 
 impl<'a> HookData<'a> {
     pub fn new(
-        uri: &'a str,
+        uri: String,
         method: &'a str,
-        remote_addr: &'a str,
+        remote_addr: String,
         headers: &'a HeaderMap,
         file_info: &'a FileInfo,
     ) -> Self {

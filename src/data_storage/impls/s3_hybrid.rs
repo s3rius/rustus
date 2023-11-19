@@ -4,7 +4,7 @@ use crate::{
     data_storage::base::Storage,
     errors::{RustusError, RustusResult},
     models::file_info::FileInfo,
-    utils::headers::HeaderMapExt,
+    utils::{headers::HeaderMapExt, result::MonadLogger},
 };
 
 use crate::utils::dir_struct::substr_time;
@@ -58,23 +58,17 @@ impl S3HybridStorage {
             session_token.as_deref(),
             profile.as_deref(),
         );
-        if let Err(err) = creds {
-            panic!("Cannot build credentials: {err}")
-        }
-        log::debug!("Parsed credentials");
-        let credentials = creds.unwrap();
+        let credentials = creds.mlog_err("Cannot parse S3 credentials").unwrap();
         let bucket = Bucket::new(
             bucket_name,
             s3::Region::Custom { region, endpoint },
             credentials,
         );
-        if let Err(error) = bucket {
-            panic!("Cannot create bucket instance {error}");
-        }
-        let mut bucket = bucket.unwrap();
+        let mut bucket = bucket.mlog_err("Cannot create bucket instance").unwrap();
         if let Some(raw_s3_headers) = custom_headers {
             let headers_map = serde_json::from_str::<HashMap<String, String>>(raw_s3_headers)
-                .expect("Cannot parse s3 headers. Please provide valid JSON object.");
+                .mlog_err("Cannot parse s3 headers. Please provide valid JSON object.")
+                .unwrap();
             log::debug!("Found extra s3 headers.");
             for (key, value) in &headers_map {
                 log::debug!("Adding header `{key}` with value `{value}`.");

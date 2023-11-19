@@ -76,7 +76,7 @@ impl InfoStorage for RedisStorage {
             .query_async::<Connection, Option<String>>(&mut conn)
             .await?;
         if res.is_none() {
-            return Err(RustusError::FileNotFound.into());
+            return Err(RustusError::FileNotFound);
         }
         FileInfo::from_json(res.unwrap())
     }
@@ -88,7 +88,7 @@ impl InfoStorage for RedisStorage {
             .query_async::<Connection, Option<usize>>(&mut conn)
             .await?;
         match resp {
-            None | Some(0) => Err(RustusError::FileNotFound.into()),
+            None | Some(0) => Err(RustusError::FileNotFound),
             _ => Ok(()),
         }
     }

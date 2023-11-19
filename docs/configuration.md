@@ -19,16 +19,16 @@ Also you can configure number of actix `workers` that handle connections.
 
 `--url` is a base URL for all tus requests.
 
-`--workers` by default is equal to number of physical CPU cores. Edit it carefully.
+`--workers` number of threads used by async runtime. By default equals to number of CPU cores.
 
 `--cors` is a list of allowed hosts with wildcards separated by commas. By default all hosts are allowed.
 You can define which hosts are allowed for your particular application.
 
-`--allow-empty` is a parameter that allows users to upload empty files. Empty
-file means that while creation 0 bytes was passed as an `Upload-Length`.
-
 For example if you add `--cors "*.staging.domain,*.prod.domain"`, it allows all origins
 like `my.staging.domain` or `my.prod.domain`, but it will refuse to serve other origins.
+
+`--allow-empty` is a parameter that allows users to upload empty files. Empty
+file means that while creation 0 bytes was passed as an `Upload-Length`.
 
 Also you can disable access log for `/health` endpoint, by using `--disable-health-access-log`.
 
@@ -133,7 +133,7 @@ data
 
     ``` bash
     rustus --force-fsync \
-        --storage "file-storage" \
+        --data-storage "file-storage" \
         --data-dir "./data/" \
         --dir-structure "{year}/{month}/{day}"
     ```
@@ -141,7 +141,7 @@ data
 === "ENV"
 
     ``` bash
-    export RUSTUS_STORAGE="file-storage"
+    export RUSTUS_STORAGE="file"
     export RUSTUS_DATA_DIR="./data/"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
     export RUSTUS_FORCE_FSYNC="true"
@@ -187,7 +187,7 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
 === "CLI"
 
     ``` bash
-    rustus --storage "hybrid-s3" \
+    rustus --data-storage "hybrid-s3" \
         --s3-url "https://localhost:9000" \
         --s3-bucket "bucket" \
         --s3-region "eu-central1" \
@@ -254,14 +254,14 @@ storing information about uploads. But if you don't plan to have many uploads, i
 === "CLI"
 
     ``` bash
-    rustus --info-storage "file-info-storage" \
+    rustus --info-storage "file" \
         --info-dir "./data"
     ```
 
 === "ENV"
 
     ``` bash
-    export RUSTUS_INFO_STORAGE="file-info-storage"
+    export RUSTUS_INFO_STORAGE="file"
     export RUSTUS_INFO_DIR="./data"
 
     rustus
@@ -279,7 +279,7 @@ Redis db is a good way to store information.
 
 Configuration parameters:
 * `--info-db-dsn` - connection string for your Redis database.
-    It's required if `redis-info-storage` is chosen.
+    It's required if `redis` is chosen.
 * `--redis-info-expiration` - number of seconds when key will expire.
 
 === "CLI"
@@ -300,35 +300,6 @@ Configuration parameters:
     rustus
     ```
 
-
-### DB info storage
-
-Rustus can store information about upload in a database.
-
-It's a good and reliable option. But Rustus can't work
-with replicas, since it requires the most recent information
-about uploads.
-
-You can use `postgresql`, `mysql` or even `sqlite` schemas to
-connect to database.
-
-`--info-db-dsn` - connection string for your database.
-
-=== "CLI"
-
-    ``` bash
-    rustus --info-storage "db-info-storage" \
-        --info-db-dsn "postgresql://user:password@localhost/db"
-    ```
-
-=== "ENV"
-
-    ``` bash
-    export RUSTUS_INFO_STORAGE="redis-info-storage"
-    export RUSTUS_INFO_DB_DSN="postgresql://user:password@localhost/db"
-
-    rustus
-    ```
 
 ## Configuring TUS
 

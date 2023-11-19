@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     response::Response,
@@ -10,7 +12,7 @@ use crate::{
 };
 
 pub async fn get_file_info(
-    State(state): State<RustusState>,
+    State(state): State<Arc<RustusState>>,
     Path(upload_id): Path<String>,
 ) -> RustusResult<Response> {
     let file_info = state.info_storage.get_info(&upload_id).await?;

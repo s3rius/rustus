@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-use crate::{config::Config, errors::RustusResult, from_str};
+use crate::{config::Config, errors::RustusResult, from_str, utils::result::MonadLogger};
 
 use self::impls::{file_storage::FileStorage, s3_hybrid::S3HybridStorage};
 
@@ -42,15 +42,20 @@ impl DataStorageImpl {
                 let secret_key =
                     from_string_or_path(&data_conf.s3_secret_key, &data_conf.s3_secret_key_path);
                 Ok(Self::S3Hybrid(S3HybridStorage::new(
-                    data_conf.s3_url.clone().unwrap(),
-                    data_conf.s3_region.clone().unwrap(),
+                    data_conf.s3_url.clone().mlog_err("S3 URL").unwrap(),
+                    data_conf.s3_region.clone().mlog_err("S3 Region").unwrap(),
                     &Some(access_key),
                     &Some(secret_key),
                     &data_conf.s3_security_token,
                     &data_conf.s3_session_token,
                     &data_conf.s3_profile,
                     &data_conf.s3_headers,
-                    data_conf.s3_bucket.clone().unwrap().as_str(),
+                    data_conf
+                        .s3_bucket
+                        .clone()
+                        .mlog_err("S3 bucket")
+                        .unwrap()
+                        .as_str(),
                     data_conf.s3_force_path_style,
                     data_conf.data_dir.clone(),
                     data_conf.dir_structure.clone(),

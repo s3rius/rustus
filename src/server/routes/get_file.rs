@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
@@ -13,7 +15,7 @@ use crate::{
 };
 
 pub async fn get_upload(
-    State(state): State<RustusState>,
+    State(state): State<Arc<RustusState>>,
     Path(upload_id): Path<String>,
 ) -> RustusResult<Response> {
     if !state

@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{ConnectInfo, State},
@@ -14,9 +14,9 @@ use crate::{
     extensions::TusExtensions,
     info_storages::base::InfoStorage,
     models::file_info::FileInfo,
-    notifiers::{hooks::Hook, serializer::HookData},
+    notifiers::hooks::Hook,
     state::RustusState,
-    utils::headers::HeaderMapExt,
+    utils::{headers::HeaderMapExt, result::MonadLogger},
 };
 
 pub async fn create_upload(
@@ -24,7 +24,7 @@ pub async fn create_upload(
     method: Method,
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(ref state): State<RustusState>,
+    State(state): State<Arc<RustusState>>,
     body: Bytes,
 ) -> RustusResult<Response> {
     let upload_len: Option<usize> = headers.parse("Upload-Length");
@@ -134,11 +134,34 @@ pub async fn create_upload(
         }
     }
 
+    if state
+        .config
+        .notification_hooks_set
+        .contains(&Hook::PreCreate)
+    {
+        state
+            .notificator
+            .send_message(
+                state.config.notification_config.hooks_format.format(
+                    &uri,
+                    &method,
+                    &addr,
+                    &headers,
+                    state.config.behind_proxy,
+                    &file_info,
+                ),
+                Hook::PreCreate,
+                &headers,
+            )
+            .await?;
+    }
+
     // Checking if creation-with-upload extension is enabled.
     let with_upload = state
         .config
         .tus_extensions
         .contains(&TusExtensions::CreationWithUpload);
+
     if with_upload && !body.is_empty() && !(concat_ext && is_final) {
         let octet_stream = |val: &str| val == "application/offset+octet-stream";
         if headers.check("Content-Type", octet_stream) {
@@ -163,30 +186,29 @@ pub async fn create_upload(
     }
 
     if state.config.notification_hooks_set.contains(&post_hook) {
-        let url = uri
-            .path_and_query()
-            .map(|val| val.to_string())
-            .unwrap_or_default();
-        let remote = headers.get_remote_ip(&addr, state.config.behind_proxy);
-        let message = state
-            .config
-            .notification_config
-            .hooks_format
-            .format(&HookData::new(
-                url.as_str(),
-                method.as_str(),
-                &remote,
-                &headers,
-                &file_info,
-            ));
-        let new_state = state.clone();
+        let message = state.config.notification_config.hooks_format.format(
+            &uri,
+            &method,
+            &addr,
+            &headers,
+            state.config.behind_proxy,
+            &file_info,
+        );
+        let moved_state = state.clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
-        tokio::task::spawn_local(async move {
-            new_state
+        tokio::task::spawn(async move {
+            moved_state
                 .notificator
                 .send_message(message, post_hook, &headers)
                 .await
+                .mlog_warn(
+                    format!(
+                        "Failed to send PostReceive hook for upload {}",
+                        file_info.id
+                    )
+                    .as_str(),
+                )
         });
     }
 
