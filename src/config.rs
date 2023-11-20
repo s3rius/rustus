@@ -1,23 +1,57 @@
-use std::{ffi::OsString, path::PathBuf};
+use std::path::PathBuf;
 
 use clap::Parser;
 
 use crate::{
-    info_storages::AvailableInfoStores,
-    notifiers::{Format, Hook},
-    protocol::extensions::Extensions,
+    data_storage::AvailableStorages,
+    extensions::TusExtensions,
+    info_storages::AvailableInfoStorages,
+    notifiers::{self, hooks::Hook},
 };
 
-use crate::storages::AvailableStores;
+#[derive(Parser, Clone, Debug)]
+pub struct InfoStorageConfig {
+    /// Rustus info storage type.
+    ///
+    /// Info storages are used to store
+    /// information about uploads.
+    #[arg(long, default_value = "file-info-storage", env = "RUSTUS_INFO_STORAGE")]
+    pub info_storage: AvailableInfoStorages,
 
-#[derive(Parser, Debug, Clone)]
-pub struct StorageOptions {
+    /// Rustus info directory
+    ///
+    /// This directory is used to store .info files
+    /// for `file_info_storage`.
+    #[arg(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
+    pub info_dir: PathBuf,
+
+    /// Connection string for remote info storages.
+    ///
+    /// This connection string is used for storages
+    /// which require connection. Examples of such storages
+    /// are `Postgres`, `MySQL` or `Redis`.
+    ///
+    /// Value must include all connection details.
+    #[arg(
+        long,
+        required_if_eq_any([("info_storage", "redis-info-storage")]),
+        env = "RUSTUS_INFO_DB_DSN"
+    )]
+    pub info_db_dsn: Option<String>,
+
+    /// How long results are stored in Redis info storage in seconds.
+    #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
+    pub redis_info_expiration: Option<usize>,
+}
+
+#[derive(Parser, Clone, Debug)]
+pub struct DataStorageConfig {
     /// Rustus storage type.
     ///
     /// Storages are used to store
     /// uploads.
     #[arg(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
-    pub storage: AvailableStores,
+    pub storage: AvailableStorages,
 
     /// Rustus data directory
     ///
@@ -121,102 +155,47 @@ pub struct StorageOptions {
     pub s3_headers: Option<String>,
 }
 
-#[derive(Parser, Debug, Clone)]
-pub struct InfoStoreOptions {
-    /// Type of info storage.
-    ///
-    /// Info storages are used
-    /// to store information about
-    /// uploads.
-    ///
-    /// This information is used in
-    /// HEAD requests.
-    #[arg(
-        long,
-        short,
-        default_value = "file-info-storage",
-        env = "RUSTUS_INFO_STORAGE"
-    )]
-    pub info_storage: AvailableInfoStores,
-
-    /// Rustus info directory
-    ///
-    /// This directory is used to store .info files
-    /// for `file_info_storage`.
-    #[arg(long, default_value = "./data", env = "RUSTUS_INFO_DIR")]
-    pub info_dir: PathBuf,
-
-    /// Connection string for remote info storages.
-    ///
-    /// This connection string is used for storages
-    /// which require connection. Examples of such storages
-    /// are `Postgres`, `MySQL` or `Redis`.
-    ///
-    /// Value must include all connection details.
-    #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
-    #[arg(
-        long,
-        required_if_eq_any([("info_storage", "db-info-storage"), ("info_storage", "redis-info-storage")]),
-        env = "RUSTUS_INFO_DB_DSN"
-    )]
-    pub info_db_dsn: Option<String>,
-
-    #[cfg(feature = "redis_info_storage")]
-    #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
-    pub redis_info_expiration: Option<usize>,
-}
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Clone, Debug)]
 #[allow(clippy::struct_excessive_bools)]
-
 pub struct AMQPHooksOptions {
     /// Url for AMQP server.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
     pub hooks_amqp_url: Option<String>,
 
     /// Rustus will create exchange if enabled.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
     pub hooks_amqp_declare_exchange: bool,
 
     /// Rustus will create all queues for communication and bind them
     /// to exchange if enabled.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
     pub hooks_amqp_declare_queues: bool,
 
     /// Durability type of exchange.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
     pub hooks_amqp_durable_exchange: bool,
 
     /// Durability type of queues.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
     pub hooks_amqp_durable_queues: bool,
 
     /// Adds celery specific headers.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
     pub hooks_amqp_celery: bool,
 
     /// Name of amqp exchange.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
     pub hooks_amqp_exchange: String,
 
     /// Exchange kind.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
     pub hooks_amqp_exchange_kind: String,
 
     /// Routing key to use when sending message to an exchange.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
     pub hooks_amqp_routing_key: Option<String>,
 
     /// Prefix for all AMQP queues.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(
         long,
         env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
@@ -225,43 +204,38 @@ pub struct AMQPHooksOptions {
     pub hooks_amqp_queues_prefix: String,
 
     /// Maximum number of connections for RabbitMQ.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(
         long,
         env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_connection_pool_size: u32,
+    pub hooks_amqp_connection_pool_size: u64,
 
     /// Maximum number of opened channels for each connection.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(
         long,
         env = "RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_channel_pool_size: u32,
+    pub hooks_amqp_channel_pool_size: u64,
 
     /// After this amount of time the connection will be dropped.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT")]
     pub hooks_amqp_idle_connection_timeout: Option<u64>,
 
     /// After this amount of time in seconds, the channel will be closed.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT")]
     pub hooks_amqp_idle_channels_timeout: Option<u64>,
 }
 
-#[derive(Parser, Debug, Clone)]
-#[allow(clippy::struct_excessive_bools)]
-pub struct NotificationsOptions {
+#[derive(Parser, Clone, Debug)]
+pub struct NotificationConfig {
     /// Notifications format.
     ///
     /// This format will be used in all
     /// messages about hooks.
     #[arg(long, default_value = "default", env = "RUSTUS_HOOKS_FORMAT")]
-    pub hooks_format: Format,
+    pub hooks_format: notifiers::Format,
 
     /// Enabled hooks for notifications.
     #[arg(
@@ -271,11 +245,6 @@ pub struct NotificationsOptions {
         use_value_delimiter = true
     )]
     pub hooks: Vec<Hook>,
-
-    /// Use this option if you use rustus
-    /// behind any proxy. Like Nginx or Traefik.
-    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
-    pub behind_proxy: bool,
 
     /// List of URLS to send webhooks to.
     #[arg(long, env = "RUSTUS_HOOKS_HTTP_URLS", use_value_delimiter = true)]
@@ -307,79 +276,38 @@ pub struct NotificationsOptions {
     pub amqp_hook_opts: AMQPHooksOptions,
 }
 
-#[derive(Debug, Parser, Clone)]
-pub struct SentryOptions {
-    #[arg(name = "sentry-dsn", long, env = "RUSTUS_SENTRY_DSN")]
-    pub dsn: Option<String>,
-
-    #[arg(
-        name = "sentry-sample-rate",
-        long,
-        default_value = "1.0",
-        env = "RUSTUS_SENTRY_SAMPLE_RATE"
-    )]
-    pub sample_rate: f32,
-}
-
-#[derive(Debug, Parser, Clone)]
-#[command(name = "Rustus")]
-/// Tus protocol implementation.
-///
-/// This program is a web-server that
-/// implements protocol for resumable uploads.
-///
-/// You can read more about protocol
-/// [here](https://tus.io/).
-pub struct RustusConf {
-    /// Rustus server host
+#[derive(Parser, Clone, Debug)]
+#[command(author, version, about, long_about = None)]
+#[allow(clippy::struct_excessive_bools)]
+pub struct Config {
+    /// Rustus server host.
     #[arg(long, default_value = "0.0.0.0", env = "RUSTUS_SERVER_HOST")]
     pub host: String,
 
-    /// Rustus server port
+    /// Rustus server port.
     #[arg(long, default_value = "1081", env = "RUSTUS_SERVER_PORT")]
     pub port: u16,
 
-    #[arg(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
-    pub disable_health_access_log: bool,
-
-    /// Rustus base API url
-    #[arg(long, default_value = "/files", env = "RUSTUS_URL")]
-    pub url: String,
-
-    /// Allowed hosts for CORS protocol.
-    ///
-    /// By default all hosts are allowed.
-    #[arg(long, env = "RUSTUS_CORS", use_value_delimiter = true)]
-    pub cors: Vec<String>,
-
-    /// Maximum payload size.
-    ///
-    /// This limit used to reduce amount of consumed memory.
-    #[arg(
-        long,
-        short = 'm',
-        default_value = "262144",
-        env = "RUSTUS_MAX_BODY_SIZE"
-    )]
-    pub max_body_size: usize,
-
-    /// Rustus maximum log level
+    /// Log level for the server.
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
     pub log_level: log::LevelFilter,
 
-    /// Number of actix workers default value = number of cpu cores.
-    #[arg(long, short, env = "RUSTUS_WORKERS")]
+    /// Number of worker threads for the server.
+    ///
+    /// By default it is equal to the number of cores.
+    #[arg(long, env = "RUSTUS_WORKERS")]
     pub workers: Option<usize>,
 
-    /// Enabled extensions for TUS protocol.
-    #[arg(
-        long,
-        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum",
-        env = "RUSTUS_TUS_EXTENSIONS",
-        use_value_delimiter = true
-    )]
-    pub tus_extensions: Vec<Extensions>,
+    /// Base URL for all endpoints.
+    #[arg(long, default_value = "/files", env = "RUSTUS_PREFIX")]
+    pub url: String,
 
+    /// Disable access log for health endpoint.
+    /// By default it is enabled.
+    #[arg(long, env = "RUSTUS_DISABLE_HEALTH_ACCESS_LOG")]
+    pub disable_health_access_log: bool,
+
+    /// Log level for the server.
     /// Enabling this parameter
     /// Will allow creation of empty files
     /// when Upload-Length header equals to 0.
@@ -393,90 +321,92 @@ pub struct RustusConf {
     #[arg(long, env = "RUSTUS_REMOVE_PARTS")]
     pub remove_parts: bool,
 
+    /// Maximum payload size in bytes.
+    ///
+    /// This limit used to reduce amount of consumed memory.
+    #[arg(
+        long,
+        short = 'm',
+        default_value = "262144",
+        env = "RUSTUS_MAX_BODY_SIZE"
+    )]
+    pub max_body_size: usize,
+
     /// Maximum size of file that can be uploaded.
     ///
     /// If not set, file size is unlimited.
     #[arg(long, env = "RUSTUS_MAX_FILE_SIZE")]
     pub max_file_size: Option<usize>,
 
-    #[command(flatten)]
-    pub storage_opts: StorageOptions,
+    #[arg(
+        long,
+        default_value = "getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum",
+        env = "RUSTUS_TUS_EXTENSIONS",
+        use_value_delimiter = true
+    )]
+    pub tus_extensions: Vec<TusExtensions>,
+
+    /// Allowed hosts for CORS protocol.
+    ///
+    /// By default all hosts are allowed.
+    #[arg(long, env = "RUSTUS_CORS", use_value_delimiter = true)]
+    pub cors: Vec<String>,
+
+    /// Use this option if you use rustus
+    /// behind any proxy. Like Nginx or Traefik.
+    #[arg(long, env = "RUSTUS_BEHIND_PROXY")]
+    pub behind_proxy: bool,
+
+    // We skip this argument, because we won't going to
+    // fullfill it from CLI. This argument is populated based
+    // on `tus_extensions` argument.
+    #[arg(skip)]
+    pub tus_extensions_set: rustc_hash::FxHashSet<TusExtensions>,
+
+    #[arg(skip)]
+    pub notification_hooks_set: rustc_hash::FxHashSet<Hook>,
 
     #[command(flatten)]
-    pub info_storage_opts: InfoStoreOptions,
+    pub info_storage_config: InfoStorageConfig,
 
     #[command(flatten)]
-    pub notification_opts: NotificationsOptions,
+    pub data_storage_config: DataStorageConfig,
 
     #[command(flatten)]
-    pub sentry_opts: SentryOptions,
+    pub notification_config: NotificationConfig,
 }
 
-#[cfg_attr(coverage, no_coverage)]
-impl RustusConf {
-    /// Function to parse CLI parametes.
-    ///
-    /// This is a workaround for issue mentioned
-    /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
-    pub fn from_args() -> RustusConf {
-        let mut conf = RustusConf::parse();
-        conf.normalize_extentions();
-        conf
+impl Config {
+    #[must_use]
+    pub fn parse() -> Self {
+        let mut config = <Self as Parser>::parse();
+        config.prepare();
+        config
     }
 
-    pub fn from_iter<I>(iter: I) -> RustusConf
-    where
-        I: IntoIterator,
-        I::Item: Into<OsString> + Clone,
-    {
-        <RustusConf as Parser>::parse_from(iter)
-    }
+    pub fn prepare(&mut self) {
+        // Update URL prefix. This is needed to make sure that
+        // URLs are correctly generated.
+        self.url = self.url.trim_end_matches('/').to_string();
 
-    /// Base API url.
-    pub fn base_url(&self) -> String {
-        let stripped_prefix = self.url.strip_prefix('/').unwrap_or(self.url.as_str());
-        String::from(stripped_prefix.strip_suffix('/').unwrap_or(stripped_prefix))
-    }
-
-    /// Helper for generating URI for test files.
-    #[cfg(test)]
-    pub fn file_url(&self, file_id: &str) -> String {
-        format!("/{}/{}/", self.base_url(), file_id)
-    }
-
-    #[cfg(test)]
-    pub fn test_url(&self) -> String {
-        format!("/{}/", self.base_url())
-    }
-
-    /// Check if hook is enabled by user.
-    pub fn hook_is_active(&self, hook: Hook) -> bool {
-        self.notification_opts.hooks.contains(&hook)
-    }
-
-    /// Normalize extension vec.
-    ///
-    ///  Nomralization consists of two parts:
-    ///  1. Adding dependent extentions (e.g. creation-with-upload depends on creation);
-    ///  2. Sorting the resulting extentions;
-    ///
-    /// Protocol extensions must be sorted,
-    /// because Actix doesn't override
-    /// existing methods.
-    pub fn normalize_extentions(&mut self) {
-        let ext = &mut self.tus_extensions;
-        // If create-with-upload extension is enabled
-        // creation extension must be enabled too.
-        if ext.contains(&Extensions::CreationWithUpload) && !ext.contains(&Extensions::Creation) {
-            ext.push(Extensions::Creation);
+        for hook in &self.notification_config.hooks {
+            self.notification_hooks_set.insert(*hook);
         }
 
-        // If create-defer-length extension is enabled
-        // creation extension must be enabled too.
-        if ext.contains(&Extensions::CreationDeferLength) && !ext.contains(&Extensions::Creation) {
-            ext.push(Extensions::Creation);
+        // We want to build a hashmap with all extensions. Because it
+        // is going to be much faster to work with in the future.
+        for extension in self.tus_extensions.clone() {
+            if extension == TusExtensions::CreationWithUpload
+                || extension == TusExtensions::CreationDeferLength
+            {
+                self.tus_extensions_set.insert(TusExtensions::Creation);
+            }
+            self.tus_extensions_set.insert(extension);
         }
+    }
 
-        ext.sort();
+    #[must_use]
+    pub fn get_url(&self, url: &str) -> String {
+        format!("{}/{url}", self.url)
     }
 }

@@ -1,11 +1,13 @@
 use chrono::{Datelike, Timelike};
 
 /// Generate directory name with user template.
+#[must_use]
 pub fn substr_now(dir_structure: &str) -> String {
     let now = chrono::Utc::now();
     substr_time(dir_structure, now)
 }
 
+#[must_use]
 pub fn substr_time(dir_structure: &str, time: chrono::DateTime<chrono::Utc>) -> String {
     dir_structure
         .replace("{day}", time.day().to_string().as_str())

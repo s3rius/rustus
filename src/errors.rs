@@ -1,7 +1,9 @@
 use std::io::{Error, ErrorKind};
 
-use actix_web::{http::StatusCode, HttpResponse, HttpResponseBuilder, ResponseError};
+use axum::response::IntoResponse;
 use log::error;
+
+use axum::http::StatusCode;
 
 pub type RustusResult<T> = Result<T, RustusError>;
 
@@ -23,15 +25,10 @@ pub enum RustusError {
     SizeAlreadyKnown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
-    #[cfg(feature = "db_info_storage")]
-    #[error("Database error: {0}")]
-    DatabaseError(#[from] rbatis::error::Error),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
     RedisError(#[from] redis::RedisError),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis pooling error: {0}")]
-    MobcError(#[from] bb8::RunError<redis::RedisError>),
+    MobcError(#[from] mobc::Error<redis::RedisError>),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]
@@ -50,12 +47,10 @@ pub enum RustusError {
     HookError(String),
     #[error("Unable to configure logging: {0}")]
     LogConfigError(#[from] log::SetLoggerError),
-    #[cfg(feature = "amqp_notifier")]
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
-    #[cfg(feature = "amqp_notifier")]
     #[error("AMQP pooling error error: {0}")]
-    AMQPPoolError(#[from] bb8::RunError<lapin::Error>),
+    AMQPPoolError(#[from] mobc::Error<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
     #[error("Can't spawn task: {0}")]
@@ -66,14 +61,14 @@ pub enum RustusError {
     WrongChecksum,
     #[error("The header value is incorrect")]
     WrongHeaderValue,
-    #[error("Metrics error: {0}")]
-    PrometheusError(#[from] prometheus::Error),
-    #[error("Blocking error: {0}")]
-    BlockingError(#[from] actix_web::error::BlockingError),
     #[error("HTTP hook error. Returned status: {0}, Response text: {1}")]
     HTTPHookError(u16, String, Option<String>),
     #[error("Found S3 error: {0}")]
     S3Error(#[from] s3::error::S3Error),
+    #[error("Found invalid header: {0}")]
+    InvalidHeader(#[from] axum::http::header::InvalidHeaderValue),
+    #[error("HTTP error: {0}")]
+    AxumHTTPError(#[from] axum::http::Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
@@ -84,29 +79,8 @@ impl From<RustusError> for Error {
     }
 }
 
-/// Trait to convert errors to http-responses.
-#[cfg_attr(coverage, no_coverage)]
-impl ResponseError for RustusError {
-    fn error_response(&self) -> HttpResponse {
-        error!("{}", self);
-        match self {
-            RustusError::HTTPHookError(_, proxy_response, content_type) => {
-                HttpResponseBuilder::new(self.status_code())
-                    .insert_header((
-                        "Content-Type",
-                        content_type
-                            .as_deref()
-                            .unwrap_or("text/plain; charset=utf-8"),
-                    ))
-                    .body(proxy_response.clone())
-            }
-            _ => HttpResponseBuilder::new(self.status_code())
-                .insert_header(("Content-Type", "text/html; charset=utf-8"))
-                .body(format!("{self}")),
-        }
-    }
-
-    fn status_code(&self) -> StatusCode {
+impl RustusError {
+    fn get_status_code(&self) -> StatusCode {
         match self {
             RustusError::FileNotFound => StatusCode::NOT_FOUND,
             RustusError::WrongOffset => StatusCode::CONFLICT,
@@ -120,6 +94,30 @@ impl ResponseError for RustusError {
                 StatusCode::from_u16(*status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
             }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
+
+impl IntoResponse for RustusError {
+    fn into_response(self) -> axum::response::Response {
+        log::error!("{self}");
+        let status_code = self.get_status_code();
+        match self {
+            RustusError::HTTPHookError(_, proxy_response, content_type) => {
+                axum::response::IntoResponse::into_response((
+                    status_code,
+                    [(
+                        "Content-Type",
+                        content_type.unwrap_or("text/plain; charset=utf-8".into()),
+                    )],
+                    proxy_response,
+                ))
+            }
+            _ => axum::response::IntoResponse::into_response((
+                status_code,
+                [("Content-Type", "text/html; charset=utf-8")],
+                format!("{self}"),
+            )),
         }
     }
 }

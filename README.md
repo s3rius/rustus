@@ -14,47 +14,28 @@
 This implementation has several features to make usage as simple as possible.
 
 * Rustus is robust, since it uses asynchronous Rust;
-* It can store information about uploads in databases;
-* You can specify directory structure to organize your uploads;
-* It has a lot of hooks options, and hooks can be combined.
-* Highly configurable;
+* It can store information about uploads not only in files;
+* You can define your own directory structure to organize your uploads;
+* It has a lot of hooks options, and hooks can be combined;
+* Highly configurable.
 
 Please check out [Documentation](https://s3rius.github.io/rustus/) for more information about configuration and deploy.
 
 ## Installation
 
-You can install rustus by 4 different ways.
+You can install rustus by 3 different ways.
 
 ### From source
 
-To build it from source rust must be installed. We don't rely on nightly features,
-you can use last stable release.
+To build it from source rust must be installed. We rely on nightly features,
+so please switch to nightly channel before building.
 
 ```bash
+rustup update nightly
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all
+cargo install --path .
 ```
-Also you can speedup build by disabling some features.
-
-Available features:
-
-* `amqp_notifier` - adds amqp protocol support for notifying about upload status;
-* `db_info_storage` - adds support for storing information about upload in different databases (Postgres, MySQL, SQLite);
-* `redis_info_storage` - adds support for storing information about upload in redis database;
-* `all` - enables all rustus features.
-
-All precompiled binaries have all features enabled.
-
-### With cargo
-
-If you have cargo installed maybe it would be easier to
-install it directly from crates.io.
-
-```bash
-cargo install rustus --features=all
-```
-
 ### Binaries
 
 All precompiled binaries available on github releases page.
@@ -77,6 +58,12 @@ Rustus has two containers for each version.
 Alpine based images are more lightweight than debian
 
 To run rustus you just need to run this command
+
+```bash
+docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"
+```
+
+To persist data you can mount volume to `/data` directory
 
 ```bash
 docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"

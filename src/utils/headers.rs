@@ -1,115 +1,111 @@
-use std::str::FromStr;
+use std::{collections::HashMap, hash::BuildHasherDefault, net::SocketAddr, str::FromStr};
 
-use actix_web::{
-    http::header::{ContentDisposition, DispositionParam, DispositionType},
-    HttpRequest,
-};
+use axum::http::{HeaderMap, HeaderValue};
+use base64::{engine::general_purpose, Engine};
+use rustc_hash::{FxHashMap, FxHasher};
 
-/// Parse header's value.
-///
-/// This function will try to parse
-/// header's value to some type T.
-///
-/// If header is not present or value
-/// can't be parsed then it returns None.
-pub fn parse_header<T: FromStr>(request: &HttpRequest, header_name: &str) -> Option<T> {
-    request
-        .headers()
-        // Get header
-        .get(header_name)
-        .and_then(|value|
-            // Parsing it to string.
-            match value.to_str() {
-                Ok(header_str) => Some(header_str),
+static DISPOSITION_TYPE_INLINE: &str = "inline";
+static DISPOSITION_TYPE_ATTACHMENT: &str = "attachment";
+
+pub trait HeaderMapExt {
+    fn parse<T: FromStr>(&self, name: &str) -> Option<T>;
+    fn check(&self, name: &str, expr: fn(&str) -> bool) -> bool;
+    fn get_metadata(&self) -> Option<FxHashMap<String, String>>;
+    fn get_upload_parts(&self) -> Vec<String>;
+    fn get_method_override(&self) -> Option<axum::http::Method>;
+    fn generate_disposition(&mut self, filename: &str);
+    fn get_remote_ip(&self, socket_addr: &SocketAddr, proxy_enabled: bool) -> String;
+}
+
+impl HeaderMapExt for HeaderMap {
+    fn parse<T: FromStr>(&self, name: &str) -> Option<T> {
+        self.get(name)?.to_str().ok()?.parse().ok()
+    }
+
+    fn check(&self, name: &str, expr: fn(&str) -> bool) -> bool {
+        self.get(name)
+            .and_then(|val| match val.to_str() {
+                Ok(val) => Some(expr(val)),
                 Err(_) => None,
             })
-        .and_then(|val|
-            // Parsing to type T.
-            match val.parse::<T>() {
-                Ok(num) => Some(num),
-                Err(_) => None,
+            .unwrap_or(false)
+    }
+
+    fn get_metadata(&self) -> Option<FxHashMap<String, String>> {
+        let meta_split = self.get("Upload-Metadata")?.to_str().ok()?.split(',');
+        let (shint, _) = meta_split.size_hint();
+        let mut meta_map =
+            HashMap::with_capacity_and_hasher(shint, BuildHasherDefault::<FxHasher>::default());
+        for meta_entry in meta_split {
+            let mut entry_split = meta_entry.trim().split(' ');
+            let key = entry_split.next();
+            let val = entry_split.next();
+            if key.is_none() || val.is_none() {
+                continue;
+            }
+            let value = general_purpose::STANDARD
+                .decode(val.unwrap())
+                .ok()
+                .and_then(|val| String::from_utf8(val).ok());
+            if let Some(value) = value {
+                meta_map.insert(key.unwrap().to_string(), value);
+            }
+        }
+        Some(meta_map)
+    }
+
+    fn get_upload_parts(&self) -> Vec<String> {
+        self.get("Upload-Concat")
+            .and_then(|header| header.to_str().ok())
+            .and_then(|header| header.strip_prefix("final;"))
+            .map(|urls| {
+                urls.split(' ')
+                    .filter_map(|val: &str| val.trim().split('/').last().map(String::from))
+                    .filter(|val| val.trim() != "")
+                    .collect()
             })
-}
-
-/// Check that header value satisfies some predicate.
-///
-/// Passes header as a parameter to expr if header is present.
-pub fn check_header(request: &HttpRequest, header_name: &str, expr: fn(&str) -> bool) -> bool {
-    request
-        .headers()
-        .get(header_name)
-        .and_then(|header_val| match header_val.to_str() {
-            Ok(val) => Some(expr(val)),
-            Err(_) => None,
-        })
-        .unwrap_or(false)
-}
-
-/// This function generates content disposition
-/// based on file name.
-pub fn generate_disposition(filename: &str) -> ContentDisposition {
-    let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
-    let disposition = match mime_type.type_() {
-        mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DispositionType::Inline,
-        mime::APPLICATION => match mime_type.subtype() {
-            mime::JAVASCRIPT | mime::JSON => DispositionType::Inline,
-            name if name == "wasm" => DispositionType::Inline,
-            _ => DispositionType::Attachment,
-        },
-        _ => DispositionType::Attachment,
-    };
-
-    ContentDisposition {
-        disposition,
-        parameters: vec![DispositionParam::Filename(String::from(filename))],
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{check_header, parse_header};
-    use actix_web::test::TestRequest;
-
-    #[actix_rt::test]
-    async fn test_parse_header_unknown_header() {
-        let request = TestRequest::get().to_http_request();
-        let header = parse_header::<String>(&request, "unknown");
-        assert!(header.is_none());
+            .unwrap_or_default()
     }
 
-    #[actix_rt::test]
-    async fn test_parse_header_wrong_type() {
-        let request = TestRequest::get()
-            .insert_header(("test_header", String::from("test").as_bytes()))
-            .to_http_request();
-        let header = parse_header::<i32>(&request, "test_header");
-        assert!(header.is_none());
+    fn get_method_override(&self) -> Option<axum::http::Method> {
+        self.get("X-HTTP-Method-Override")
+            .and_then(|header| header.to_str().ok())
+            .and_then(|header| header.trim().parse().ok())
     }
 
-    #[actix_rt::test]
-    async fn test_parse_header() {
-        let request = TestRequest::get()
-            .insert_header(("test_header", String::from("123").as_bytes()))
-            .to_http_request();
-        let header = parse_header::<usize>(&request, "test_header");
-        assert_eq!(header.unwrap(), 123);
+    fn generate_disposition(&mut self, filename: &str) {
+        let mime_type = mime_guess::from_path(filename).first_or_octet_stream();
+
+        let disposition = match mime_type.type_() {
+            mime::IMAGE | mime::TEXT | mime::AUDIO | mime::VIDEO => DISPOSITION_TYPE_INLINE,
+            mime::APPLICATION => match mime_type.subtype() {
+                mime::JAVASCRIPT | mime::JSON | mime::PDF => DISPOSITION_TYPE_INLINE,
+                name if name == "wasm" => DISPOSITION_TYPE_INLINE,
+                _ => DISPOSITION_TYPE_ATTACHMENT,
+            },
+            _ => DISPOSITION_TYPE_ATTACHMENT,
+        };
+
+        format!("{disposition}; filename=\"{filename}\"")
+            .parse::<HeaderValue>()
+            .map(|val| {
+                self.insert(axum::http::header::CONTENT_DISPOSITION, val);
+            })
+            .ok();
+        mime_type
+            .to_string()
+            .parse::<HeaderValue>()
+            .map(|val| self.insert(axum::http::header::CONTENT_TYPE, val))
+            .ok();
     }
 
-    #[actix_rt::test]
-    async fn test_check_header_unknown_header() {
-        let request = TestRequest::get().to_http_request();
-        let check = check_header(&request, "unknown", |value| value == "1");
-        assert_eq!(check, false);
-    }
-
-    #[actix_rt::test]
-    async fn test_check_header() {
-        let request = TestRequest::get()
-            .insert_header(("test_header", "1"))
-            .to_http_request();
-        let check = check_header(&request, "test_header", |value| value == "1");
-        assert!(check);
-        let check = check_header(&request, "test_header", |value| value == "2");
-        assert!(!check);
+    fn get_remote_ip(&self, socket_addr: &SocketAddr, proxy_enabled: bool) -> String {
+        if !proxy_enabled {
+            return socket_addr.ip().to_string();
+        }
+        self.get("Forwarded")
+            .or_else(|| self.get("X-Forwarded-For"))
+            .and_then(|val| val.to_str().ok())
+            .map_or_else(|| socket_addr.ip().to_string(), ToString::to_string)
     }
 }

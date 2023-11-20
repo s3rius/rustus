@@ -27,7 +27,6 @@ repos:
         entry: cargo
         args:
           - clippy
-          - --features=all
           - --all
           - -p
           - rustus
@@ -38,6 +37,8 @@ repos:
           - clippy::pedantic
           - -D
           - warnings
+          - -A
+          - clippy::module_name_repetitions
 
       - id: check
         types:
@@ -48,14 +49,3 @@ repos:
         pass_filenames: false
         args:
           - check
-
-      - id: check-all
-        types:
-          - rust
-        name: cargo check all
-        language: system
-        entry: cargo
-        pass_filenames: false
-        args:
-          - check
-          - --features=all
