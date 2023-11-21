@@ -11,6 +11,7 @@ use axum::{
     http::HeaderValue,
     Router, ServiceExt,
 };
+use sentry_tower::{NewSentryLayer, SentryHttpLayer};
 use tower::Layer;
 
 mod cors;
@@ -44,16 +45,8 @@ async fn logger(
     let elapsed = (time.elapsed().as_micros() as f64) / 1000.0;
     let status = response.status().as_u16();
 
-    // log::log!(log::Level::Info, "ememe");
     if uri != "/health" {
-        let mut level = log::Level::Info;
-        if !response.status().is_success() {
-            level = log::Level::Error;
-        }
-        log::log!(
-            level,
-            "\"{method} {uri} {version:?}\" \"-\" \"{status}\" \"{remote}\" \"{elapsed}\""
-        );
+        log::info!("\"{method} {uri} {version:?}\" \"-\" \"{status}\" \"{remote}\" \"{elapsed}\"");
     }
 
     response
@@ -142,10 +135,13 @@ pub async fn start(config: Config) -> RustusResult<()> {
     let state = Arc::new(RustusState::from_config(&config).await?);
 
     let tus_app = get_router(state);
+
     let main_router = axum::Router::new()
         .route("/health", axum::routing::get(healthcheck))
         .nest(&config.url, tus_app)
-        .fallback(fallback);
+        .fallback(fallback)
+        .layer(NewSentryLayer::new_from_top())
+        .layer(SentryHttpLayer::with_transaction());
 
     let service = axum::middleware::from_fn(method_replacer).layer(
         axum::middleware::from_fn_with_state(Arc::new(config.clone()), logger).layer(main_router),

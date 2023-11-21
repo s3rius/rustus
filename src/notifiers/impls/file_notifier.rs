@@ -7,7 +7,7 @@ use axum::http::HeaderMap;
 use log::debug;
 use tokio::process::Command;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileNotifier {
     pub command: String,
 }

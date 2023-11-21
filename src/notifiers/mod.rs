@@ -7,7 +7,7 @@ pub mod serializer;
 pub use manager::NotificationManager;
 pub use serializer::Format;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum NotifierImpl {
     Http(impls::http_notifier::HttpNotifier),
     File(impls::file_notifier::FileNotifier),

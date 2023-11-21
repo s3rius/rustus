@@ -7,7 +7,7 @@ use axum::http::HeaderMap;
 use reqwest::Client;
 use std::time::Duration;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HttpNotifier {
     urls: Vec<String>,
     client: Client,

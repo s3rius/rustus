@@ -15,7 +15,7 @@ use crate::{
     utils::{dir_struct::substr_now, headers::HeaderMapExt},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileStorage {
     data_dir: PathBuf,
     dir_struct: String,

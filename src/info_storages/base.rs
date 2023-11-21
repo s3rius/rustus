@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use crate::{errors::RustusResult, models::file_info::FileInfo};
 /// Trait for every info storage.
 ///
 /// This trait defines required functions
 /// for building your own info storage.
-pub trait InfoStorage {
+pub trait InfoStorage: Clone + Debug {
     /// Prepare storage for storing files.
     ///
     /// In this function you can prepare

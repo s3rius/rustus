@@ -277,6 +277,17 @@ pub struct NotificationConfig {
 }
 
 #[derive(Parser, Clone, Debug)]
+pub struct SentryConfig {
+    /// Sentry DSN.
+    #[arg(long, env = "RUSTUS_SENTRY_DSN")]
+    pub sentry_dsn: Option<String>,
+
+    /// Sentry sample rate.
+    #[arg(long, env = "RUSTUS_SENTRY_SAMPLE_RATE")]
+    pub sentry_sample_rate: Option<f32>,
+}
+
+#[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Config {
@@ -290,7 +301,7 @@ pub struct Config {
 
     /// Log level for the server.
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
-    pub log_level: log::LevelFilter,
+    pub log_level: tracing::level_filters::LevelFilter,
 
     /// Number of worker threads for the server.
     ///
@@ -374,6 +385,9 @@ pub struct Config {
 
     #[command(flatten)]
     pub notification_config: NotificationConfig,
+
+    #[command(flatten)]
+    pub sentry_config: SentryConfig,
 }
 
 impl Config {

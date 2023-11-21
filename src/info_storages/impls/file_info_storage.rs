@@ -9,7 +9,7 @@ use crate::{
     utils::result::MonadLogger,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileInfoStorage {
     info_dir: PathBuf,
 }

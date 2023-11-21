@@ -1,10 +1,12 @@
 use lapin::{ChannelState, ConnectionProperties, ConnectionState};
 
+#[derive(Clone)]
 pub struct ConnnectionPool {
     url: String,
     properties: ConnectionProperties,
 }
 
+#[derive(Clone, Debug)]
 pub struct ChannelPool {
     pool: mobc::Pool<ConnnectionPool>,
 }

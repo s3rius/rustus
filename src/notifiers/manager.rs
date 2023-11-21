@@ -9,7 +9,7 @@ use crate::{
 use super::{base::Notifier, NotifierImpl};
 use axum::http::HeaderMap;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NotificationManager {
     notifiers: Vec<NotifierImpl>,
 }

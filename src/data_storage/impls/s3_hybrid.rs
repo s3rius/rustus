@@ -26,7 +26,7 @@ use super::file_storage::FileStorage;
 /// complete, it uploads file to S3.
 ///
 /// It's not intended to use this storage for large files.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct S3HybridStorage {
     bucket: Bucket,
     local_storage: FileStorage,

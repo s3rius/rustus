@@ -100,8 +100,10 @@ impl RustusError {
 
 impl IntoResponse for RustusError {
     fn into_response(self) -> axum::response::Response {
-        log::error!("{self}");
         let status_code = self.get_status_code();
+        if status_code != StatusCode::NOT_FOUND {
+            log::error!("{self}");
+        }
         match self {
             RustusError::HTTPHookError(_, proxy_response, content_type) => {
                 axum::response::IntoResponse::into_response((
