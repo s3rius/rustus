@@ -1,7 +1,6 @@
 use std::io::{Error, ErrorKind};
 
 use axum::response::IntoResponse;
-use log::error;
 
 use axum::http::StatusCode;
 
@@ -45,8 +44,6 @@ pub enum RustusError {
     HttpRequestError(#[from] reqwest::Error),
     #[error("Hook invocation failed. Reason: {0}")]
     HookError(String),
-    #[error("Unable to configure logging: {0}")]
-    LogConfigError(#[from] log::SetLoggerError),
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
     #[error("AMQP pooling error error: {0}")]
@@ -61,7 +58,7 @@ pub enum RustusError {
     WrongChecksum,
     #[error("The header value is incorrect")]
     WrongHeaderValue,
-    #[error("HTTP hook error. Returned status: {0}, Response text: {1}")]
+    #[error("HTTP hook error. Returned status: {0}.")]
     HTTPHookError(u16, String, Option<String>),
     #[error("Found S3 error: {0}")]
     S3Error(#[from] s3::error::S3Error),
@@ -102,7 +99,7 @@ impl IntoResponse for RustusError {
     fn into_response(self) -> axum::response::Response {
         let status_code = self.get_status_code();
         if status_code != StatusCode::NOT_FOUND {
-            log::error!("{self}");
+            tracing::error!(err=?self, "{self}");
         }
         match self {
             RustusError::HTTPHookError(_, proxy_response, content_type) => {

@@ -150,6 +150,7 @@ impl Notifier for AMQPNotifier {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, message, _header_map))]
     async fn send_message(
         &self,
         message: String,

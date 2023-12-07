@@ -4,7 +4,6 @@ use crate::{
     RustusResult,
 };
 use axum::http::HeaderMap;
-use log::debug;
 use std::path::PathBuf;
 use tokio::process::Command;
 
@@ -26,6 +25,7 @@ impl Notifier for DirNotifier {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, message, _headers_map))]
     async fn send_message(
         &self,
         message: String,
@@ -34,12 +34,12 @@ impl Notifier for DirNotifier {
     ) -> RustusResult<()> {
         let hook_path = self.dir.join(hook.to_string());
         if !hook_path.exists() {
-            debug!("Hook {} not found.", hook.to_string());
+            tracing::debug!("Hook {} not found.", hook.to_string());
             return Err(RustusError::HookError(format!(
                 "Hook file {hook} not found."
             )));
         }
-        debug!("Running hook: {}", hook_path.as_path().display());
+        tracing::debug!("Running hook: {}", hook_path.as_path().display());
         let mut command = Command::new(hook_path).arg(message).spawn()?;
         let stat = command.wait().await?;
         if !stat.success() {

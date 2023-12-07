@@ -1,6 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
-use http::{HeaderName, HeaderValue, Method};
+use axum::http::{HeaderName, HeaderValue, Method};
 use tower_http::cors::{AllowOrigin, CorsLayer, MaxAge};
 use wildmatch::WildMatch;
 

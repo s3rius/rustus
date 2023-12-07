@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use axum::{
     extract::{Path, State},
+    http::StatusCode,
     response::{IntoResponse, Response},
 };
-use reqwest::StatusCode;
 
 use crate::{
     data_storage::base::Storage,

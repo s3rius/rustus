@@ -1,10 +1,8 @@
 #![allow(async_fn_in_trait)]
 
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 use errors::RustusResult;
-use sentry::types::Dsn;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod config;
 pub mod data_storage;
@@ -17,8 +15,9 @@ pub mod server;
 pub mod state;
 pub mod utils;
 
+#[cfg(not(target_env = "msvc"))]
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 #[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &config::Config) {
@@ -48,32 +47,33 @@ fn greeting(app_conf: &config::Config) {
 
 fn main() -> RustusResult<()> {
     let args = config::Config::parse();
+    greeting(&args);
     let mut _guard = None;
-    if let Some(sentry_dsn) = &args.sentry_config.sentry_dsn {
+    if let Some(sentry_dsn) = &args.sentry_config.dsn {
+        let default_options = sentry::ClientOptions::default();
         _guard = Some(sentry::init(sentry::ClientOptions {
-            dsn: Dsn::from_str(sentry_dsn.as_str()).ok(),
+            dsn: sentry::types::Dsn::from_str(sentry_dsn.as_str()).ok(),
             // Enable capturing of traces; set this a to lower value in production:
-            traces_sample_rate: 1.0,
-            ..sentry::ClientOptions::default()
+            sample_rate: args
+                .sentry_config
+                .sample_rate
+                .unwrap_or(default_options.sample_rate),
+            traces_sample_rate: args
+                .sentry_config
+                .traces_sample_rate
+                .unwrap_or(default_options.traces_sample_rate),
+            environment: args
+                .sentry_config
+                .environment
+                .clone()
+                .map(|val| Cow::from(val))
+                .clone(),
+            release: sentry::release_name!(),
+            debug: args.sentry_config.debug,
+            ..default_options
         }));
     }
 
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::filter::filter_fn(move |a| {
-            a.level() <= &args.log_level
-        }))
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_level(true)
-                .with_file(false)
-                .with_line_number(false)
-                .with_target(false)
-                .compact(),
-        )
-        .with(sentry_tracing::layer())
-        .init();
-
-    greeting(&args);
     let mut builder = if Some(1) == args.workers {
         tokio::runtime::Builder::new_current_thread()
     } else {

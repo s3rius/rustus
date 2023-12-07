@@ -1,6 +1,6 @@
 use std::{collections::HashMap, hash::BuildHasherDefault, net::SocketAddr};
 
-use http::{HeaderMap, Uri};
+use axum::http::{HeaderMap, Method, Uri};
 use rustc_hash::FxHasher;
 use serde_json::{json, Value};
 
@@ -29,7 +29,7 @@ impl Format {
     pub fn format(
         &self,
         uri: &Uri,
-        method: &http::Method,
+        method: &Method,
         addr: &SocketAddr,
         headers: &HeaderMap,
         proxy_enabled: bool,

@@ -34,16 +34,17 @@ impl Notifier for HttpNotifier {
         Ok(())
     }
 
+    #[tracing::instrument(err, skip(self, message, header_map), fields(response_body = tracing::field::Empty))]
     async fn send_message(
         &self,
         message: String,
         hook: Hook,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
-        log::debug!("Starting HTTP Hook.");
+        tracing::debug!("Starting HTTP Hook.");
         let idempotency_key = uuid::Uuid::new_v4().to_string();
         let requests_vec = self.urls.iter().map(|url| {
-            log::debug!("Preparing request for {}", url);
+            tracing::debug!("Preparing request for {}", url);
             let mut request = self
                 .client
                 .post(url.as_str())
@@ -67,12 +68,7 @@ impl Notifier for HttpNotifier {
                     .and_then(|hval| hval.to_str().ok().map(String::from));
                 let status = real_resp.status().as_u16();
                 let text = real_resp.text().await.unwrap_or_default();
-                log::warn!(
-                    "Got wrong response for `{hook}`. Status code: `{status}`, body: `{body}`",
-                    hook = hook,
-                    status = status,
-                    body = text,
-                );
+                tracing::Span::current().record("response_body", &text);
                 return Err(RustusError::HTTPHookError(status, text, content_type));
             }
         }

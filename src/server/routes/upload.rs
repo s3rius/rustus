@@ -2,11 +2,11 @@ use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{ConnectInfo, Path, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, Method, StatusCode, Uri},
     response::IntoResponse,
 };
 use bytes::Bytes;
-use http::{Method, Uri};
+use tracing::Instrument;
 
 use crate::{
     data_storage::base::Storage,
@@ -15,9 +15,10 @@ use crate::{
     info_storages::base::InfoStorage,
     notifiers::hooks::Hook,
     state::RustusState,
-    utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt, result::MonadLogger},
+    utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt},
 };
 
+#[tracing::instrument(level = "info", skip_all, fields(upload_id = tracing::field::Empty))]
 pub async fn handler(
     uri: Uri,
     method: Method,
@@ -27,6 +28,7 @@ pub async fn handler(
     Path(upload_id): Path<String>,
     body: Bytes,
 ) -> RustusResult<axum::response::Response> {
+    tracing::Span::current().record("upload_id", &upload_id.as_str());
     if !headers.check("Content-Type", |val| {
         val == "application/offset+octet-stream"
     }) {
@@ -134,20 +136,16 @@ pub async fn handler(
         );
         let headers_clone = headers.clone();
 
-        tokio::spawn(async move {
-            state_clone
-                .notificator
-                .send_message(msg, hook, &headers_clone)
-                .await
-                .mlog_warn(
-                    format!(
-                        "Failed to send PostReceive hook for upload {}",
-                        file_info.id
-                    )
-                    .as_str(),
-                )
-                .ok();
-        });
+        tokio::spawn(
+            async move {
+                state_clone
+                    .notificator
+                    .notify_all(msg, hook, &headers_clone)
+                    .await
+                    .ok();
+            }
+            .in_current_span(),
+        );
     }
 
     Ok((

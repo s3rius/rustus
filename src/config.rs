@@ -279,12 +279,31 @@ pub struct NotificationConfig {
 #[derive(Parser, Clone, Debug)]
 pub struct SentryConfig {
     /// Sentry DSN.
-    #[arg(long, env = "RUSTUS_SENTRY_DSN")]
-    pub sentry_dsn: Option<String>,
+    #[arg(name = "sentry-dsn", long, env = "RUSTUS_SENTRY_DSN")]
+    pub dsn: Option<String>,
 
     /// Sentry sample rate.
-    #[arg(long, env = "RUSTUS_SENTRY_SAMPLE_RATE")]
-    pub sentry_sample_rate: Option<f32>,
+    #[arg(name = "sentry-sample-rate", long, env = "RUSTUS_SENTRY_SAMPLE_RATE")]
+    pub sample_rate: Option<f32>,
+
+    /// Sentry traces sample rate.
+    #[arg(
+        name = "sentry-traces-sample-rate",
+        long,
+        env = "RUSTUS_SENTRY_TRACES_SAMPLE_RATE"
+    )]
+    pub traces_sample_rate: Option<f32>,
+
+    #[arg(name = "sentry-environment", long, env = "RUSTUS_SENTRY_ENVIRONMENT")]
+    pub environment: Option<String>,
+
+    #[arg(
+        name = "sentry-debug",
+        long,
+        default_value = "false",
+        env = "RUSTUS_SENTRY_DEBUG"
+    )]
+    pub debug: bool,
 }
 
 #[derive(Parser, Clone, Debug)]
@@ -301,7 +320,7 @@ pub struct Config {
 
     /// Log level for the server.
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
-    pub log_level: tracing::level_filters::LevelFilter,
+    pub log_level: tracing::Level,
 
     /// Number of worker threads for the server.
     ///
@@ -312,6 +331,15 @@ pub struct Config {
     /// Base URL for all endpoints.
     #[arg(long, default_value = "/files", env = "RUSTUS_PREFIX")]
     pub url: String,
+
+    /// Option to disable access logging completely.
+    /// Useful when using sentry, to not spam with logs,
+    /// because sentry might incorrectly capture some access logs,
+    /// which is annoying.
+    ///
+    /// By default it is disabled.
+    #[arg(long, default_value = "false", env = "RUSTUS_NO_ACCESS")]
+    pub no_access: bool,
 
     /// Disable access log for health endpoint.
     /// By default it is enabled.
