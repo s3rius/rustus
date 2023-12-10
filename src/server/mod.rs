@@ -103,6 +103,11 @@ pub async fn start(config: Config) -> RustusResult<()> {
         0,
     )));
 
+    let mut sentry_layer = None;
+    if config.sentry_config.dsn.is_some() {
+        sentry_layer = Some(sentry_tracing::layer());
+    }
+
     tracing_subscriber::registry()
         .with(tracing_subscriber::filter::LevelFilter::from_level(
             config.log_level,
@@ -114,7 +119,7 @@ pub async fn start(config: Config) -> RustusResult<()> {
                 .with_line_number(false)
                 .with_target(false),
         )
-        .with(sentry_tracing::layer())
+        .with(sentry_layer)
         .init();
 
     let tracer = tower_http::trace::TraceLayer::new_for_http()
