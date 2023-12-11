@@ -48,6 +48,7 @@ fn greeting(app_conf: &config::Config) {
 fn main() -> RustusResult<()> {
     let args = config::Config::parse();
     greeting(&args);
+    #[allow(clippy::no_effect_underscore_binding)]
     let mut _guard = None;
     if let Some(sentry_dsn) = &args.sentry_config.dsn {
         let default_options = sentry::ClientOptions::default();
@@ -66,7 +67,7 @@ fn main() -> RustusResult<()> {
                 .sentry_config
                 .environment
                 .clone()
-                .map(|val| Cow::from(val))
+                .map(Cow::from)
                 .clone(),
             release: sentry::release_name!(),
             debug: args.sentry_config.debug,

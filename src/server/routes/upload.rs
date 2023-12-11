@@ -28,7 +28,7 @@ pub async fn handler(
     Path(upload_id): Path<String>,
     body: Bytes,
 ) -> RustusResult<axum::response::Response> {
-    tracing::Span::current().record("upload_id", &upload_id.as_str());
+    tracing::Span::current().record("upload_id", upload_id.as_str());
     if !headers.check("Content-Type", |val| {
         val == "application/offset+octet-stream"
     }) {

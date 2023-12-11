@@ -95,7 +95,7 @@ impl Storage for FileStorage {
             .open(path.as_str())
             .await?;
         let mut writer = tokio::io::BufWriter::new(file);
-        writer.write_all(&mut bytes).await?;
+        writer.write_all(&bytes).await?;
         writer.flush().await?;
         if self.force_fsync {
             writer.get_ref().sync_data().await?;
@@ -144,7 +144,7 @@ impl Storage for FileStorage {
                 .await?;
             let mut reader = tokio::io::BufReader::new(part_file);
             tokio::io::copy_buf(&mut reader, &mut writer).await?;
-            reader.shutdown().await?
+            reader.shutdown().await?;
         }
         writer.flush().await?;
         if self.force_fsync {

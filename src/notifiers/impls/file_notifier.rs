@@ -38,7 +38,7 @@ impl Notifier for FileNotifier {
             .spawn()?;
         let stat = command.wait().await?;
         if !stat.success() {
-            tracing::Span::current().record("exit_status", &stat.code().unwrap_or(0));
+            tracing::Span::current().record("exit_status", stat.code().unwrap_or(0));
             return Err(RustusError::HookError("Returned wrong status code".into()));
         }
         Ok(())

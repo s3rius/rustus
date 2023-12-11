@@ -144,7 +144,7 @@ pub async fn start(config: Config) -> RustusResult<()> {
         })
         .on_response(
             |response: &Response, latency: Duration, span: &tracing::Span| {
-                span.record("status", &response.status().as_u16());
+                span.record("status", response.status().as_u16());
                 span.record("duration", latency.as_millis());
                 tracing::info!("response");
             },

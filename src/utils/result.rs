@@ -4,25 +4,28 @@ pub trait MonadLogger: Sized {
     #[must_use]
     fn _should_log(&self) -> bool;
 
+    #[must_use]
     fn mlog_err(self, msg: &str) -> Self {
         if self._should_log() {
-            tracing::error!(msg)
+            tracing::error!(msg);
         }
         self
     }
 
+    #[must_use]
     fn mlog_warn(self, msg: &str) -> Self {
         if self._should_log() {
-            tracing::warn!(msg)
+            tracing::warn!(msg);
         }
         self
     }
 
+    #[must_use]
     #[allow(unused_variables)]
     fn mlog_dbg(self, msg: &str) -> Self {
         #[cfg(debug_assertions)]
         if self._should_log() {
-            tracing::debug!(msg)
+            tracing::debug!(msg);
         }
         self
     }
