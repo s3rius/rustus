@@ -279,14 +279,28 @@ pub struct NotificationConfig {
 #[derive(Parser, Clone, Debug)]
 pub struct SentryConfig {
     /// Sentry DSN.
+    ///
+    /// Link to sentry project, which is used to send events to.
     #[arg(name = "sentry-dsn", long, env = "RUSTUS_SENTRY_DSN")]
     pub dsn: Option<String>,
 
     /// Sentry sample rate.
-    #[arg(name = "sentry-sample-rate", long, env = "RUSTUS_SENTRY_SAMPLE_RATE")]
+    ///
+    /// This option is used to set how often events are sent to sentry.
+    /// The default value is 1.0, which means that all events are sent.
+    #[arg(
+        name = "sentry-sample-rate",
+        long,
+        default_value = "1.0",
+        env = "RUSTUS_SENTRY_SAMPLE_RATE"
+    )]
     pub sample_rate: Option<f32>,
 
     /// Sentry traces sample rate.
+    ///
+    /// This option is used to set how often traces are sent to sentry.
+    /// Traces are used to track performance, so this option might not be
+    /// useful for regular users.
     #[arg(
         name = "sentry-traces-sample-rate",
         long,
@@ -294,9 +308,17 @@ pub struct SentryConfig {
     )]
     pub traces_sample_rate: Option<f32>,
 
+    /// Sentry environment.
+    ///
+    /// This option is used to set environment for sentry.
     #[arg(name = "sentry-environment", long, env = "RUSTUS_SENTRY_ENVIRONMENT")]
     pub environment: Option<String>,
 
+    /// DEvelopment option for sentry.
+    ///
+    /// This option enables logging of sentry events,
+    /// which is useful for debugging. But it is not recommended
+    /// to enable this option in production.
     #[arg(
         name = "sentry-debug",
         long,

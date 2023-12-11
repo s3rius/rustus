@@ -74,7 +74,8 @@ please provide sentry-dsn to rustus.
 
     ``` bash
     rustus --sentry-dsn "https://user@sentry-instance.com/11" \
-        --sentry-sample-rate 1.0
+        --sentry-sample-rate 1.0 \
+        --sentry-environment "dev"
     ```
 
 === "ENV"
@@ -82,6 +83,7 @@ please provide sentry-dsn to rustus.
     ``` bash
     export RUSTUS_SENTRY_DSN="https://user@sentry-instance.com/11"
     export RUSTUS_SENTRY_SAMPLE_RATE="1.0"
+    export RUSTUS_SENTRY_ENVIRONMENT="dev"
 
     rustus
     ```
