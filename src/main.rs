@@ -1,11 +1,8 @@
 #![allow(async_fn_in_trait)]
 
+use std::{borrow::Cow, str::FromStr};
+
 use errors::RustusResult;
-use fern::{
-    colors::{Color, ColoredLevelConfig},
-    Dispatch,
-};
-use log::LevelFilter;
 
 pub mod config;
 pub mod data_storage;
@@ -18,34 +15,10 @@ pub mod server;
 pub mod state;
 pub mod utils;
 
+#[cfg(not(target_env = "msvc"))]
 #[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
-#[cfg_attr(coverage, no_coverage)]
-fn setup_logging(app_config: &config::Config) -> RustusResult<()> {
-    let colors = ColoredLevelConfig::new()
-        // use builder methods
-        .info(Color::Green)
-        .warn(Color::Yellow)
-        .debug(Color::BrightCyan)
-        .error(Color::BrightRed)
-        .trace(Color::Blue);
-
-    Dispatch::new()
-        .level(app_config.log_level)
-        .level_for("rbatis", LevelFilter::Error)
-        .chain(std::io::stdout())
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{}[{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S%:z]"),
-                colors.color(record.level()),
-                message
-            ));
-        })
-        .apply()?;
-    Ok(())
-}
 #[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &config::Config) {
     let extensions = app_conf
@@ -74,8 +47,34 @@ fn greeting(app_conf: &config::Config) {
 
 fn main() -> RustusResult<()> {
     let args = config::Config::parse();
-    setup_logging(&args)?;
     greeting(&args);
+    #[allow(clippy::no_effect_underscore_binding)]
+    let mut _guard = None;
+    if let Some(sentry_dsn) = &args.sentry_config.dsn {
+        let default_options = sentry::ClientOptions::default();
+        _guard = Some(sentry::init(sentry::ClientOptions {
+            dsn: sentry::types::Dsn::from_str(sentry_dsn.as_str()).ok(),
+            // Enable capturing of traces; set this a to lower value in production:
+            sample_rate: args
+                .sentry_config
+                .sample_rate
+                .unwrap_or(default_options.sample_rate),
+            traces_sample_rate: args
+                .sentry_config
+                .traces_sample_rate
+                .unwrap_or(default_options.traces_sample_rate),
+            environment: args
+                .sentry_config
+                .environment
+                .clone()
+                .map(Cow::from)
+                .clone(),
+            release: sentry::release_name!(),
+            debug: args.sentry_config.debug,
+            ..default_options
+        }));
+    }
+
     let mut builder = if Some(1) == args.workers {
         tokio::runtime::Builder::new_current_thread()
     } else {

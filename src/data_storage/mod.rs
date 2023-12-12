@@ -21,7 +21,7 @@ pub enum AvailableStorages {
 
 from_str!(AvailableStorages, "storages");
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum DataStorageImpl {
     File(FileStorage),
     S3Hybrid(S3HybridStorage),

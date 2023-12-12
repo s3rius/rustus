@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use tokio::fs::DirBuilder;
+use tokio::{fs::DirBuilder, io::AsyncWriteExt};
 
 use crate::{
     errors::{RustusError, RustusResult},
@@ -9,7 +9,7 @@ use crate::{
     utils::result::MonadLogger,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileInfoStorage {
     info_dir: PathBuf,
 }
@@ -46,6 +46,8 @@ impl InfoStorage for FileInfoStorage {
         let str_data = serde_json::to_string(file_info)?;
         let mut writer = tokio::io::BufWriter::new(file);
         tokio::io::copy_buf(&mut str_data.as_bytes(), &mut writer).await?;
+        writer.flush().await?;
+        writer.shutdown().await?;
         Ok(())
     }
 
@@ -60,6 +62,7 @@ impl InfoStorage for FileInfoStorage {
         tokio::io::copy_buf(&mut reader, &mut contents)
             .await
             .mlog_dbg("Cannot write bytes")?;
+        reader.shutdown().await?;
         Ok(serde_json::from_slice::<FileInfo>(contents.as_slice())?)
     }
 

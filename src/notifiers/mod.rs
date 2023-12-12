@@ -4,10 +4,11 @@ pub mod impls;
 pub mod manager;
 pub mod serializer;
 
+use axum::http::HeaderMap;
 pub use manager::NotificationManager;
 pub use serializer::Format;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum NotifierImpl {
     Http(impls::http_notifier::HttpNotifier),
     File(impls::file_notifier::FileNotifier),
@@ -28,7 +29,7 @@ impl base::Notifier for NotifierImpl {
         &self,
         message: String,
         hook: hooks::Hook,
-        headers_map: &http::HeaderMap,
+        headers_map: &HeaderMap,
     ) -> crate::errors::RustusResult<()> {
         match self {
             Self::Http(http) => http.send_message(message, hook, headers_map).await,

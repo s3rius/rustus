@@ -17,7 +17,7 @@ pub enum AvailableInfoStorages {
 
 from_str!(AvailableInfoStorages, "info storage");
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum InfoStorageImpl {
     Redis(RedisStorage),
     File(FileInfoStorage),

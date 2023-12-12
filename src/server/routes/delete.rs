@@ -2,10 +2,10 @@ use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{ConnectInfo, Path, State},
-    http::StatusCode,
+    http::{HeaderMap, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
-use http::{HeaderMap, Method, Uri};
+use tracing::Instrument;
 
 use crate::{
     data_storage::base::Storage,
@@ -14,7 +14,6 @@ use crate::{
     info_storages::base::InfoStorage,
     notifiers::hooks::Hook,
     state::RustusState,
-    utils::result::MonadLogger,
 };
 
 pub async fn handler(
@@ -45,7 +44,7 @@ pub async fn handler(
     {
         state
             .notificator
-            .send_message(
+            .notify_all(
                 state.config.notification_config.hooks_format.format(
                     &uri,
                     &method,
@@ -77,13 +76,15 @@ pub async fn handler(
             &file_info,
         );
         let state_cln = state.clone();
-        tokio::spawn(async move {
-            state_cln
-                .notificator
-                .send_message(msg, Hook::PostTerminate, &headers)
-                .await
-                .mlog_warn("Cannot send PostTerminate hook")
-        });
+        tokio::spawn(
+            async move {
+                state_cln
+                    .notificator
+                    .notify_all(msg, Hook::PostTerminate, &headers)
+                    .await
+            }
+            .in_current_span(),
+        );
     }
 
     Ok(StatusCode::NO_CONTENT.into_response())

@@ -4,10 +4,9 @@ use crate::{
     RustusResult,
 };
 use axum::http::HeaderMap;
-use log::debug;
 use tokio::process::Command;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileNotifier {
     pub command: String,
 }
@@ -25,19 +24,21 @@ impl Notifier for FileNotifier {
         Ok(())
     }
 
+    #[tracing::instrument(err, skip(self, message, _headers_map), fields(exit_status = tracing::field::Empty))]
     async fn send_message(
         &self,
         message: String,
         hook: Hook,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
-        debug!("Running command: {}", self.command.as_str());
+        tracing::debug!("Running command: {}", self.command.as_str());
         let mut command = Command::new(self.command.as_str())
             .arg(hook.to_string())
             .arg(message)
             .spawn()?;
         let stat = command.wait().await?;
         if !stat.success() {
+            tracing::Span::current().record("exit_status", stat.code().unwrap_or(0));
             return Err(RustusError::HookError("Returned wrong status code".into()));
         }
         Ok(())

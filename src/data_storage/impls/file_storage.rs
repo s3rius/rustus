@@ -1,12 +1,10 @@
-use std::{io::Write, path::PathBuf};
+use std::path::PathBuf;
+
+use tokio::io::AsyncWriteExt;
 
 use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
-use log::error;
-use std::{
-    fs::{remove_file, DirBuilder, OpenOptions},
-    io::{copy, BufReader, BufWriter},
-};
+use std::fs::DirBuilder;
 
 use crate::{
     data_storage::base::Storage,
@@ -15,7 +13,7 @@ use crate::{
     utils::{dir_struct::substr_now, headers::HeaderMapExt},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileStorage {
     data_dir: PathBuf,
     dir_struct: String,
@@ -82,45 +80,42 @@ impl Storage for FileStorage {
         Ok(resp)
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
-        if file_info.path.is_none() {
+        let Some(path) = &file_info.path else {
             return Err(RustusError::FileNotFound);
+        };
+        let file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(false)
+            .read(false)
+            .truncate(false)
+            .open(path.as_str())
+            .await?;
+        let mut writer = tokio::io::BufWriter::new(file);
+        writer.write_all(&bytes).await?;
+        writer.flush().await?;
+        if self.force_fsync {
+            writer.get_ref().sync_data().await?;
         }
-        let path = file_info.path.as_ref().unwrap().clone();
-        let force_sync = self.force_fsync;
-        tokio::task::spawn_blocking(move || {
-            // Opening file in w+a mode.
-            // It means that we're going to append some
-            // bytes to the end of a file.
-            let file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .create(false)
-                .read(false)
-                .truncate(false)
-                .open(path.as_str())?;
-            let mut writer = BufWriter::new(file);
-            writer.write_all(bytes.as_ref())?;
-            writer.flush()?;
-            if force_sync {
-                writer.get_ref().sync_data()?;
-            }
-            Ok(())
-        })
-        .await?
+        writer.into_inner().shutdown().await?;
+        bytes.clear();
+        Ok(())
     }
 
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str())?;
-        OpenOptions::new()
+        let mut opened = tokio::fs::OpenOptions::new()
             .create(true)
             .write(true)
             .truncate(true)
             .create_new(true)
-            .open(file_path.as_path())?;
+            .open(file_path.as_path())
+            .await?;
+        opened.shutdown().await?;
         Ok(file_path.display().to_string())
     }
 
@@ -129,54 +124,48 @@ impl Storage for FileStorage {
         file_info: &FileInfo,
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        let force_fsync = self.force_fsync;
-        if file_info.path.is_none() {
+        let Some(path) = &file_info.path else {
             return Err(RustusError::FileNotFound);
+        };
+        let file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .append(true)
+            .create(true)
+            .open(path)
+            .await?;
+        let mut writer = tokio::io::BufWriter::new(file);
+        for part in parts_info {
+            if part.path.is_none() {
+                return Err(RustusError::FileNotFound);
+            }
+            let part_file = tokio::fs::OpenOptions::new()
+                .read(true)
+                .open(part.path.as_ref().unwrap())
+                .await?;
+            let mut reader = tokio::io::BufReader::new(part_file);
+            tokio::io::copy_buf(&mut reader, &mut writer).await?;
+            reader.shutdown().await?;
         }
-        let path = file_info.path.as_ref().unwrap().clone();
-        tokio::task::spawn_blocking(move || {
-            let file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .create(true)
-                .open(path)?;
-            let mut writer = BufWriter::new(file);
-            for part in parts_info {
-                if part.path.is_none() {
-                    return Err(RustusError::FileNotFound);
-                }
-                let part_file = OpenOptions::new()
-                    .read(true)
-                    .open(part.path.as_ref().unwrap())?;
-                let mut reader = BufReader::new(part_file);
-                copy(&mut reader, &mut writer)?;
-            }
-            writer.flush()?;
-            if force_fsync {
-                writer.get_ref().sync_data()?;
-            }
-            Ok(())
-        })
-        .await?
+        writer.flush().await?;
+        if self.force_fsync {
+            writer.get_ref().sync_data().await?;
+        }
+        writer.into_inner().shutdown().await?;
+        Ok(())
     }
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
-        let info = file_info.clone();
-        if info.path.is_none() {
+        let Some(path) = &file_info.path else {
+            return Err(RustusError::FileNotFound);
+        };
+        let data_path = PathBuf::from(path);
+        if !data_path.exists() {
             return Err(RustusError::FileNotFound);
         }
-        tokio::task::spawn_blocking(move || {
-            // Let's remove the file itself.
-            let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
-            if !data_path.exists() {
-                return Err(RustusError::FileNotFound);
-            }
-            remove_file(data_path).map_err(|err| {
-                error!("{:?}", err);
-                RustusError::UnableToRemove(info.id.clone())
-            })?;
-            Ok(())
-        })
-        .await?
+        tokio::fs::remove_file(data_path).await.map_err(|err| {
+            tracing::error!("{:?}", err);
+            RustusError::UnableToRemove(String::from(path.as_str()))
+        })?;
+        Ok(())
     }
 }

@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 async-trait = "0.1.74"
-axum = { git = "https://github.com/tokio-rs/axum.git", rev = "3ff45d9" }
+axum = { version = "0.7.1" }
 base64 = "0.21.5"
 bytes = "1.5.0"
 chrono = { version = "0.4.26", features = ["serde"] }
@@ -25,17 +25,16 @@ enum_dispatch = "0.3.12"
 fern = { version = "0.6.2", features = ["colored", "chrono"] }
 futures = "0.3.29"
 log = "0.4.20"
-mimalloc = "0.1.39"
 mime = "0.3.17"
 mime_guess = "2.0.4"
 mobc = "0.8.3"
-redis = { version = "0.23.3", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "0.24.0", features = ["tokio-comp", "connection-manager"] }
 rustc-hash = "1.1.0"
 serde = { version = "1.0.192", features = ["derive"] }
 serde_json = "1.0.108"
 strum = { version = "0.25.0", features = ["derive"] }
 thiserror = "1.0.50"
-tokio = { version = "1.31.0", features = ["full"] }
+tokio = { version = "1.31.0", features = ["full", "bytes"] }
 tokio-util = { version = "0.7.10", features = ["io"] }
 uuid = { version = "1.5.0", features = ["v4"] }
 rust-s3 = "^0.33"
@@ -47,10 +46,26 @@ md-5 = "^0.10.1"
 digest = "^0.10.1"
 reqwest = "0.11.22"
 lapin = "2.3.1"
-tower-http = { version = "0.4.4", features = ["cors"] }
-http = "^0.2"
+tower-http = { version = "0.5.0", features = ["cors", "trace"] }
 wildmatch = "2.1.1"
+tracing = "0.1.40"
+sentry = "0.32.0"
+sentry-tracing = "0.32.0"
+sentry-tower = { version = "0.32.0", features = [
+    "http",
+    "axum",
+    "axum-matched-path",
+] }
+tracing-subscriber = { version = "0.3.18", features = [
+    "smallvec",
+    "parking_lot",
+    "time",
+] }
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+tikv-jemallocator = { version = "0.5.4", features = [
+    "background_threads_runtime_support",
+] }
 
 [profile.release]
 opt-level = 3

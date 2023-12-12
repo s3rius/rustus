@@ -1,63 +1,23 @@
 use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
     sync::Arc,
+    time::Duration,
 };
 
 use crate::{
     config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
 };
 use axum::{
-    extract::{ConnectInfo, DefaultBodyLimit, State},
-    http::HeaderValue,
+    extract::{ConnectInfo, DefaultBodyLimit, MatchedPath, Request, State},
+    http::{HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
     Router, ServiceExt,
 };
 use tower::Layer;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod cors;
 mod routes;
-
-async fn logger(
-    State(config): State<Arc<Config>>,
-    req: axum::extract::Request,
-    next: axum::middleware::Next,
-) -> impl axum::response::IntoResponse {
-    let default_addr = ConnectInfo(SocketAddr::V4(SocketAddrV4::new(
-        Ipv4Addr::new(0, 0, 0, 0),
-        8000,
-    )));
-    let socket = req
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .unwrap_or(&default_addr);
-    let remote = req.headers().get_remote_ip(socket, config.behind_proxy);
-    let method = req.method().to_string();
-    let uri = req
-        .uri()
-        .path_and_query()
-        .map(ToString::to_string)
-        .unwrap_or_default();
-
-    let time = std::time::Instant::now();
-    let version = req.version();
-    let response = next.run(req).await;
-    #[allow(clippy::cast_precision_loss)]
-    let elapsed = (time.elapsed().as_micros() as f64) / 1000.0;
-    let status = response.status().as_u16();
-
-    // log::log!(log::Level::Info, "ememe");
-    if uri != "/health" {
-        let mut level = log::Level::Info;
-        if !response.status().is_success() {
-            level = log::Level::Error;
-        }
-        log::log!(
-            level,
-            "\"{method} {uri} {version:?}\" \"-\" \"{status}\" \"{remote}\" \"{elapsed}\""
-        );
-    }
-
-    response
-}
 
 async fn method_replacer(
     mut req: axum::extract::Request,
@@ -94,7 +54,11 @@ async fn add_tus_header(
 }
 
 async fn healthcheck() -> impl axum::response::IntoResponse {
-    axum::http::StatusCode::OK
+    let mut response = StatusCode::OK.into_response();
+    response
+        .headers_mut()
+        .insert("X-NO-LOG", HeaderValue::from_static("1"));
+    response
 }
 
 async fn fallback() -> impl axum::response::IntoResponse {
@@ -137,23 +101,86 @@ pub fn get_router(state: Arc<RustusState>) -> Router {
 ///
 /// This function returns an error if the server fails to start.
 pub async fn start(config: Config) -> RustusResult<()> {
-    let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
-    log::info!("Starting server at http://{}:{}", config.host, config.port);
-    let state = Arc::new(RustusState::from_config(&config).await?);
+    let behind_proxy = config.behind_proxy;
+    let default_addr = ConnectInfo(SocketAddr::V4(SocketAddrV4::new(
+        Ipv4Addr::new(0, 0, 0, 0),
+        0,
+    )));
 
+    let mut sentry_layer = None;
+    if config.sentry_config.dsn.is_some() {
+        sentry_layer = Some(sentry_tracing::layer());
+    }
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::filter::LevelFilter::from_level(
+            config.log_level,
+        ))
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_level(true)
+                .with_file(false)
+                .with_line_number(false)
+                .with_target(false),
+        )
+        .with(sentry_layer)
+        .init();
+
+    let tracer = tower_http::trace::TraceLayer::new_for_http()
+        .make_span_with(move |request: &Request| {
+            let matched_path = request
+                .extensions()
+                .get::<MatchedPath>()
+                .map(MatchedPath::as_str);
+            let socket_addr = request
+                .extensions()
+                .get::<ConnectInfo<SocketAddr>>()
+                .unwrap_or(&default_addr);
+            let ip = request.headers().get_remote_ip(socket_addr, behind_proxy);
+            tracing::info_span!(
+                "request",
+                method = ?request.method(),
+                matched_path,
+                version = ?request.version(),
+                ip = ip,
+                status = tracing::field::Empty,
+            )
+        })
+        .on_response(
+            move |response: &Response, latency: Duration, span: &tracing::Span| {
+                span.record("status", response.status().as_u16());
+                span.record("duration", latency.as_millis());
+                if config.no_access {
+                    return;
+                }
+                if response.headers().contains_key("X-NO-LOG") {
+                    return;
+                }
+                tracing::info!("access log");
+            },
+        );
+
+    let state = Arc::new(RustusState::from_config(&config).await?);
     let tus_app = get_router(state);
-    let main_router = axum::Router::new()
+    let mut main_router = axum::Router::new()
         .route("/health", axum::routing::get(healthcheck))
         .nest(&config.url, tus_app)
-        .fallback(fallback);
+        .fallback(fallback)
+        .layer(tracer);
 
-    let service = axum::middleware::from_fn(method_replacer).layer(
-        axum::middleware::from_fn_with_state(Arc::new(config.clone()), logger).layer(main_router),
-    );
+    if config.sentry_config.dsn.is_some() {
+        main_router = main_router
+            .layer(sentry_tower::NewSentryLayer::new_from_top())
+            .layer(sentry_tower::SentryHttpLayer::new());
+    }
 
+    let listener = tokio::net::TcpListener::bind((config.host.clone(), config.port)).await?;
+    tracing::info!("Starting server at http://{}:{}", config.host, config.port);
     axum::serve(
         listener,
-        service.into_make_service_with_connect_info::<SocketAddr>(),
+        axum::middleware::from_fn(method_replacer)
+            .layer(main_router)
+            .into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await?;
     Ok(())

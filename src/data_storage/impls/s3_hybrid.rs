@@ -26,7 +26,7 @@ use super::file_storage::FileStorage;
 /// complete, it uploads file to S3.
 ///
 /// It's not intended to use this storage for large files.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct S3HybridStorage {
     bucket: Bucket,
     local_storage: FileStorage,
@@ -76,9 +76,9 @@ impl S3HybridStorage {
             let headers_map = serde_json::from_str::<HashMap<String, String>>(raw_s3_headers)
                 .mlog_err("Cannot parse s3 headers. Please provide valid JSON object.")
                 .unwrap();
-            log::debug!("Found extra s3 headers.");
+            tracing::debug!("Found extra s3 headers.");
             for (key, value) in &headers_map {
-                log::debug!("Adding header `{key}` with value `{value}`.");
+                tracing::debug!("Adding header `{key}` with value `{value}`.");
                 bucket.add_header(key, value);
             }
         }
@@ -103,7 +103,7 @@ impl S3HybridStorage {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
         }
         let s3_path = self.get_s3_key(file_info);
-        log::debug!(
+        tracing::debug!(
             "Starting uploading {} to S3 with key `{}`",
             file_info.id,
             s3_path,
@@ -133,7 +133,7 @@ impl Storage for S3HybridStorage {
 
     async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<Response> {
         if file_info.length != Some(file_info.offset) {
-            log::debug!("File isn't uploaded. Returning from local storage.");
+            tracing::debug!("File isn't uploaded. Returning from local storage.");
             return self.local_storage.get_contents(file_info).await;
         }
         let key = self.get_s3_key(file_info);

@@ -47,16 +47,12 @@ pub fn verify_chunk_checksum(header: &HeaderValue, data: &[u8]) -> RustusResult<
             if let Some(checksum_base) = split.next() {
                 let checksum = base64::engine::general_purpose::STANDARD
                     .decode(checksum_base)
-                    .map_err(|_| {
-                        log::error!("Can't decode checksum value");
-                        RustusError::WrongHeaderValue
-                    })?;
+                    .map_err(|_| RustusError::WrongHeaderValue)?;
                 return checksum_verify(algo, data, checksum.as_slice());
             }
         }
         Err(RustusError::WrongHeaderValue)
     } else {
-        log::error!("Can't decode checksum header.");
         Err(RustusError::WrongHeaderValue)
     }
 }

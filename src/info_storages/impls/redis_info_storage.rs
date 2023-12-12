@@ -35,7 +35,7 @@ impl Manager for RedisConnectionManager {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RedisStorage {
     pool: Pool<RedisConnectionManager>,
     expiration: Option<usize>,

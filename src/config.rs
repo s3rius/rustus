@@ -277,6 +277,58 @@ pub struct NotificationConfig {
 }
 
 #[derive(Parser, Clone, Debug)]
+pub struct SentryConfig {
+    /// Sentry DSN.
+    ///
+    /// Link to sentry project, which is used to send events to.
+    #[arg(name = "sentry-dsn", long, env = "RUSTUS_SENTRY_DSN")]
+    pub dsn: Option<String>,
+
+    /// Sentry sample rate.
+    ///
+    /// This option is used to set how often events are sent to sentry.
+    /// The default value is 1.0, which means that all events are sent.
+    #[arg(
+        name = "sentry-sample-rate",
+        long,
+        default_value = "1.0",
+        env = "RUSTUS_SENTRY_SAMPLE_RATE"
+    )]
+    pub sample_rate: Option<f32>,
+
+    /// Sentry traces sample rate.
+    ///
+    /// This option is used to set how often traces are sent to sentry.
+    /// Traces are used to track performance, so this option might not be
+    /// useful for regular users.
+    #[arg(
+        name = "sentry-traces-sample-rate",
+        long,
+        env = "RUSTUS_SENTRY_TRACES_SAMPLE_RATE"
+    )]
+    pub traces_sample_rate: Option<f32>,
+
+    /// Sentry environment.
+    ///
+    /// This option is used to set environment for sentry.
+    #[arg(name = "sentry-environment", long, env = "RUSTUS_SENTRY_ENVIRONMENT")]
+    pub environment: Option<String>,
+
+    /// DEvelopment option for sentry.
+    ///
+    /// This option enables logging of sentry events,
+    /// which is useful for debugging. But it is not recommended
+    /// to enable this option in production.
+    #[arg(
+        name = "sentry-debug",
+        long,
+        default_value = "false",
+        env = "RUSTUS_SENTRY_DEBUG"
+    )]
+    pub debug: bool,
+}
+
+#[derive(Parser, Clone, Debug)]
 #[command(author, version, about, long_about = None)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Config {
@@ -290,7 +342,7 @@ pub struct Config {
 
     /// Log level for the server.
     #[arg(long, default_value = "INFO", env = "RUSTUS_LOG_LEVEL")]
-    pub log_level: log::LevelFilter,
+    pub log_level: tracing::Level,
 
     /// Number of worker threads for the server.
     ///
@@ -301,6 +353,15 @@ pub struct Config {
     /// Base URL for all endpoints.
     #[arg(long, default_value = "/files", env = "RUSTUS_PREFIX")]
     pub url: String,
+
+    /// Option to disable access logging completely.
+    /// Useful when using sentry, to not spam with logs,
+    /// because sentry might incorrectly capture some access logs,
+    /// which is annoying.
+    ///
+    /// By default it is disabled.
+    #[arg(long, default_value = "false", env = "RUSTUS_NO_ACCESS")]
+    pub no_access: bool,
 
     /// Disable access log for health endpoint.
     /// By default it is enabled.
@@ -374,6 +435,9 @@ pub struct Config {
 
     #[command(flatten)]
     pub notification_config: NotificationConfig,
+
+    #[command(flatten)]
+    pub sentry_config: SentryConfig,
 }
 
 impl Config {

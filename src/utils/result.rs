@@ -1,53 +1,44 @@
 use std::fmt::Display;
 
-pub trait MonadLogger {
+pub trait MonadLogger: Sized {
     #[must_use]
-    fn mlog(self, level: log::Level, msg: &str) -> Self;
-    #[must_use]
-    fn mlog_err(self, msg: &str) -> Self;
-    #[must_use]
-    fn mlog_warn(self, msg: &str) -> Self;
-    #[must_use]
-    fn mlog_dbg(self, msg: &str) -> Self;
-}
+    fn _should_log(&self) -> bool;
 
-impl<T, E: Display> MonadLogger for Result<T, E> {
-    fn mlog(self, level: log::Level, msg: &str) -> Self {
-        if let Err(err) = &self {
-            log::log!(level, "{msg}: {err}");
+    #[must_use]
+    fn mlog_err(self, msg: &str) -> Self {
+        if self._should_log() {
+            tracing::error!(msg);
         }
         self
     }
 
-    fn mlog_err(self, msg: &str) -> Self {
-        self.mlog(log::Level::Error, msg)
-    }
-
+    #[must_use]
     fn mlog_warn(self, msg: &str) -> Self {
-        self.mlog(log::Level::Warn, msg)
+        if self._should_log() {
+            tracing::warn!(msg);
+        }
+        self
     }
 
+    #[must_use]
+    #[allow(unused_variables)]
     fn mlog_dbg(self, msg: &str) -> Self {
-        self.mlog(log::Level::Debug, msg)
+        #[cfg(debug_assertions)]
+        if self._should_log() {
+            tracing::debug!(msg);
+        }
+        self
+    }
+}
+
+impl<T, E: Display> MonadLogger for Result<T, E> {
+    fn _should_log(&self) -> bool {
+        self.is_err()
     }
 }
 
 impl<T> MonadLogger for Option<T> {
-    fn mlog(self, level: log::Level, msg: &str) -> Self {
-        if self.is_none() {
-            log::log!(level, "{msg}: The value is None");
-        }
-        self
-    }
-    fn mlog_err(self, msg: &str) -> Self {
-        self.mlog(log::Level::Error, msg)
-    }
-
-    fn mlog_warn(self, msg: &str) -> Self {
-        self.mlog(log::Level::Warn, msg)
-    }
-
-    fn mlog_dbg(self, msg: &str) -> Self {
-        self.mlog(log::Level::Debug, msg)
+    fn _should_log(&self) -> bool {
+        self.is_none()
     }
 }

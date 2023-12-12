@@ -8,8 +8,9 @@ use crate::{
 
 use super::{base::Notifier, NotifierImpl};
 use axum::http::HeaderMap;
+use tracing::Instrument;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct NotificationManager {
     notifiers: Vec<NotifierImpl>,
 }
@@ -25,21 +26,21 @@ impl NotificationManager {
         let mut manager = Self {
             notifiers: Vec::new(),
         };
-        log::debug!("Initializing notification manager.");
+        tracing::debug!("Initializing notification manager.");
         if let Some(hooks_file) = &rustus_config.notification_config.hooks_file {
-            log::debug!("Found hooks file");
+            tracing::debug!("Found hooks file");
             manager
                 .notifiers
                 .push(NotifierImpl::File(FileNotifier::new(hooks_file.clone())));
         }
         if let Some(hooks_dir) = &rustus_config.notification_config.hooks_dir {
-            log::debug!("Found hooks directory");
+            tracing::debug!("Found hooks directory");
             manager
                 .notifiers
                 .push(NotifierImpl::Dir(DirNotifier::new(hooks_dir.clone())));
         }
         if !rustus_config.notification_config.hooks_http_urls.is_empty() {
-            log::debug!("Found http hook urls.");
+            tracing::debug!("Found http hook urls.");
             manager.notifiers.push(NotifierImpl::Http(HttpNotifier::new(
                 rustus_config.notification_config.hooks_http_urls.clone(),
                 rustus_config
@@ -55,12 +56,12 @@ impl NotificationManager {
             .hooks_amqp_url
             .is_some()
         {
-            log::debug!("Found AMQP notifier.");
+            tracing::debug!("Found AMQP notifier.");
             manager.notifiers.push(NotifierImpl::Amqp(AMQPNotifier::new(
                 rustus_config.notification_config.amqp_hook_opts.clone(),
             )));
         }
-        log::debug!("Notification manager initialized.");
+        tracing::debug!("Notification manager initialized.");
         manager
     }
 
@@ -83,7 +84,8 @@ impl NotificationManager {
     /// # Errors
     ///
     /// This method might fail in case if any of the notifiers fails.
-    pub async fn send_message(
+    #[tracing::instrument(skip(self, hook, headers_map))]
+    pub async fn notify_all(
         &self,
         message: String,
         hook: super::hooks::Hook,
@@ -92,6 +94,7 @@ impl NotificationManager {
         for notifier in &self.notifiers {
             notifier
                 .send_message(message.clone(), hook, headers_map)
+                .in_current_span()
                 .await?;
         }
         Ok(())

@@ -2,24 +2,20 @@ use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     extract::{ConnectInfo, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, Method, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use bytes::Bytes;
-use http::{Method, Uri};
+use tracing::Instrument;
 
 use crate::{
-    data_storage::base::Storage,
-    errors::RustusResult,
-    extensions::TusExtensions,
-    info_storages::base::InfoStorage,
-    models::file_info::FileInfo,
-    notifiers::hooks::Hook,
-    state::RustusState,
-    utils::{headers::HeaderMapExt, result::MonadLogger},
+    data_storage::base::Storage, errors::RustusResult, extensions::TusExtensions,
+    info_storages::base::InfoStorage, models::file_info::FileInfo, notifiers::hooks::Hook,
+    state::RustusState, utils::headers::HeaderMapExt,
 };
 
 #[allow(clippy::too_many_lines)]
+#[tracing::instrument(level = "info", skip_all, fields(upload_id = tracing::field::Empty))]
 pub async fn handler(
     uri: Uri,
     method: Method,
@@ -68,6 +64,8 @@ pub async fn handler(
     let meta = headers.get_metadata();
 
     let file_id = uuid::Uuid::new_v4().to_string();
+    tracing::Span::current().record("upload_id", &file_id);
+
     let mut file_info = FileInfo::new(
         file_id.as_str(),
         upload_len,
@@ -142,7 +140,7 @@ pub async fn handler(
     {
         state
             .notificator
-            .send_message(
+            .notify_all(
                 state.config.notification_config.hooks_format.format(
                     &uri,
                     &method,
@@ -198,19 +196,15 @@ pub async fn handler(
         let moved_state = state.clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
-        tokio::task::spawn(async move {
-            moved_state
-                .notificator
-                .send_message(message, post_hook, &headers)
-                .await
-                .mlog_warn(
-                    format!(
-                        "Failed to send PostReceive hook for upload {}",
-                        file_info.id
-                    )
-                    .as_str(),
-                )
-        });
+        tokio::task::spawn(
+            async move {
+                moved_state
+                    .notificator
+                    .notify_all(message, post_hook, &headers)
+                    .await
+            }
+            .in_current_span(),
+        );
     }
 
     Ok((

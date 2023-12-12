@@ -20,7 +20,7 @@ use crate::{
 };
 
 #[allow(clippy::struct_excessive_bools)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DeclareOptions {
     pub declare_exchange: bool,
     pub durable_exchange: bool,
@@ -28,7 +28,7 @@ pub struct DeclareOptions {
     pub durable_queues: bool,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AMQPNotifier {
     exchange_name: String,
     channel_pool: Pool<ChannelPool>,
@@ -150,6 +150,7 @@ impl Notifier for AMQPNotifier {
         Ok(())
     }
 
+    #[tracing::instrument(skip(self, message, _header_map))]
     async fn send_message(
         &self,
         message: String,
