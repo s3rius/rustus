@@ -9,8 +9,8 @@ use crate::{
 };
 use axum::{
     extract::{ConnectInfo, DefaultBodyLimit, MatchedPath, Request, State},
-    http::HeaderValue,
-    response::Response,
+    http::{HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
     Router, ServiceExt,
 };
 use tower::Layer;
@@ -54,7 +54,11 @@ async fn add_tus_header(
 }
 
 async fn healthcheck() -> impl axum::response::IntoResponse {
-    axum::http::StatusCode::OK
+    let mut response = StatusCode::OK.into_response();
+    response
+        .headers_mut()
+        .insert("X-NO-LOG", HeaderValue::from_static("1"));
+    response
 }
 
 async fn fallback() -> impl axum::response::IntoResponse {
@@ -143,10 +147,16 @@ pub async fn start(config: Config) -> RustusResult<()> {
             )
         })
         .on_response(
-            |response: &Response, latency: Duration, span: &tracing::Span| {
+            move |response: &Response, latency: Duration, span: &tracing::Span| {
                 span.record("status", response.status().as_u16());
                 span.record("duration", latency.as_millis());
-                tracing::info!("response");
+                if config.no_access {
+                    return;
+                }
+                if response.headers().contains_key("X-NO-LOG") {
+                    return;
+                }
+                tracing::info!("access log");
             },
         );
 
