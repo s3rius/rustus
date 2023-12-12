@@ -8,7 +8,7 @@ use crate::{
     config::Config, errors::RustusResult, state::RustusState, utils::headers::HeaderMapExt,
 };
 use axum::{
-    extract::{ConnectInfo, DefaultBodyLimit, MatchedPath, Request, State},
+    extract::{ConnectInfo, DefaultBodyLimit, Request, State},
     http::{HeaderValue, StatusCode},
     response::{IntoResponse, Response},
     Router, ServiceExt,
@@ -128,10 +128,7 @@ pub async fn start(config: Config) -> RustusResult<()> {
 
     let tracer = tower_http::trace::TraceLayer::new_for_http()
         .make_span_with(move |request: &Request| {
-            let matched_path = request
-                .extensions()
-                .get::<MatchedPath>()
-                .map(MatchedPath::as_str);
+            let path = request.uri().path().to_string();
             let socket_addr = request
                 .extensions()
                 .get::<ConnectInfo<SocketAddr>>()
@@ -140,7 +137,7 @@ pub async fn start(config: Config) -> RustusResult<()> {
             tracing::info_span!(
                 "request",
                 method = ?request.method(),
-                matched_path,
+                path,
                 version = ?request.version(),
                 ip = ip,
                 status = tracing::field::Empty,
