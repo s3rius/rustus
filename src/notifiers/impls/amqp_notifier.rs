@@ -153,8 +153,8 @@ impl Notifier for AMQPNotifier {
     #[tracing::instrument(skip(self, message, _header_map))]
     async fn send_message(
         &self,
-        message: String,
-        hook: Hook,
+        message: &str,
+        hook: &Hook,
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
         let chan = self.channel_pool.get().await?;

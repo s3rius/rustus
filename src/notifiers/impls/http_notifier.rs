@@ -37,12 +37,13 @@ impl Notifier for HttpNotifier {
     #[tracing::instrument(err, skip(self, message, header_map), fields(response_body = tracing::field::Empty))]
     async fn send_message(
         &self,
-        message: String,
-        hook: Hook,
+        message: &str,
+        hook: &Hook,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
         tracing::debug!("Starting HTTP Hook.");
         let idempotency_key = uuid::Uuid::new_v4().to_string();
+        let body_bytes = bytes::Bytes::copy_from_slice(message.as_bytes());
         let requests_vec = self.urls.iter().map(|url| {
             tracing::debug!("Preparing request for {}", url);
             let mut request = self
@@ -57,7 +58,7 @@ impl Notifier for HttpNotifier {
                     request = request.header(item.as_str(), value.as_bytes());
                 }
             }
-            request.body(message.clone()).send()
+            request.body(body_bytes.clone()).send()
         });
         for response in requests_vec {
             let real_resp = response.await?;

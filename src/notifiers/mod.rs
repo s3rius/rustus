@@ -27,8 +27,8 @@ impl base::Notifier for NotifierImpl {
     }
     async fn send_message(
         &self,
-        message: String,
-        hook: hooks::Hook,
+        message: &str,
+        hook: &hooks::Hook,
         headers_map: &HeaderMap,
     ) -> crate::errors::RustusResult<()> {
         match self {

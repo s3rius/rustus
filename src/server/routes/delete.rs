@@ -45,15 +45,20 @@ pub async fn handler(
         state
             .notificator
             .notify_all(
-                state.config.notification_config.hooks_format.format(
-                    &uri,
-                    &method,
-                    &addr,
-                    &headers,
-                    state.config.behind_proxy,
-                    &file_info,
-                ),
-                Hook::PreTerminate,
+                state
+                    .config
+                    .notification_config
+                    .hooks_format
+                    .format(
+                        &uri,
+                        &method,
+                        &addr,
+                        &headers,
+                        state.config.behind_proxy,
+                        &file_info,
+                    )
+                    .as_str(),
+                &Hook::PreTerminate,
                 &headers,
             )
             .await?;
@@ -80,7 +85,7 @@ pub async fn handler(
             async move {
                 state_cln
                     .notificator
-                    .notify_all(msg, Hook::PostTerminate, &headers)
+                    .notify_all(&msg, &Hook::PostTerminate, &headers)
                     .await
             }
             .in_current_span(),
