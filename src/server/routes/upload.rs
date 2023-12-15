@@ -140,7 +140,7 @@ pub async fn handler(
             async move {
                 state_clone
                     .notificator
-                    .notify_all(msg, hook, &headers_clone)
+                    .notify_all(&msg, &hook, &headers_clone)
                     .await
                     .ok();
             }

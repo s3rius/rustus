@@ -27,8 +27,8 @@ impl Notifier for FileNotifier {
     #[tracing::instrument(err, skip(self, message, _headers_map), fields(exit_status = tracing::field::Empty))]
     async fn send_message(
         &self,
-        message: String,
-        hook: Hook,
+        message: &str,
+        hook: &Hook,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         tracing::debug!("Running command: {}", self.command.as_str());

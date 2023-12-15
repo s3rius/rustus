@@ -28,8 +28,8 @@ impl Notifier for DirNotifier {
     #[tracing::instrument(skip(self, message, _headers_map))]
     async fn send_message(
         &self,
-        message: String,
-        hook: Hook,
+        message: &str,
+        hook: &Hook,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         let hook_path = self.dir.join(hook.to_string());

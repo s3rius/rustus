@@ -8,8 +8,8 @@ pub trait Notifier {
     async fn prepare(&mut self) -> RustusResult<()>;
     async fn send_message(
         &self,
-        message: String,
-        hook: Hook,
+        message: &str,
+        hook: &Hook,
         headers_map: &HeaderMap,
     ) -> RustusResult<()>;
 }

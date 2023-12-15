@@ -87,16 +87,16 @@ impl NotificationManager {
     #[tracing::instrument(skip(self, hook, headers_map))]
     pub async fn notify_all(
         &self,
-        message: String,
-        hook: super::hooks::Hook,
+        message: &str,
+        hook: &super::hooks::Hook,
         headers_map: &HeaderMap,
     ) -> crate::errors::RustusResult<()> {
-        for notifier in &self.notifiers {
+        let collect = self.notifiers.iter().map(|notifier| {
             notifier
-                .send_message(message.clone(), hook, headers_map)
+                .send_message(message, hook, headers_map)
                 .in_current_span()
-                .await?;
-        }
+        });
+        futures::future::try_join_all(collect).await?;
         Ok(())
     }
 }
