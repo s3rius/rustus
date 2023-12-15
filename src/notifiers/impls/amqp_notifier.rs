@@ -158,7 +158,7 @@ impl Notifier for AMQPNotifier {
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
         let chan = self.channel_pool.get().await?;
-        let queue = self.get_queue_name(&hook);
+        let queue = self.get_queue_name(hook);
         let routing_key = self.routing_key.as_ref().unwrap_or(&queue);
         let payload = if self.celery {
             format!("[[{message}], {{}}, {{}}]").as_bytes().to_vec()
