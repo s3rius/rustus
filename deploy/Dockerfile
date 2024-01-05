@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-buster AS builder
+FROM rust:1.75.0-buster AS builder
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
@@ -19,6 +19,6 @@ ENTRYPOINT ["/usr/local/bin/rustus"]
 
 FROM base as rootless
 
-RUN useradd --create-home  -u 1000 --user-group rustus
+RUN useradd --create-home -u 1000 --user-group rustus
 WORKDIR /home/rustus
 USER rustus
