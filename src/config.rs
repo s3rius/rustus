@@ -56,7 +56,7 @@ pub struct DataStorageConfig {
     /// Rustus data directory
     ///
     /// This directory is used to store files
-    /// for all *file_storage storages.
+    /// for all *`file_storage` storages.
     #[arg(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
@@ -203,7 +203,7 @@ pub struct AMQPHooksOptions {
     )]
     pub hooks_amqp_queues_prefix: String,
 
-    /// Maximum number of connections for RabbitMQ.
+    /// Maximum number of connections for `RabbitMQ`.
     #[arg(
         long,
         env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
@@ -314,7 +314,7 @@ pub struct SentryConfig {
     #[arg(name = "sentry-environment", long, env = "RUSTUS_SENTRY_ENVIRONMENT")]
     pub environment: Option<String>,
 
-    /// DEvelopment option for sentry.
+    /// Development option for sentry.
     ///
     /// This option enables logging of sentry events,
     /// which is useful for debugging. But it is not recommended

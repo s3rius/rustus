@@ -58,11 +58,8 @@ async fn add_tus_header(
         .collect::<Vec<String>>()
         .join(",");
 
-    match extensions.parse() {
-        Ok(val) => {
-            resp.headers_mut().insert("Tus-Extension", val);
-        }
-        Err(_) => (),
+    if let Ok(val) = extensions.parse() {
+        resp.headers_mut().insert("Tus-Extension", val);
     };
 
     if state.tus_extensions.contains(&TusExtensions::Checksum) {
