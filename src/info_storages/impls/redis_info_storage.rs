@@ -1,5 +1,5 @@
 use mobc::{Manager, Pool};
-use redis::aio::Connection;
+use redis::aio::MultiplexedConnection;
 
 use crate::{
     errors::{RustusError, RustusResult},
@@ -19,11 +19,11 @@ impl RedisConnectionManager {
 
 #[async_trait::async_trait]
 impl Manager for RedisConnectionManager {
-    type Connection = redis::aio::Connection;
+    type Connection = redis::aio::MultiplexedConnection;
     type Error = redis::RedisError;
 
     async fn connect(&self) -> Result<Self::Connection, Self::Error> {
-        Ok(self.client.get_async_connection().await?)
+        Ok(self.client.get_multiplexed_async_connection().await?)
     }
 
     async fn check(&self, mut conn: Self::Connection) -> Result<Self::Connection, Self::Error> {
@@ -69,7 +69,8 @@ impl InfoStorage for RedisStorage {
         if let Some(expiration) = self.expiration.as_ref() {
             cmd = cmd.arg("EX").arg(expiration);
         }
-        cmd.query_async::<Connection, String>(&mut conn).await?;
+        cmd.query_async::<MultiplexedConnection, String>(&mut conn)
+            .await?;
         Ok(())
     }
 
@@ -77,7 +78,7 @@ impl InfoStorage for RedisStorage {
         let mut conn = self.pool.get().await?;
         let res = redis::cmd("GET")
             .arg(file_id)
-            .query_async::<Connection, Option<String>>(&mut conn)
+            .query_async::<MultiplexedConnection, Option<String>>(&mut conn)
             .await?;
 
         if let Some(res) = res {
@@ -91,7 +92,7 @@ impl InfoStorage for RedisStorage {
         let mut conn = self.pool.get().await?;
         let resp = redis::cmd("DEL")
             .arg(file_id)
-            .query_async::<Connection, Option<usize>>(&mut conn)
+            .query_async::<MultiplexedConnection, Option<usize>>(&mut conn)
             .await?;
         match resp {
             None | Some(0) => Err(RustusError::FileNotFound),
