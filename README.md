@@ -27,11 +27,10 @@ You can install rustus by 3 different ways.
 
 ### From source
 
-To build it from source rust must be installed. We rely on nightly features,
-so please switch to nightly channel before building.
+To build it from source rust must be installed.
 
 ```bash
-rustup update nightly
+rustup update stable
 git clone https://github.com/s3rius/rustus.git
 cd rustus
 cargo install --path .

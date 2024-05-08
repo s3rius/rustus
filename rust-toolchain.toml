@@ -1,1 +1,1 @@
-toolchain.channel = "nightly"
+toolchain.channel = "stable"

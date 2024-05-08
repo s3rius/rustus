@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-buster AS builder
+FROM rustlang/rust:buster AS builder
 
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
