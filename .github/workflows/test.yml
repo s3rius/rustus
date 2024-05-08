@@ -27,7 +27,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Adding component
         run: rustup component add rustfmt
@@ -43,7 +43,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
       - run: rustup component add clippy
       - uses: actions-rs/clippy-check@v1
@@ -62,7 +62,7 @@ jobs:
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Run tests
         run: cargo test -- --test-threads 1
