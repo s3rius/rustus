@@ -19,7 +19,6 @@ impl FileNotifier {
 }
 
 impl Notifier for FileNotifier {
-    #[cfg_attr(coverage, no_coverage)]
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }

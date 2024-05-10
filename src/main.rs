@@ -19,7 +19,6 @@ pub mod utils;
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
-#[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &config::Config) {
     let extensions = app_conf
         .tus_extensions
