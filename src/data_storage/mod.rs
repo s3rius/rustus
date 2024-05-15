@@ -6,7 +6,9 @@ use std::{
 
 use crate::{config::Config, errors::RustusResult, from_str, utils::result::MonadLogger};
 
-use self::impls::{file_storage::FileStorage, s3_hybrid::S3HybridStorage};
+use self::impls::{
+    file_storage::FileStorage, gcs_hybrid::GCSHybridStorage, s3_hybrid::S3HybridStorage,
+};
 
 pub mod base;
 pub mod impls;
@@ -17,14 +19,17 @@ pub enum AvailableStorages {
     File,
     #[strum(serialize = "hybrid-s3")]
     S3Hybrid,
+    #[strum(serialize = "hybrid-gcs")]
+    GCSHybrid,
 }
 
 from_str!(AvailableStorages, "storages");
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum DataStorageImpl {
     File(FileStorage),
     S3Hybrid(S3HybridStorage),
+    GCSHybrid(GCSHybridStorage),
 }
 
 impl DataStorageImpl {
@@ -34,8 +39,8 @@ impl DataStorageImpl {
     ///
     /// # Panics
     ///
-    /// Might panic if one of required fields is not set for `S3Hybrid` storage,
-    /// and `S3Hybrid` is selected as data storage.
+    /// Might panic if one of required fields is not set for `S3Hybrid` or `GCSHybrid` storages,
+    /// when they are selected as data storage.
     #[must_use]
     pub fn new(config: &Config) -> Self {
         let data_conf = config.data_storage_config.clone();
@@ -71,6 +76,24 @@ impl DataStorageImpl {
                     data_conf.force_fsync,
                 ))
             }
+            AvailableStorages::GCSHybrid => {
+                let service_account_key = from_string_or_path(
+                    &data_conf.gcs_service_account_key,
+                    &data_conf.gcs_service_account_key_path,
+                );
+                Self::GCSHybrid(GCSHybridStorage::new(
+                    service_account_key,
+                    data_conf
+                        .gcs_bucket
+                        .clone()
+                        .mlog_err("GCS bucket")
+                        .unwrap()
+                        .as_str(),
+                    data_conf.data_dir.clone(),
+                    data_conf.dir_structure.clone(),
+                    data_conf.force_fsync,
+                ))
+            }
         }
     }
 }
@@ -80,6 +103,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.get_name(),
             Self::S3Hybrid(s3) => s3.get_name(),
+            Self::GCSHybrid(gcs) => gcs.get_name(),
         }
     }
 
@@ -87,6 +111,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.prepare().await,
             Self::S3Hybrid(s3) => s3.prepare().await,
+            Self::GCSHybrid(gcs) => gcs.prepare().await,
         }
     }
 
@@ -97,6 +122,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.get_contents(file_info).await,
             Self::S3Hybrid(s3) => s3.get_contents(file_info).await,
+            Self::GCSHybrid(gcs) => gcs.get_contents(file_info).await,
         }
     }
 
@@ -108,6 +134,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.add_bytes(file_info, bytes).await,
             Self::S3Hybrid(s3) => s3.add_bytes(file_info, bytes).await,
+            Self::GCSHybrid(gcs) => gcs.add_bytes(file_info, bytes).await,
         }
     }
 
@@ -118,6 +145,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.create_file(file_info).await,
             Self::S3Hybrid(s3) => s3.create_file(file_info).await,
+            Self::GCSHybrid(gcs) => gcs.create_file(file_info).await,
         }
     }
 
@@ -129,6 +157,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.concat_files(file_info, parts_info).await,
             Self::S3Hybrid(s3) => s3.concat_files(file_info, parts_info).await,
+            Self::GCSHybrid(gcs) => gcs.concat_files(file_info, parts_info).await,
         }
     }
 
@@ -139,6 +168,7 @@ impl base::Storage for DataStorageImpl {
         match self {
             Self::File(file) => file.remove_file(file_info).await,
             Self::S3Hybrid(s3) => s3.remove_file(file_info).await,
+            Self::GCSHybrid(gcs) => gcs.remove_file(file_info).await,
         }
     }
 }

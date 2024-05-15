@@ -134,7 +134,7 @@ impl Storage for FileStorage {
             .open(path)
             .await?;
         let mut writer = tokio::io::BufWriter::new(file);
-        for part in parts_info {
+        for part in &parts_info {
             if part.path.is_none() {
                 return Err(RustusError::FileNotFound);
             }
@@ -151,6 +151,9 @@ impl Storage for FileStorage {
             writer.get_ref().sync_data().await?;
         }
         writer.into_inner().shutdown().await?;
+        for part in parts_info {
+            tokio::fs::remove_file(part.path.unwrap()).await?;
+        }
         Ok(())
     }
 

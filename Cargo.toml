@@ -28,6 +28,7 @@ log = "0.4.20"
 mime = "0.3.17"
 mime_guess = "2.0.4"
 mobc = "0.8.3"
+object_store = { version = "0.10.1", features = ["gcp"] }
 redis = { version = "0.25.3", features = ["tokio-comp", "connection-manager"] }
 rustc-hash = "1.1.0"
 serde = { version = "1.0.192", features = ["derive"] }

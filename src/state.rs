@@ -6,7 +6,7 @@ use crate::{
     notifiers::NotificationManager,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 #[allow(clippy::module_name_repetitions)]
 pub struct RustusState {
     pub config: Config,

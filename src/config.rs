@@ -153,6 +153,24 @@ pub struct DataStorageConfig {
     /// This parameter is required fo s3-based storages.
     #[arg(long, env = "RUSTUS_S3_HEADERS")]
     pub s3_headers: Option<String>,
+
+    /// Service account key for GCS.
+    ///
+    /// This parameter is required for GCS-based storages.
+    #[arg(long, env = "RUSTUS_GCS_SERVICE_ACCOUNT_KEY")]
+    pub gcs_service_account_key: Option<String>,
+
+    /// Service account key path for GCS.
+    ///
+    /// This parameter is used for GCS-based storages.
+    #[arg(long, env = "RUSTUS_GCS_SERVICE_ACCOUNT_KEY_PATH")]
+    pub gcs_service_account_key_path: Option<PathBuf>,
+
+    /// Service account key path for GCS.
+    ///
+    /// This parameter is used for GCS-based storages.
+    #[arg(long, env = "RUSTUS_GCS_BUCKET")]
+    pub gcs_bucket: Option<String>,
 }
 
 #[derive(Parser, Clone, Debug)]
