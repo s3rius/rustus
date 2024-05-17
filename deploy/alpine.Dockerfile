@@ -1,4 +1,4 @@
-FROM alpine:3.15.0 as base
+FROM alpine:3.19.1 as base
 
 ARG app_version
 
