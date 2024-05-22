@@ -166,6 +166,12 @@ pub struct DataStorageConfig {
     #[arg(long, env = "RUSTUS_GCS_SERVICE_ACCOUNT_KEY_PATH")]
     pub gcs_service_account_key_path: Option<PathBuf>,
 
+    /// Application credentials path for GCS.
+    ///
+    /// This parameter is used for GCS-based storages.
+    #[arg(long, env = "RUSTUS_GCS_APPLICATION_CREDENTIALS_PATH")]
+    pub gcs_application_credentials_path: Option<String>,
+
     /// Service account key path for GCS.
     ///
     /// This parameter is used for GCS-based storages.

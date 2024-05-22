@@ -37,15 +37,24 @@ impl GCSHybridStorage {
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
-        service_account_key: String,
+        service_account_key: Option<String>,
+        application_credentials_path: Option<String>,
         bucket_name: &str,
         data_dir: PathBuf,
         dir_struct: String,
         force_fsync: bool,
     ) -> Self {
-        let store = GoogleCloudStorageBuilder::new()
-            .with_service_account_key(service_account_key)
-            .with_bucket_name(bucket_name)
+        let mut store_builder = GoogleCloudStorageBuilder::new().with_bucket_name(bucket_name);
+
+        if let Some(path) = application_credentials_path {
+            store_builder = store_builder.with_application_credentials(path);
+        }
+
+        if let Some(key) = service_account_key {
+            store_builder = store_builder.with_service_account_key(key);
+        }
+
+        let store = store_builder
             .build()
             .mlog_err("Cannot create GCS storage")
             .unwrap();
@@ -78,8 +87,8 @@ impl GCSHybridStorage {
         let file = tokio::fs::File::open(file_path).await?;
         let mut reader = tokio::io::BufReader::new(file);
 
-        let upload = self.store.put_multipart(&key).await.map_err(|_| {
-            RustusError::UnableToWrite("Failed to start upload of file to GCS.".into())
+        let upload = self.store.put_multipart(&key).await.map_err(|e| {
+            RustusError::UnableToWrite(format!("Failed to start upload of file to GCS: {e}"))
         })?;
         let mut write = WriteMultipart::new(upload);
         let mut buffer = vec![0; UPLOAD_BUFFER_SIZE];
@@ -114,7 +123,7 @@ impl Storage for GCSHybridStorage {
     }
 
     async fn prepare(&mut self) -> RustusResult<()> {
-        Ok(())
+        self.local_storage.prepare().await
     }
 
     async fn get_contents(&self, file_info: &FileInfo) -> RustusResult<Response> {

@@ -77,12 +77,13 @@ impl DataStorageImpl {
                 ))
             }
             AvailableStorages::GCSHybrid => {
-                let service_account_key = from_string_or_path(
+                let service_account_key = try_from_string_or_path(
                     &data_conf.gcs_service_account_key,
                     &data_conf.gcs_service_account_key_path,
                 );
                 Self::GCSHybrid(GCSHybridStorage::new(
                     service_account_key,
+                    data_conf.gcs_application_credentials_path,
                     data_conf
                         .gcs_bucket
                         .clone()
@@ -172,9 +173,17 @@ impl base::Storage for DataStorageImpl {
         }
     }
 }
+
 fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+    match try_from_string_or_path(variable, path) {
+        Some(value) => value,
+        None => panic!("can't find {variable:?} or path {path:?}"),
+    }
+}
+
+fn try_from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> Option<String> {
     if let Some(variable) = variable {
-        variable.to_string()
+        Some(variable.to_string())
     } else if let Some(path) = path {
         let file =
             File::open(path).unwrap_or_else(|_| panic!("failed to open path {}", path.display()));
@@ -182,8 +191,8 @@ fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> Str
         BufReader::new(file)
             .read_to_string(&mut contents)
             .unwrap_or_else(|_| panic!("failed to read from path {}", path.display()));
-        contents
+        Some(contents)
     } else {
-        panic!("can't find {variable:?} or path {path:?}")
+        None
     }
 }
