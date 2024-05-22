@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "rustus.fullname" . }}
   labels:
     {{- include "rustus.labels" . | nindent 4 }}
 spec:
+  serviceName: {{ include "rustus.fullname" . }}
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
@@ -45,13 +46,15 @@ spec:
             httpGet:
               path: /health
               port: http
-          {{- with .Values.env }}
           env:
-            {{- range $key, $val := . }}
+            {{- range $key, $val := .Values.env }}
             - name: {{ $key | quote }}
               value: {{ $val | quote }}
             {{- end }}
-          {{- end }}
+            {{- range $key, $value := .Values.secrets }}
+            - name: {{ $key }}
+              valueFrom: { secretKeyRef: { name: {{ $value.from }}, key: {{ $value.key }} } }
+            {{- end }}
           {{- if .Values.persistence.enabled }}
           volumeMounts:
             - name: data
@@ -59,16 +62,6 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- if .Values.persistence.enabled }}
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            {{- if .Values.persistence.existingClaim }}
-            claimName: {{ .Values.persistence.existingClaim }}
-            {{- else }}
-            claimName: {{ printf "rustus-data-%s" (include "rustus.fullname" .) }}
-            {{- end }}
-      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -81,3 +74,34 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "rustus.selectorLabels" . | nindent 10 }}
+        {{- if .Values.persistence.annotations }}
+        annotations:
+          {{- toYaml .Values.persistence.annotations | nindent 10 }}
+        {{- end }}
+      spec:
+        storageClassName: {{ .Values.persistence.storageClass }}
+        accessModes:
+        {{- range .Values.persistence.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        {{- with .Values.persistence.dataSource }}
+        dataSource:
+          {{ . | toYaml | nindent 10 }}
+        {{- end }}
+        {{- with .Values.persistence.selector }}
+        selector:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+        mountOptions:
+          {{- .Values.persistence.mountOptions | toYaml | nindent 10 }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+  {{- end }}

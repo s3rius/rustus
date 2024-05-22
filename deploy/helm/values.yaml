@@ -31,6 +31,8 @@ env:
 #  RUSTUS_INFO_STORAGE: db-info-storage
 #  RUSTUS_INFO_DB_DSN: mysql://rustus:rustus@rustus-mysql/rustus
 
+secrets: []
+
 persistence:
   enabled: false
 
