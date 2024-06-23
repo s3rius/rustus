@@ -151,7 +151,9 @@ impl base::Storage for DataStorageImpl {
         }
     }
 }
+
 fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+    #[allow(clippy::option_if_let_else)]
     if let Some(variable) = variable {
         variable.to_string()
     } else if let Some(path) = path {

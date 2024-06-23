@@ -92,8 +92,8 @@ impl FileInfo {
     }
 
     #[cfg(test)]
-    pub fn new_test() -> Self {
-        FileInfo::new(
+    #[must_use] pub fn new_test() -> Self {
+        Self::new(
             uuid::Uuid::new_v4().to_string().as_str(),
             Some(10),
             Some("random_path".into()),

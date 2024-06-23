@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_sum_unknown_algo_checksum_verify() {
-        let res = checksum_verify("base64", "test".as_bytes(), b"dGVzdAo=");
+        let res = checksum_verify("base64", b"test", b"dGVzdAo=");
         assert!(res.is_err());
     }
 
