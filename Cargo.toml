@@ -61,7 +61,6 @@ tracing-subscriber = { version = "0.3.18", features = [
     "parking_lot",
     "time",
 ] }
-tracing-error = { version = "0.2.0", features = ["traced-error"] }
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = { version = "0.5.4", features = [
@@ -73,4 +72,4 @@ opt-level = 3
 debug = false
 codegen-units = 1
 lto = true
-panic = "abort"
+panic = "unwind"

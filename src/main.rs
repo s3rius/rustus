@@ -104,7 +104,6 @@ fn main() -> RustusResult<()> {
                 .with_line_number(false)
                 .with_target(false),
         )
-        .with(tracing_error::ErrorLayer::default())
         .with(sentry_layer)
         .init();
 
