@@ -92,7 +92,8 @@ impl FileInfo {
     }
 
     #[cfg(test)]
-    #[must_use] pub fn new_test() -> Self {
+    #[must_use]
+    pub fn new_test() -> Self {
         Self::new(
             uuid::Uuid::new_v4().to_string().as_str(),
             Some(10),
