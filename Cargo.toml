@@ -21,10 +21,7 @@ base64 = "0.22.1"
 bytes = "1.6.0"
 chrono = { version = "0.4.38", features = ["serde"] }
 clap = { version = "4.3.21", features = ["env", "derive"] }
-enum_dispatch = "0.3.13"
-fern = { version = "0.6.2", features = ["colored", "chrono"] }
 futures = "0.3.30"
-log = "0.4.21"
 mime = "0.3.17"
 mime_guess = "2.0.4"
 mobc = "0.8.4"
