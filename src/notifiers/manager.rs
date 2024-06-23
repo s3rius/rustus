@@ -22,6 +22,7 @@ impl NotificationManager {
     /// It's capable of having multiple notifiers,
     /// which are used to send messages.
     #[must_use]
+    #[allow(clippy::cognitive_complexity)]
     pub fn new(rustus_config: &Config) -> Self {
         let mut manager = Self {
             notifiers: Vec::new(),

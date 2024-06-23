@@ -27,18 +27,9 @@ repos:
         entry: cargo
         args:
           - clippy
-          - --all
-          - -p
-          - rustus
           - --
-          - -W
-          - clippy::all
-          - -W
-          - clippy::pedantic
           - -D
           - warnings
-          - -A
-          - clippy::module_name_repetitions
 
       - id: check
         types:

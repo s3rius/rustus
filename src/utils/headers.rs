@@ -24,17 +24,14 @@ impl HeaderMapExt for HeaderMap {
 
     fn check(&self, name: &str, expr: fn(&str) -> bool) -> bool {
         self.get(name)
-            .and_then(|val| match val.to_str() {
-                Ok(val) => Some(expr(val)),
-                Err(_) => None,
-            })
+            .and_then(|val| val.to_str().map_or(None, |val| Some(expr(val))))
             .unwrap_or(false)
     }
 
     fn get_metadata(&self) -> Option<FxHashMap<String, String>> {
         let meta_split = self.get("Upload-Metadata")?.to_str().ok()?.split(',');
         let (shint, _) = meta_split.size_hint();
-        let mut meta_map = HashMap::with_capacity_and_hasher(shint, FxBuildHasher::default());
+        let mut meta_map = HashMap::with_capacity_and_hasher(shint, FxBuildHasher);
         for meta_entry in meta_split {
             let mut entry_split = meta_entry.trim().split(' ');
             let key = entry_split.next();

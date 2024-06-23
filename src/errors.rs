@@ -69,22 +69,22 @@ pub enum RustusError {
 /// This conversion allows us to use `RustusError` in the `main` function.
 impl From<RustusError> for std::io::Error {
     fn from(err: RustusError) -> Self {
-        std::io::Error::new(std::io::ErrorKind::Other, err)
+        Self::new(std::io::ErrorKind::Other, err)
     }
 }
 
 impl RustusError {
     fn get_status_code(&self) -> StatusCode {
         match self {
-            RustusError::FileNotFound => StatusCode::NOT_FOUND,
-            RustusError::WrongOffset => StatusCode::CONFLICT,
-            RustusError::FrozenFile
-            | RustusError::SizeAlreadyKnown
-            | RustusError::HookError(_)
-            | RustusError::UnknownHashAlgorithm
-            | RustusError::WrongHeaderValue => StatusCode::BAD_REQUEST,
-            RustusError::WrongChecksum => StatusCode::EXPECTATION_FAILED,
-            RustusError::HTTPHookError(status, _, _) => {
+            Self::FileNotFound => StatusCode::NOT_FOUND,
+            Self::WrongOffset => StatusCode::CONFLICT,
+            Self::FrozenFile
+            | Self::SizeAlreadyKnown
+            | Self::HookError(_)
+            | Self::UnknownHashAlgorithm
+            | Self::WrongHeaderValue => StatusCode::BAD_REQUEST,
+            Self::WrongChecksum => StatusCode::EXPECTATION_FAILED,
+            Self::HTTPHookError(status, _, _) => {
                 StatusCode::from_u16(*status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
             }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
@@ -99,12 +99,12 @@ impl IntoResponse for RustusError {
             tracing::error!(err=%self, "{self}");
         }
         match self {
-            RustusError::HTTPHookError(_, proxy_response, content_type) => {
+            Self::HTTPHookError(_, proxy_response, content_type) => {
                 axum::response::IntoResponse::into_response((
                     status_code,
                     [(
                         "Content-Type",
-                        content_type.unwrap_or("text/plain; charset=utf-8".into()),
+                        content_type.unwrap_or_else(|| "text/plain; charset=utf-8".into()),
                     )],
                     proxy_response,
                 ))

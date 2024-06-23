@@ -38,19 +38,13 @@ impl FileInfo {
         path: Option<String>,
         storage: String,
         initial_metadata: Option<FxHashMap<String, String>>,
-    ) -> FileInfo {
+    ) -> Self {
         let id = String::from(file_id);
 
-        let mut deferred_size = true;
-        if length.is_some() {
-            deferred_size = false;
-        }
-        let metadata = match initial_metadata {
-            Some(meta) => meta,
-            None => FxHashMap::default(),
-        };
+        let deferred_size = length.is_none();
+        let metadata = initial_metadata.unwrap_or_default();
 
-        FileInfo {
+        Self {
             id,
             path,
             length,

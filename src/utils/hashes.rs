@@ -51,10 +51,8 @@ pub fn verify_chunk_checksum(header: &HeaderValue, data: &[u8]) -> RustusResult<
                 return checksum_verify(algo, data, checksum.as_slice());
             }
         }
-        Err(RustusError::WrongHeaderValue)
-    } else {
-        Err(RustusError::WrongHeaderValue)
     }
+    Err(RustusError::WrongHeaderValue)
 }
 
 #[cfg(test)]

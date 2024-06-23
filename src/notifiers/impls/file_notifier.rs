@@ -13,7 +13,7 @@ pub struct FileNotifier {
 
 impl FileNotifier {
     #[must_use]
-    pub fn new(command: String) -> Self {
+    pub const fn new(command: String) -> Self {
         Self { command }
     }
 }

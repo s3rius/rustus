@@ -45,16 +45,16 @@ impl Format {
             file_info,
         );
         match self {
-            Format::Default => default_format(hook_data),
-            Format::Tusd => tusd_format(hook_data),
-            Format::V2 => v2_format(hook_data),
+            Self::Default => default_format(hook_data),
+            Self::Tusd => tusd_format(hook_data),
+            Self::V2 => v2_format(hook_data),
         }
     }
 }
 
 impl<'a> HookData<'a> {
     #[must_use]
-    pub fn new(
+    pub const fn new(
         uri: String,
         method: &'a str,
         remote_addr: String,

@@ -1,5 +1,21 @@
 #![allow(async_fn_in_trait)]
-
+#![warn(
+    // Base lints.
+    clippy::all,
+    // Some pedantic lints.
+    clippy::pedantic,
+    // New lints which are cool.
+    clippy::nursery,
+)]
+#![
+    allow(
+        // I don't care about this.
+        clippy::module_name_repetitions,
+        // Yo, the hell you should put
+        // it in docs, if signature is clear as sky.
+        clippy::missing_errors_doc
+    )
+]
 use std::{borrow::Cow, str::FromStr};
 
 use errors::RustusResult;
@@ -48,7 +64,7 @@ fn greeting(app_conf: &config::Config) {
 fn main() -> RustusResult<()> {
     let args = config::Config::parse();
     greeting(&args);
-    #[allow(clippy::no_effect_underscore_binding)]
+    #[allow(clippy::collection_is_never_read)]
     let mut _guard = None;
     let mut sentry_layer = None;
     if let Some(sentry_dsn) = &args.sentry_config.dsn {
