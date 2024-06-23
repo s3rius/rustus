@@ -13,7 +13,7 @@ use axum::response::{IntoResponse, Response};
 use bytes::Bytes;
 use s3::{
     command::Command,
-    request::{tokio_backend::Reqwest, Request as S3Request},
+    request::{tokio_backend::HyperRequest, Request as S3Request},
     Bucket,
 };
 
@@ -138,9 +138,9 @@ impl Storage for S3HybridStorage {
         }
         let key = self.get_s3_key(file_info);
         let command = Command::GetObject;
-        let s3_request = Reqwest::new(&self.bucket, &key, command).unwrap();
-        let s3_response = s3_request.response().await.unwrap();
-        let mut resp = axum::body::Body::from_stream(s3_response.bytes_stream()).into_response();
+        let s3_request = HyperRequest::new(&self.bucket, &key, command).await?;
+        let s3_response = s3_request.response_data_to_stream().await?;
+        let mut resp = axum::body::Body::from_stream(s3_response.bytes).into_response();
         resp.headers_mut()
             .generate_disposition(file_info.get_filename());
         Ok(resp)

@@ -40,11 +40,10 @@ impl Notifier for HttpNotifier {
         hook: &Hook,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
-        tracing::debug!("Starting HTTP Hook.");
+        tracing::info!("Starting HTTP Hook.");
         let idempotency_key = uuid::Uuid::new_v4().to_string();
         let body_bytes = bytes::Bytes::copy_from_slice(message.as_bytes());
-        let requests_vec = self.urls.iter().map(|url| {
-            tracing::debug!("Preparing request for {}", url);
+        for url in &self.urls {
             let mut request = self
                 .client
                 .post(url.as_str())
@@ -57,17 +56,15 @@ impl Notifier for HttpNotifier {
                     request = request.header(item.as_str(), value.as_bytes());
                 }
             }
-            request.body(body_bytes.clone()).send()
-        });
-        for response in requests_vec {
-            let real_resp = response.await?;
-            if !real_resp.status().is_success() {
-                let content_type = real_resp
+            tracing::info!("Sending request to {}", url);
+            let response = request.body(body_bytes.clone()).send().await?;
+            if !response.status().is_success() {
+                let content_type = response
                     .headers()
                     .get("Content-Type")
                     .and_then(|hval| hval.to_str().ok().map(String::from));
-                let status = real_resp.status().as_u16();
-                let text = real_resp.text().await.unwrap_or_default();
+                let status = response.status().as_u16();
+                let text = response.text().await.unwrap_or_default();
                 tracing::Span::current().record("response_body", &text);
                 return Err(RustusError::HTTPHookError(status, text, content_type));
             }

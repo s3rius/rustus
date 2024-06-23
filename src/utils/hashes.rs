@@ -51,10 +51,8 @@ pub fn verify_chunk_checksum(header: &HeaderValue, data: &[u8]) -> RustusResult<
                 return checksum_verify(algo, data, checksum.as_slice());
             }
         }
-        Err(RustusError::WrongHeaderValue)
-    } else {
-        Err(RustusError::WrongHeaderValue)
     }
+    Err(RustusError::WrongHeaderValue)
 }
 
 #[cfg(test)]
@@ -90,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_sum_unknown_algo_checksum_verify() {
-        let res = checksum_verify("base64", "test".as_bytes(), b"dGVzdAo=");
+        let res = checksum_verify("base64", b"test", b"dGVzdAo=");
         assert!(res.is_err());
     }
 

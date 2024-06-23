@@ -38,19 +38,13 @@ impl FileInfo {
         path: Option<String>,
         storage: String,
         initial_metadata: Option<FxHashMap<String, String>>,
-    ) -> FileInfo {
+    ) -> Self {
         let id = String::from(file_id);
 
-        let mut deferred_size = true;
-        if length.is_some() {
-            deferred_size = false;
-        }
-        let metadata = match initial_metadata {
-            Some(meta) => meta,
-            None => FxHashMap::default(),
-        };
+        let deferred_size = length.is_none();
+        let metadata = initial_metadata.unwrap_or_default();
 
-        FileInfo {
+        Self {
             id,
             path,
             length,
@@ -98,8 +92,9 @@ impl FileInfo {
     }
 
     #[cfg(test)]
+    #[must_use]
     pub fn new_test() -> Self {
-        FileInfo::new(
+        Self::new(
             uuid::Uuid::new_v4().to_string().as_str(),
             Some(10),
             Some("random_path".into()),

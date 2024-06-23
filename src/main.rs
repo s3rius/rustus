@@ -1,8 +1,25 @@
 #![allow(async_fn_in_trait)]
-
+#![warn(
+    // Base lints.
+    clippy::all,
+    // Some pedantic lints.
+    clippy::pedantic,
+    // New lints which are cool.
+    clippy::nursery,
+)]
+#![
+    allow(
+        // I don't care about this.
+        clippy::module_name_repetitions,
+        // Yo, the hell you should put
+        // it in docs, if signature is clear as sky.
+        clippy::missing_errors_doc
+    )
+]
 use std::{borrow::Cow, str::FromStr};
 
 use errors::RustusResult;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod config;
 pub mod data_storage;
@@ -47,9 +64,11 @@ fn greeting(app_conf: &config::Config) {
 fn main() -> RustusResult<()> {
     let args = config::Config::parse();
     greeting(&args);
-    #[allow(clippy::no_effect_underscore_binding)]
+    #[allow(clippy::collection_is_never_read)]
     let mut _guard = None;
+    let mut sentry_layer = None;
     if let Some(sentry_dsn) = &args.sentry_config.dsn {
+        sentry_layer = Some(sentry_tracing::layer());
         let default_options = sentry::ClientOptions::default();
         _guard = Some(sentry::init(sentry::ClientOptions {
             dsn: sentry::types::Dsn::from_str(sentry_dsn.as_str()).ok(),
@@ -73,6 +92,21 @@ fn main() -> RustusResult<()> {
             ..default_options
         }));
     }
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::filter::LevelFilter::from_level(
+            args.log_level,
+        ))
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_level(true)
+                .with_file(false)
+                .with_line_number(false)
+                .with_target(false),
+        )
+        .with(tracing_error::ErrorLayer::default())
+        .with(sentry_layer)
+        .init();
 
     let mut builder = if Some(1) == args.workers {
         tokio::runtime::Builder::new_current_thread()

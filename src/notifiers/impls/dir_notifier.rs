@@ -14,7 +14,7 @@ pub struct DirNotifier {
 
 impl DirNotifier {
     #[must_use]
-    pub fn new(dir: PathBuf) -> Self {
+    pub const fn new(dir: PathBuf) -> Self {
         Self { dir }
     }
 }
@@ -33,12 +33,10 @@ impl Notifier for DirNotifier {
     ) -> RustusResult<()> {
         let hook_path = self.dir.join(hook.to_string());
         if !hook_path.exists() {
-            tracing::debug!("Hook {} not found.", hook.to_string());
-            return Err(RustusError::HookError(format!(
-                "Hook file {hook} not found."
-            )));
+            tracing::warn!("Hook {} not found.", hook.to_string());
+            return Ok(());
         }
-        tracing::debug!("Running hook: {}", hook_path.as_path().display());
+        tracing::info!("Running dir hook: {}", hook_path.as_path().display());
         let mut command = Command::new(hook_path).arg(message).spawn()?;
         let stat = command.wait().await?;
         if !stat.success() {

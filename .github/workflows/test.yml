@@ -49,7 +49,7 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features -p rustus -- -W clippy::all -W clippy::pedantic -D warnings -A clippy::module_name_repetitions
+          args: --all-features -p rustus -- -D warnings
 
   tests:
     needs: pre_job

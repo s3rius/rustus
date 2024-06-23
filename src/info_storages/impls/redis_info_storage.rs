@@ -12,7 +12,7 @@ struct RedisConnectionManager {
 }
 
 impl RedisConnectionManager {
-    pub fn new(client: redis::Client) -> Self {
+    pub const fn new(client: redis::Client) -> Self {
         Self { client }
     }
 }
@@ -81,11 +81,9 @@ impl InfoStorage for RedisStorage {
             .query_async::<MultiplexedConnection, Option<String>>(&mut conn)
             .await?;
 
-        if let Some(res) = res {
+        res.map_or(Err(RustusError::FileNotFound), |res| {
             serde_json::from_str::<FileInfo>(res.as_str()).map_err(RustusError::from)
-        } else {
-            Err(RustusError::FileNotFound)
-        }
+        })
     }
 
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {

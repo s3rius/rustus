@@ -13,7 +13,7 @@ pub struct FileNotifier {
 
 impl FileNotifier {
     #[must_use]
-    pub fn new(command: String) -> Self {
+    pub const fn new(command: String) -> Self {
         Self { command }
     }
 }
@@ -23,23 +23,47 @@ impl Notifier for FileNotifier {
         Ok(())
     }
 
-    #[tracing::instrument(err, skip(self, message, _headers_map), fields(exit_status = tracing::field::Empty))]
+    #[tracing::instrument(
+        err,
+        skip(self, message, _headers_map),
+        fields(
+            exit_status = tracing::field::Empty,
+            sout = tracing::field::Empty,
+            serr = tracing::field::Empty,
+        )
+    )]
     async fn send_message(
         &self,
         message: &str,
         hook: &Hook,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
-        tracing::debug!("Running command: {}", self.command.as_str());
-        let mut command = Command::new(self.command.as_str())
-            .arg(hook.to_string())
+        let hook_str = hook.to_string();
+        tracing::info!(
+            "Running command: `{} \"{}\" \"{{message}}\"`",
+            self.command.as_str(),
+            &hook_str
+        );
+
+        let command = Command::new(self.command.as_str())
+            .arg(hook_str)
             .arg(message)
+            .stderr(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
             .spawn()?;
-        let stat = command.wait().await?;
-        if !stat.success() {
-            tracing::Span::current().record("exit_status", stat.code().unwrap_or(0));
-            return Err(RustusError::HookError("Returned wrong status code".into()));
+        let output = command.wait_with_output().await?;
+
+        tracing::Span::current()
+            .record("exit_status", output.status.code().unwrap_or(0))
+            .record("sout", String::from_utf8_lossy(&output.stdout).to_string())
+            .record("serr", String::from_utf8_lossy(&output.stderr).to_string());
+
+        if !output.status.success() {
+            return Err(RustusError::HookError(String::from(
+                "Returned wrong status code",
+            )));
         }
+
         Ok(())
     }
 }

@@ -60,7 +60,7 @@ impl AMQPNotifier {
     /// TODO: add separate type for this structure.
     pub fn new(options: AMQPHooksOptions) -> Self {
         let manager = ConnnectionPool::new(
-            options.hooks_amqp_url.mlog_err("AMQP url").unwrap().clone(),
+            options.hooks_amqp_url.mlog_err("AMQP url").unwrap(),
             ConnectionProperties::default(),
         );
         let connection_pool = mobc::Pool::builder()
@@ -102,11 +102,10 @@ impl AMQPNotifier {
     /// Otherwise it will generate queue name based on hook name.
     #[must_use]
     pub fn get_queue_name(&self, hook: &Hook) -> String {
-        if let Some(routing_key) = self.routing_key.as_ref() {
-            routing_key.into()
-        } else {
-            format!("{}.{hook}", self.queues_prefix.as_str())
-        }
+        self.routing_key.as_ref().map_or(
+            format!("{}.{hook}", self.queues_prefix.as_str()),
+            std::convert::Into::into,
+        )
     }
 }
 
@@ -157,6 +156,7 @@ impl Notifier for AMQPNotifier {
         hook: &Hook,
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
+        tracing::info!("Sending message to AMQP.");
         let chan = self.channel_pool.get().await?;
         let queue = self.get_queue_name(hook);
         let routing_key = self.routing_key.as_ref().unwrap_or(&queue);

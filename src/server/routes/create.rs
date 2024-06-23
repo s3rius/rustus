@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[allow(clippy::too_many_lines)]
-#[tracing::instrument(level = "info", skip_all, fields(upload_id = tracing::field::Empty))]
+#[tracing::instrument(skip_all, fields(upload_id = tracing::field::Empty, file_path = tracing::field::Empty))]
 pub async fn handler(
     uri: Uri,
     method: Method,
@@ -25,14 +25,12 @@ pub async fn handler(
     body: Bytes,
 ) -> RustusResult<Response> {
     let upload_len: Option<usize> = headers.parse("Upload-Length");
-    if !state.config.allow_empty {
-        if let Some(0) = upload_len {
-            return Ok((
-                StatusCode::BAD_REQUEST,
-                "Upload-Length must be greater than 0",
-            )
-                .into_response());
-        }
+    if !state.config.allow_empty && Some(0) == upload_len {
+        return Ok((
+            StatusCode::BAD_REQUEST,
+            "Upload-Length must be greater than 0",
+        )
+            .into_response());
     }
     let defer_size = headers.check("Upload-Defer-Length", |val| val == "1");
     let defer_ext = state
@@ -96,6 +94,8 @@ pub async fn handler(
     }
 
     file_info.path = Some(state.data_storage.create_file(&file_info).await?);
+
+    tracing::Span::current().record("file_path", &file_info.path);
 
     if file_info.is_final {
         let mut final_size = 0;
@@ -184,10 +184,11 @@ pub async fn handler(
     // It's more intuitive to send post-finish
     // hook, when final upload is created.
     // https://github.com/s3rius/rustus/issues/77
-    let mut post_hook = Hook::PostCreate;
-    if file_info.is_final || Some(file_info.offset) == file_info.length {
-        post_hook = Hook::PostFinish;
-    }
+    let post_hook = if file_info.is_final || Some(file_info.offset) == file_info.length {
+        Hook::PostFinish
+    } else {
+        Hook::PostCreate
+    };
 
     if state.config.notification_hooks_set.contains(&post_hook) {
         let message = state.config.notification_config.hooks_format.format(

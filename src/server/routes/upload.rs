@@ -18,7 +18,6 @@ use crate::{
     utils::{hashes::verify_chunk_checksum, headers::HeaderMapExt},
 };
 
-#[tracing::instrument(level = "info", skip_all, fields(upload_id = tracing::field::Empty))]
 pub async fn handler(
     uri: Uri,
     method: Method,
@@ -110,19 +109,18 @@ pub async fn handler(
     }
     let chunk_len = body.len();
 
-    // Appending bytes to file.
-    state.data_storage.add_bytes(&file_info, body).await?;
-    // bytes.clear()
     // Updating offset.
     file_info.offset += chunk_len;
+    // Appending bytes to file.
+    state.data_storage.add_bytes(&file_info, body).await?;
     // Saving info to info storage.
     state.info_storage.set_info(&file_info, false).await?;
 
-    let mut hook = Hook::PostReceive;
-
-    if file_info.length == Some(file_info.offset) {
-        hook = Hook::PostFinish;
-    }
+    let hook = if file_info.length == Some(file_info.offset) {
+        Hook::PostFinish
+    } else {
+        Hook::PostReceive
+    };
 
     if state.config.notification_hooks_set.contains(&hook) {
         let state_clone = state.clone();

@@ -16,7 +16,7 @@ pub struct FileInfoStorage {
 
 impl FileInfoStorage {
     #[must_use]
-    pub fn new(info_dir: PathBuf) -> Self {
+    pub const fn new(info_dir: PathBuf) -> Self {
         Self { info_dir }
     }
 
