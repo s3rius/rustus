@@ -80,7 +80,7 @@ impl Storage for FileStorage {
         Ok(resp)
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         let Some(path) = &file_info.path else {
@@ -101,7 +101,6 @@ impl Storage for FileStorage {
             writer.get_ref().sync_data().await?;
         }
         writer.into_inner().shutdown().await?;
-        bytes.clear();
         Ok(())
     }
 
@@ -147,10 +146,11 @@ impl Storage for FileStorage {
             reader.shutdown().await?;
         }
         writer.flush().await?;
+        let mut inner_file = writer.into_inner();
         if self.force_fsync {
-            writer.get_ref().sync_data().await?;
+            inner_file.sync_data().await?;
         }
-        writer.into_inner().shutdown().await?;
+        inner_file.shutdown().await?;
         Ok(())
     }
 

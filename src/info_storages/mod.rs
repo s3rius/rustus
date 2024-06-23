@@ -63,17 +63,20 @@ impl base::InfoStorage for InfoStorageImpl {
         }
     }
 
+    #[tracing::instrument(err, skip(self, file_info))]
     async fn set_info(
         &self,
         file_info: &crate::models::file_info::FileInfo,
         create: bool,
     ) -> RustusResult<()> {
+        tracing::debug!("Setting file info: {:?}", file_info);
         match self {
             Self::Redis(redis) => redis.set_info(file_info, create).await,
             Self::File(file) => file.set_info(file_info, create).await,
         }
     }
 
+    #[tracing::instrument(err, skip(self))]
     async fn get_info(&self, file_id: &str) -> RustusResult<crate::models::file_info::FileInfo> {
         match self {
             Self::Redis(redis) => redis.get_info(file_id).await,
@@ -81,6 +84,7 @@ impl base::InfoStorage for InfoStorageImpl {
         }
     }
 
+    #[tracing::instrument(err, skip(self))]
     async fn remove_info(&self, file_id: &str) -> RustusResult<()> {
         match self {
             Self::Redis(redis) => redis.remove_info(file_id).await,

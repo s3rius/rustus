@@ -1,8 +1,8 @@
-use std::{collections::HashMap, hash::BuildHasherDefault, net::SocketAddr, str::FromStr};
+use std::{collections::HashMap, net::SocketAddr, str::FromStr};
 
 use axum::http::{HeaderMap, HeaderValue};
 use base64::{engine::general_purpose, Engine};
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 static DISPOSITION_TYPE_INLINE: &str = "inline";
 static DISPOSITION_TYPE_ATTACHMENT: &str = "attachment";
@@ -34,8 +34,7 @@ impl HeaderMapExt for HeaderMap {
     fn get_metadata(&self) -> Option<FxHashMap<String, String>> {
         let meta_split = self.get("Upload-Metadata")?.to_str().ok()?.split(',');
         let (shint, _) = meta_split.size_hint();
-        let mut meta_map =
-            HashMap::with_capacity_and_hasher(shint, BuildHasherDefault::<FxHasher>::default());
+        let mut meta_map = HashMap::with_capacity_and_hasher(shint, FxBuildHasher::default());
         for meta_entry in meta_split {
             let mut entry_split = meta_entry.trim().split(' ');
             let key = entry_split.next();

@@ -15,7 +15,7 @@ use crate::{
 };
 
 #[allow(clippy::too_many_lines)]
-#[tracing::instrument(level = "info", skip_all, fields(upload_id = tracing::field::Empty))]
+#[tracing::instrument(skip_all, fields(upload_id = tracing::field::Empty, file_path = tracing::field::Empty))]
 pub async fn handler(
     uri: Uri,
     method: Method,
@@ -96,6 +96,8 @@ pub async fn handler(
     }
 
     file_info.path = Some(state.data_storage.create_file(&file_info).await?);
+
+    tracing::Span::current().record("file_path", &file_info.path);
 
     if file_info.is_final {
         let mut final_size = 0;

@@ -25,6 +25,7 @@ impl base::Notifier for NotifierImpl {
             Self::Amqp(amqp) => amqp.prepare().await,
         }
     }
+
     async fn send_message(
         &self,
         message: &str,

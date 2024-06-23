@@ -100,6 +100,7 @@ impl base::Storage for DataStorageImpl {
         }
     }
 
+    #[tracing::instrument(err, skip(self, bytes), fields(storage = self.get_name()))]
     async fn add_bytes(
         &self,
         file_info: &crate::models::file_info::FileInfo,
@@ -111,10 +112,17 @@ impl base::Storage for DataStorageImpl {
         }
     }
 
+    #[tracing::instrument("FileStorage create_file", skip(self, file_info), fields(storage = self.get_name()))]
     async fn create_file(
         &self,
         file_info: &crate::models::file_info::FileInfo,
     ) -> RustusResult<String> {
+        tracing::info!(
+            path = file_info.path,
+            length = file_info.length,
+            "Creating file: {:?}",
+            file_info.id
+        );
         match self {
             Self::File(file) => file.create_file(file_info).await,
             Self::S3Hybrid(s3) => s3.create_file(file_info).await,
@@ -132,6 +140,7 @@ impl base::Storage for DataStorageImpl {
         }
     }
 
+    #[tracing::instrument(skip(self), fields(storage = self.get_name()))]
     async fn remove_file(
         &self,
         file_info: &crate::models::file_info::FileInfo,

@@ -157,6 +157,7 @@ impl Notifier for AMQPNotifier {
         hook: &Hook,
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
+        tracing::info!("Sending message to AMQP.");
         let chan = self.channel_pool.get().await?;
         let queue = self.get_queue_name(hook);
         let routing_key = self.routing_key.as_ref().unwrap_or(&queue);

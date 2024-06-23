@@ -1,5 +1,3 @@
-use std::io::{Error, ErrorKind};
-
 use axum::response::IntoResponse;
 
 use axum::http::StatusCode;
@@ -69,9 +67,9 @@ pub enum RustusError {
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
-impl From<RustusError> for Error {
+impl From<RustusError> for std::io::Error {
     fn from(err: RustusError) -> Self {
-        Error::new(ErrorKind::Other, err)
+        std::io::Error::new(std::io::ErrorKind::Other, err)
     }
 }
 
@@ -98,7 +96,7 @@ impl IntoResponse for RustusError {
     fn into_response(self) -> axum::response::Response {
         let status_code = self.get_status_code();
         if status_code != StatusCode::NOT_FOUND {
-            tracing::error!(err=?self, "{self}");
+            tracing::error!(err=%self, "{self}");
         }
         match self {
             RustusError::HTTPHookError(_, proxy_response, content_type) => {

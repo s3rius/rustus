@@ -73,6 +73,7 @@ impl NotificationManager {
     ///
     /// This method might fail in case if any of the notifiers fails.
     pub async fn prepare(&mut self) -> crate::errors::RustusResult<()> {
+        tracing::info!("Preparing notifiers.");
         for notifier in &mut self.notifiers {
             notifier.prepare().await?;
         }
@@ -84,13 +85,14 @@ impl NotificationManager {
     /// # Errors
     ///
     /// This method might fail in case if any of the notifiers fails.
-    #[tracing::instrument(skip(self, hook, headers_map))]
+    #[tracing::instrument(skip(self, message, hook, headers_map))]
     pub async fn notify_all(
         &self,
         message: &str,
         hook: &super::hooks::Hook,
         headers_map: &HeaderMap,
     ) -> crate::errors::RustusResult<()> {
+        tracing::info!("Sending message to all notifiers.");
         let collect = self.notifiers.iter().map(|notifier| {
             notifier
                 .send_message(message, hook, headers_map)

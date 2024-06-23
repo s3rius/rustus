@@ -14,8 +14,8 @@ use axum::{
     response::{IntoResponse, Response},
     Router, ServiceExt,
 };
+use tokio::signal;
 use tower::Layer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod cors;
 mod routes;
@@ -125,25 +125,6 @@ pub async fn start(config: Config) -> RustusResult<()> {
         0,
     )));
 
-    let mut sentry_layer = None;
-    if config.sentry_config.dsn.is_some() {
-        sentry_layer = Some(sentry_tracing::layer());
-    }
-
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::filter::LevelFilter::from_level(
-            config.log_level,
-        ))
-        .with(
-            tracing_subscriber::fmt::layer()
-                .with_level(true)
-                .with_file(false)
-                .with_line_number(false)
-                .with_target(false),
-        )
-        .with(sentry_layer)
-        .init();
-
     let tracer = tower_http::trace::TraceLayer::new_for_http()
         .make_span_with(move |request: &Request| {
             let path = request.uri().path().to_string();
@@ -157,7 +138,7 @@ pub async fn start(config: Config) -> RustusResult<()> {
                 method = ?request.method(),
                 path,
                 version = ?request.version(),
-                ip = ip,
+                ip,
                 status = tracing::field::Empty,
             )
         })
@@ -171,9 +152,10 @@ pub async fn start(config: Config) -> RustusResult<()> {
                 if response.headers().contains_key("X-NO-LOG") {
                     return;
                 }
-                tracing::info!("access log");
+                tracing::info!("request completed with status: {}", response.status());
             },
-        );
+        )
+        .on_failure(());
 
     let state = Arc::new(RustusState::from_config(&config).await?);
     let tus_app = get_router(state);
@@ -197,6 +179,32 @@ pub async fn start(config: Config) -> RustusResult<()> {
             .layer(main_router)
             .into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(shutdown_signal())
     .await?;
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+    eprintln!("Shutting down ...")
 }
