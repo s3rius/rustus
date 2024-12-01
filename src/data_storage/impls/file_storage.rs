@@ -207,7 +207,7 @@ impl DataStorage for FileDataStorage {
 #[cfg(test)]
 mod tests {
     use super::FileDataStorage;
-    use crate::{data_storage::base::DataStorage, info_storages::FileInfo};
+    use crate::{data_storage::base::DataStorage, file_info::FileInfo};
     use actix_web::test::TestRequest;
     use bytes::Bytes;
     use std::{

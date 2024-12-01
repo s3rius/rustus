@@ -70,7 +70,7 @@ impl State {
 
     #[cfg(test)]
     pub async fn create_test_file(&self) -> FileInfo {
-        use crate::data_storage::base::DataStorage;
+        use crate::{data_storage::base::DataStorage, info_storage::base::InfoStorage};
 
         let mut new_file = FileInfo::new(
             uuid::Uuid::new_v4().to_string().as_str(),

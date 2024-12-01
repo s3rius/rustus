@@ -46,8 +46,7 @@ mod tests {
             .get("Tus-Extension")
             .unwrap()
             .to_str()
-            .unwrap()
-            .clone();
+            .unwrap();
         assert!(extensions.contains(Extensions::Creation.to_string().as_str()));
         assert!(extensions.contains(Extensions::Concatenation.to_string().as_str()));
         assert!(extensions.contains(Extensions::Termination.to_string().as_str()));
