@@ -33,17 +33,8 @@ you can use last stable release.
 ```bash
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all
+cargo install --path .
 ```
-Also you can speedup build by disabling some features.
-
-Available features:
-
-* `amqp_notifier` - adds amqp protocol support for notifying about upload status;
-* `db_info_storage` - adds support for storing information about upload in different databases (Postgres, MySQL, SQLite);
-* `all` - enables all rustus features.
-
-All precompiled binaries have all features enabled.
 
 ### With cargo
 

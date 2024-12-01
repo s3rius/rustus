@@ -36,7 +36,12 @@ sentry-actix = "0.35.0"
 mime = "0.3.17"
 mime_guess = "2.0.5"
 mobc = "0.8.5"
-redis = {version  = "^0.27.5", features = ["tokio", "tokio-comp"]}
+redis = { version  = "^0.27.5", features = ["tokio", "tokio-comp"]}
+lapin = { version = "^2.5.0"}
+tokio = { version = "^1.41.1", features = ["full"] }
+uuid = { version = "^1.11.0", features = ["v4"] }
+rust-s3 = "~0.35.1"
+strum = { version = "0.26.3", features = ["derive"] }
 
 [dependencies.sha1]
 version = "^0.10.6"
@@ -76,14 +81,6 @@ version = "^1.0.0"
 features = ["colored"]
 version = "^0.7.0"
 
-[dependencies.lapin]
-optional = true
-version = "^2.5.0"
-
-[dependencies.bb8-lapin]
-version = "^0.5.0"
-optional = true
-
 [dependencies.rbatis]
 default-features = false
 optional = true
@@ -97,34 +94,8 @@ version = "^2.0"
 features = ["json"]
 version = "^0.12.9"
 
-[dependencies.strum]
-features = ["derive"]
-version = "0.26.3"
-
-[dependencies.tokio]
-features = [
-    "time",
-    "process",
-    "fs",
-    "io-std",
-    "io-util",
-    "rt-multi-thread",
-    "bytes",
-    "rt",
-    "macros",
-]
-version = "^1.41.1"
-
-[dependencies.uuid]
-features = ["v4"]
-version = "^1.11.0"
-
-[dependencies.rust-s3]
-version = "~0.35.1"
-
 [features]
-all = ["db_info_storage", "amqp_notifier"]
-amqp_notifier = ["lapin", "bb8-lapin"]
+all = ["db_info_storage"]
 db_info_storage = ["rbatis", "rbson"]
 default = []
 

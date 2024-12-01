@@ -1,4 +1,3 @@
-#[cfg(feature = "amqp_notifier")]
 use crate::notifiers::amqp_notifier;
 use crate::{
     errors::RustusResult,
@@ -46,7 +45,6 @@ impl NotificationManager {
                     rustus_config.notification_opts.http_hook_timeout,
                 )));
         }
-        #[cfg(feature = "amqp_notifier")]
         if rustus_config
             .notification_opts
             .amqp_hook_opts
@@ -54,12 +52,11 @@ impl NotificationManager {
             .is_some()
         {
             debug!("Found AMQP notifier.");
-            manager.notifiers.push(Box::new(
-                amqp_notifier::AMQPNotifier::new(
+            manager
+                .notifiers
+                .push(Box::new(amqp_notifier::AMQPNotifier::new(
                     rustus_config.notification_opts.amqp_hook_opts.clone(),
-                )
-                .await?,
-            ));
+                )));
         }
         for notifier in &mut manager.notifiers.iter_mut() {
             notifier.prepare().await?;

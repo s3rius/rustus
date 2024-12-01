@@ -724,17 +724,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bb8-lapin"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5fa743e89365814a029f8d05c36549c3c57971e82ed593c75be7b4adadeef554"
-dependencies = [
- "async-trait",
- "bb8",
- "lapin",
-]
-
-[[package]]
 name = "bigdecimal"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3481,7 +3470,6 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "bb8",
- "bb8-lapin",
  "bytes",
  "chrono",
  "clap 4.5.21",

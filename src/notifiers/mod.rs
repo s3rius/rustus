@@ -1,4 +1,3 @@
-#[cfg(feature = "amqp_notifier")]
 pub mod amqp_notifier;
 pub mod dir_notifier;
 mod file_notifier;
