@@ -153,7 +153,6 @@ pub struct InfoStoreOptions {
     /// are `Postgres`, `MySQL` or `Redis`.
     ///
     /// Value must include all connection details.
-    #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
     #[arg(
         long,
         required_if_eq_any([("info_storage", "db-info-storage"), ("info_storage", "redis-info-storage")]),
@@ -161,7 +160,6 @@ pub struct InfoStoreOptions {
     )]
     pub info_db_dsn: Option<String>,
 
-    #[cfg(feature = "redis_info_storage")]
     #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
     pub redis_info_expiration: Option<usize>,
 }
@@ -411,7 +409,6 @@ pub struct RustusConf {
     #[command(flatten)]
     pub sentry_opts: SentryOptions,
 }
-
 
 impl RustusConf {
     /// Function to parse CLI parametes.

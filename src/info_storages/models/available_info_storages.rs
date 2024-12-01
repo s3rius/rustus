@@ -8,7 +8,6 @@ use strum::EnumIter;
 #[cfg(feature = "db_info_storage")]
 use crate::info_storages::db_info_storage;
 
-#[cfg(feature = "redis_info_storage")]
 use crate::info_storages::redis_info_storage;
 
 #[derive(PartialEq, Eq, From, Display, Clone, Debug, EnumIter)]
@@ -18,7 +17,6 @@ pub enum AvailableInfoStores {
     #[cfg(feature = "db_info_storage")]
     #[display("db-info-storage")]
     DB,
-    #[cfg(feature = "redis_info_storage")]
     #[display("redis-info-storage")]
     Redis,
 }
@@ -52,7 +50,6 @@ impl AvailableInfoStores {
                 )
                 .await?,
             )),
-            #[cfg(feature = "redis_info_storage")]
             AvailableInfoStores::Redis => Ok(Box::new(redis_info_storage::RedisStorage::new(
                 config
                     .info_storage_opts

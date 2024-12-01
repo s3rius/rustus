@@ -26,10 +26,8 @@ pub enum RustusError {
     #[cfg(feature = "db_info_storage")]
     #[error("Database error: {0}")]
     DatabaseError(#[from] rbatis::error::Error),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
     RedisError(#[from] redis::RedisError),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis pooling error: {0}")]
     MobcError(#[from] mobc::Error<redis::RedisError>),
     #[error("Unable to get file information")]
