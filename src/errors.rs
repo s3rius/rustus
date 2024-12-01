@@ -31,7 +31,7 @@ pub enum RustusError {
     RedisError(#[from] redis::RedisError),
     #[cfg(feature = "redis_info_storage")]
     #[error("Redis pooling error: {0}")]
-    MobcError(#[from] bb8::RunError<redis::RedisError>),
+    MobcError(#[from] mobc::Error<redis::RedisError>),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]

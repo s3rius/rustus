@@ -31,7 +31,7 @@ impl AvailableInfoStores {
     /// # Params
     /// `config` - Rustus configuration.
     ///
-    
+
     pub async fn get(
         &self,
         config: &RustusConf,
@@ -53,18 +53,15 @@ impl AvailableInfoStores {
                 .await?,
             )),
             #[cfg(feature = "redis_info_storage")]
-            AvailableInfoStores::Redis => Ok(Box::new(
-                redis_info_storage::RedisStorage::new(
-                    config
-                        .info_storage_opts
-                        .info_db_dsn
-                        .clone()
-                        .unwrap()
-                        .as_str(),
-                    config.info_storage_opts.redis_info_expiration,
-                )
-                .await?,
-            )),
+            AvailableInfoStores::Redis => Ok(Box::new(redis_info_storage::RedisStorage::new(
+                config
+                    .info_storage_opts
+                    .info_db_dsn
+                    .clone()
+                    .unwrap()
+                    .as_str(),
+                config.info_storage_opts.redis_info_expiration,
+            )?)),
         }
     }
 }
