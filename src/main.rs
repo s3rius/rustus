@@ -1,6 +1,3 @@
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use std::str::FromStr;
 
 use actix_cors::Cors;
@@ -40,6 +37,10 @@ mod server;
 mod state;
 mod storages;
 mod utils;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
@@ -235,7 +236,6 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 
     Dispatch::new()
         .level(app_config.log_level)
-        .level_for("rbatis", LevelFilter::Error)
         .chain(std::io::stdout())
         .format(move |out, message, record| {
             out.finish(format_args!(
