@@ -13,13 +13,13 @@ use crate::info_storages::redis_info_storage;
 
 #[derive(PartialEq, Eq, From, Display, Clone, Debug, EnumIter)]
 pub enum AvailableInfoStores {
-    #[display(fmt = "file-info-storage")]
+    #[display("file-info-storage")]
     Files,
     #[cfg(feature = "db_info_storage")]
-    #[display(fmt = "db-info-storage")]
+    #[display("db-info-storage")]
     DB,
     #[cfg(feature = "redis_info_storage")]
-    #[display(fmt = "redis-info-storage")]
+    #[display("redis-info-storage")]
     Redis,
 }
 
@@ -31,7 +31,7 @@ impl AvailableInfoStores {
     /// # Params
     /// `config` - Rustus configuration.
     ///
-    #[cfg_attr(coverage, no_coverage)]
+    
     pub async fn get(
         &self,
         config: &RustusConf,

@@ -22,7 +22,7 @@ impl DirNotifier {
 
 #[async_trait(?Send)]
 impl Notifier for DirNotifier {
-    #[cfg_attr(coverage, no_coverage)]
+    
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }

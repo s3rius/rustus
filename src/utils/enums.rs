@@ -36,9 +36,9 @@ mod tests {
 
     #[derive(PartialEq, Debug, Display, EnumIter, From, Clone, Eq)]
     pub enum TestEnum {
-        #[display(fmt = "test-val-1")]
+        #[display("test-val-1")]
         TestVal1,
-        #[display(fmt = "test-val-2")]
+        #[display("test-val-2")]
         TestVal2,
     }
 

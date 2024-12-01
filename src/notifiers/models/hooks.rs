@@ -5,17 +5,17 @@ use strum::EnumIter;
 /// Hooks for notifications.
 #[derive(Copy, Clone, Debug, Display, From, EnumIter, Eq, PartialEq)]
 pub enum Hook {
-    #[display(fmt = "pre-create")]
+    #[display("pre-create")]
     PreCreate,
-    #[display(fmt = "post-create")]
+    #[display("post-create")]
     PostCreate,
-    #[display(fmt = "post-receive")]
+    #[display("post-receive")]
     PostReceive,
-    #[display(fmt = "pre-terminate")]
+    #[display("pre-terminate")]
     PreTerminate,
-    #[display(fmt = "post-terminate")]
+    #[display("post-terminate")]
     PostTerminate,
-    #[display(fmt = "post-finish")]
+    #[display("post-finish")]
     PostFinish,
 }
 

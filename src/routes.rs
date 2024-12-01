@@ -4,14 +4,14 @@ use actix_web::HttpResponse;
 /// All protocol urls can be found
 /// at `crate::protocol::*`.
 #[allow(clippy::unused_async)]
-#[cfg_attr(coverage, no_coverage)]
+
 pub async fn not_found() -> HttpResponse {
     HttpResponse::NotFound().finish()
 }
 
 /// Checks that application is accepting connections correctly.
 #[allow(clippy::unused_async)]
-#[cfg_attr(coverage, no_coverage)]
+
 pub async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
 }

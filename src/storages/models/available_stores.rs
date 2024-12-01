@@ -14,9 +14,9 @@ use strum::EnumIter;
 /// Enum of available Storage implementations.
 #[derive(PartialEq, Eq, From, Display, EnumIter, Clone, Debug)]
 pub enum AvailableStores {
-    #[display(fmt = "file-storage")]
+    #[display("file-storage")]
     FileStorage,
-    #[display(fmt = "hybrid-s3")]
+    #[display("hybrid-s3")]
     HybridS3,
 }
 
@@ -29,7 +29,7 @@ impl AvailableStores {
     /// `config` - Rustus configuration.
     /// `info_storage` - Storage for information about files.
     ///
-    #[cfg_attr(coverage, no_coverage)]
+    
     pub fn get(&self, config: &RustusConf) -> Box<dyn Storage + Send + Sync> {
         #[allow(clippy::single_match)]
         match self {

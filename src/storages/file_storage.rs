@@ -19,7 +19,7 @@ use crate::{
 use derive_more::Display;
 
 #[derive(Display, Clone)]
-#[display(fmt = "file_storage")]
+#[display("file_storage")]
 pub struct FileStorage {
     data_dir: PathBuf,
     dir_struct: String,

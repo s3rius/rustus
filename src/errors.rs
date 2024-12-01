@@ -77,7 +77,7 @@ pub enum RustusError {
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
-#[cfg_attr(coverage, no_coverage)]
+
 impl From<RustusError> for Error {
     fn from(err: RustusError) -> Self {
         Error::new(ErrorKind::Other, err)
@@ -85,7 +85,7 @@ impl From<RustusError> for Error {
 }
 
 /// Trait to convert errors to http-responses.
-#[cfg_attr(coverage, no_coverage)]
+
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
         error!("{}", self);

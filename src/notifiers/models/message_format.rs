@@ -8,11 +8,11 @@ use strum::EnumIter;
 
 #[derive(Clone, Debug, Eq, Display, From, PartialEq, EnumIter)]
 pub enum Format {
-    #[display(fmt = "default")]
+    #[display("default")]
     Default,
-    #[display(fmt = "tusd")]
+    #[display("tusd")]
     Tusd,
-    #[display(fmt = "v2")]
+    #[display("v2")]
     V2,
 }
 

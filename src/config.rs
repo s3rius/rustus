@@ -412,7 +412,7 @@ pub struct RustusConf {
     pub sentry_opts: SentryOptions,
 }
 
-#[cfg_attr(coverage, no_coverage)]
+
 impl RustusConf {
     /// Function to parse CLI parametes.
     ///

@@ -1,5 +1,3 @@
-#![cfg_attr(coverage, feature(no_coverage))]
-
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
@@ -43,7 +41,6 @@ mod state;
 mod storages;
 mod utils;
 
-#[cfg_attr(coverage, no_coverage)]
 fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
         .tus_extensions
@@ -142,7 +139,7 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
-#[cfg_attr(coverage, no_coverage)]
+
 #[allow(clippy::too_many_lines)]
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
@@ -227,7 +224,6 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     Ok(server.run())
 }
 
-#[cfg_attr(coverage, no_coverage)]
 fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
     let colors = ColoredLevelConfig::new()
         // use builder methods
@@ -254,7 +250,7 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 }
 
 /// Main program entrypoint.
-#[cfg_attr(coverage, no_coverage)]
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();

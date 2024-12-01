@@ -13,7 +13,11 @@ use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use async_trait::async_trait;
 use bytes::Bytes;
 use derive_more::Display;
-use s3::{command::Command, request::Reqwest, request_trait::Request, Bucket};
+use s3::{
+    command::Command,
+    request::{tokio_backend::HyperRequest, Request as S3Request},
+    Bucket,
+};
 
 /// This storage is useful for small files when you have chunks less than 5MB.
 /// This restriction is based on the S3 API limitations.
@@ -23,7 +27,7 @@ use s3::{command::Command, request::Reqwest, request_trait::Request, Bucket};
 ///
 /// It's not intended to use this storage for large files.
 #[derive(Display, Clone)]
-#[display(fmt = "s3_storage")]
+#[display("s3_storage")]
 pub struct S3HybridStorage {
     bucket: Bucket,
     local_storage: FileStorage,
@@ -84,7 +88,7 @@ impl S3HybridStorage {
         }
 
         Self {
-            bucket,
+            bucket: *bucket,
             local_storage,
             dir_struct,
         }
@@ -124,6 +128,21 @@ impl Storage for S3HybridStorage {
         Ok(())
     }
 
+    // async fn get_contents(
+    //     &self,
+    //     file_info: &FileInfo,
+    //     request: &HttpRequest,
+    // ) -> RustusResult<HttpResponse> {
+    //     if file_info.length != Some(file_info.offset) {
+    //         log::debug!("File isn't uploaded. Returning from local storage.");
+    //         return self.local_storage.get_contents(file_info, request).await;
+    //     }
+    //     let key = self.get_s3_key(file_info);
+    //     let command = Command::GetObject;
+    //     let s3_request = Reqwest::new(&self.bucket, &key, command);
+    //     let s3_response = s3_request.response().await?;
+    // }
+
     async fn get_contents(
         &self,
         file_info: &FileInfo,
@@ -135,12 +154,12 @@ impl Storage for S3HybridStorage {
         }
         let key = self.get_s3_key(file_info);
         let command = Command::GetObject;
-        let s3_request = Reqwest::new(&self.bucket, &key, command);
-        let s3_response = s3_request.response().await?;
+        let s3_request = HyperRequest::new(&self.bucket, &key, command).await?;
+        let s3_response = s3_request.response_data_to_stream().await?;
         let mut response = HttpResponseBuilder::new(actix_web::http::StatusCode::OK);
         Ok(response
             .insert_header(generate_disposition(file_info.get_filename()))
-            .streaming(s3_response.bytes_stream()))
+            .streaming(s3_response.bytes))
     }
 
     async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
