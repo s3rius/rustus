@@ -1,6 +1,6 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::{errors::RustusError, RustusResult, State};
+use crate::{data_storage::base::DataStorage, errors::RustusError, RustusResult, State};
 
 /// Retrieve actual file.
 ///
@@ -9,7 +9,7 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusRe
     let file_id_opt = request.match_info().get("file_id").map(String::from);
     if let Some(file_id) = file_id_opt {
         let file_info = state.info_storage.get_info(file_id.as_str()).await?;
-        if file_info.storage != state.data_storage.to_string() {
+        if file_info.storage != state.data_storage.get_name() {
             return Err(RustusError::FileNotFound);
         }
         state.data_storage.get_contents(&file_info, &request).await
@@ -20,7 +20,7 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusRe
 
 #[cfg(test)]
 mod test {
-    use crate::{server::test::get_service, State};
+    use crate::{data_storage::base::DataStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},

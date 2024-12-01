@@ -6,11 +6,12 @@ use actix_web::{
     http::{KeepAlive, Method},
     middleware, web, App, HttpServer,
 };
+use data_storage::base::DataStorage;
 use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
-use log::{error, LevelFilter};
+use log::error;
 
 use config::RustusConf;
 
@@ -23,10 +24,10 @@ use crate::{
     notifiers::models::notification_manager::NotificationManager,
     server::rustus_service,
     state::State,
-    storages::Storage,
 };
 
 mod config;
+mod data_storage;
 mod errors;
 mod info_storages;
 mod metrics;
@@ -35,7 +36,6 @@ mod protocol;
 mod routes;
 mod server;
 mod state;
-mod storages;
 mod utils;
 
 #[cfg(not(target_env = "msvc"))]
@@ -286,20 +286,13 @@ async fn main() -> std::io::Result<()> {
     // Preparing it, lol.
     info_storage.prepare().await?;
 
-    // Creating file storage.
-    let mut storage = app_conf.storage_opts.storage.get(&app_conf);
-    // Preparing it.
-    storage.prepare().await?;
-
     // Creating notification manager.
     let notification_manager = NotificationManager::new(&app_conf).await?;
 
+    let mut state = State::new(app_conf.clone(), info_storage, notification_manager);
+    state.data_storage.prepare().await?;
+
     // Creating actual server and running it.
-    let server = create_server(State::new(
-        app_conf.clone(),
-        storage,
-        info_storage,
-        notification_manager,
-    ))?;
+    let server = create_server(state)?;
     server.await
 }

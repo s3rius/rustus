@@ -3,21 +3,20 @@ use std::{ffi::OsString, path::PathBuf};
 use clap::Parser;
 
 use crate::{
+    data_storage::AvailableDataStorages,
     info_storages::AvailableInfoStores,
     notifiers::{Format, Hook},
     protocol::extensions::Extensions,
 };
 
-use crate::storages::AvailableStores;
-
 #[derive(Parser, Debug, Clone)]
-pub struct StorageOptions {
+pub struct DataStorageOptions {
     /// Rustus storage type.
     ///
     /// Storages are used to store
     /// uploads.
     #[arg(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
-    pub storage: AvailableStores,
+    pub storage: AvailableDataStorages,
 
     /// Rustus data directory
     ///
@@ -384,7 +383,7 @@ pub struct RustusConf {
     pub max_file_size: Option<usize>,
 
     #[command(flatten)]
-    pub storage_opts: StorageOptions,
+    pub storage_opts: DataStorageOptions,
 
     #[command(flatten)]
     pub info_storage_opts: InfoStoreOptions,

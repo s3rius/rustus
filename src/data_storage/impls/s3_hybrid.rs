@@ -1,23 +1,23 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use crate::{
+    data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
     info_storages::FileInfo,
     utils::headers::generate_disposition,
 };
 
-use super::Storage;
-use crate::{storages::file_storage::FileStorage, utils::dir_struct::substr_time};
+use crate::utils::dir_struct::substr_time;
 
 use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
-use async_trait::async_trait;
 use bytes::Bytes;
-use derive_more::Display;
 use s3::{
     command::Command,
     request::{tokio_backend::HyperRequest, Request as S3Request},
     Bucket,
 };
+
+use super::file_storage::FileDataStorage;
 
 /// This storage is useful for small files when you have chunks less than 5MB.
 /// This restriction is based on the S3 API limitations.
@@ -26,15 +26,14 @@ use s3::{
 /// complete, it uploads file to S3.
 ///
 /// It's not intended to use this storage for large files.
-#[derive(Display, Clone)]
-#[display("s3_storage")]
-pub struct S3HybridStorage {
+#[derive(Clone, Debug)]
+pub struct S3HybridDataStorage {
     bucket: Bucket,
-    local_storage: FileStorage,
+    local_storage: FileDataStorage,
     dir_struct: String,
 }
 
-impl S3HybridStorage {
+impl S3HybridDataStorage {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         endpoint: String,
@@ -51,7 +50,7 @@ impl S3HybridStorage {
         dir_struct: String,
         force_fsync: bool,
     ) -> Self {
-        let local_storage = FileStorage::new(data_dir, dir_struct.clone(), force_fsync);
+        let local_storage = FileDataStorage::new(data_dir, dir_struct.clone(), force_fsync);
         let creds = s3::creds::Credentials::new(
             access_key.as_deref(),
             secret_key.as_deref(),
@@ -122,8 +121,10 @@ impl S3HybridStorage {
     }
 }
 
-#[async_trait(?Send)]
-impl Storage for S3HybridStorage {
+impl DataStorage for S3HybridDataStorage {
+    fn get_name(&self) -> &'static str {
+        "s3_storage"
+    }
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }

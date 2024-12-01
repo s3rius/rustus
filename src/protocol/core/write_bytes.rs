@@ -6,6 +6,7 @@ use actix_web::{
 };
 
 use crate::{
+    data_storage::base::DataStorage,
     errors::RustusError,
     metrics,
     notifiers::Hook,
@@ -74,7 +75,7 @@ pub async fn write_bytes(
     }
 
     // Checking if file was stored in the same storage.
-    if file_info.storage != state.data_storage.to_string() {
+    if file_info.storage != state.data_storage.get_name() {
         return Err(RustusError::FileNotFound);
     }
     // Checking if offset from request is the same as the real offset.

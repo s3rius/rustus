@@ -3,6 +3,7 @@ use base64::{engine::general_purpose, Engine};
 use std::collections::HashMap;
 
 use crate::{
+    data_storage::base::DataStorage,
     info_storages::FileInfo,
     metrics,
     notifiers::Hook,
@@ -126,7 +127,7 @@ pub async fn create_file(
         file_id.as_str(),
         length,
         None,
-        state.data_storage.to_string(),
+        state.data_storage.get_name().to_string(),
         meta,
     );
 

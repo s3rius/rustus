@@ -1,12 +1,13 @@
 use crate::{errors::RustusResult, info_storages::FileInfo};
 use actix_web::{HttpRequest, HttpResponse};
-use async_trait::async_trait;
 use bytes::Bytes;
-use dyn_clone::DynClone;
-use std::fmt::Display;
 
-#[async_trait(?Send)]
-pub trait Storage: Display + DynClone {
+pub trait DataStorage {
+    /// Get name of the storage.
+    ///
+    /// Used to store file storage name in file info.
+    fn get_name(&self) -> &'static str;
+
     /// Prepare storage before starting up server.
     ///
     /// Function to check if configuration is correct
@@ -82,5 +83,3 @@ pub trait Storage: Display + DynClone {
     /// `file_info` - info about current file.
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()>;
 }
-
-dyn_clone::clone_trait_object!(Storage);

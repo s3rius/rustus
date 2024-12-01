@@ -1,4 +1,4 @@
-use crate::errors::RustusError;
+use crate::{data_storage::base::DataStorage, errors::RustusError};
 use actix_web::{
     http::header::{CacheControl, CacheDirective},
     web, HttpRequest, HttpResponse,
@@ -19,7 +19,7 @@ pub async fn get_file_info(
 
     // Getting file info from info_storage.
     let file_info = state.info_storage.get_info(file_id).await?;
-    if file_info.storage != state.data_storage.to_string() {
+    if file_info.storage != state.data_storage.get_name() {
         return Err(RustusError::FileNotFound);
     }
     let mut builder = HttpResponse::Ok();
