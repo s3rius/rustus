@@ -81,22 +81,12 @@ version = "^1.0.0"
 features = ["colored"]
 version = "^0.7.0"
 
-[dependencies.rbatis]
-default-features = false
-optional = true
-version = "^4.5"
-
-[dependencies.rbson]
-optional = true
-version = "^2.0"
-
 [dependencies.reqwest]
 features = ["json"]
 version = "^0.12.9"
 
 [features]
-all = ["db_info_storage"]
-db_info_storage = ["rbatis", "rbson"]
+all = []
 default = []
 
 ### For testing

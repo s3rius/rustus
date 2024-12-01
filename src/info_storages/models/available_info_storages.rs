@@ -5,18 +5,12 @@ use crate::{errors::RustusResult, from_str, RustusConf};
 use crate::info_storages::{file_info_storage, InfoStorage};
 use strum::EnumIter;
 
-#[cfg(feature = "db_info_storage")]
-use crate::info_storages::db_info_storage;
-
 use crate::info_storages::redis_info_storage;
 
 #[derive(PartialEq, Eq, From, Display, Clone, Debug, EnumIter)]
 pub enum AvailableInfoStores {
     #[display("file-info-storage")]
     Files,
-    #[cfg(feature = "db_info_storage")]
-    #[display("db-info-storage")]
-    DB,
     #[display("redis-info-storage")]
     Redis,
 }
@@ -38,18 +32,6 @@ impl AvailableInfoStores {
             Self::Files => Ok(Box::new(file_info_storage::FileInfoStorage::new(
                 config.info_storage_opts.info_dir.clone(),
             ))),
-            #[cfg(feature = "db_info_storage")]
-            Self::DB => Ok(Box::new(
-                db_info_storage::DBInfoStorage::new(
-                    config
-                        .info_storage_opts
-                        .info_db_dsn
-                        .clone()
-                        .unwrap()
-                        .as_str(),
-                )
-                .await?,
-            )),
             AvailableInfoStores::Redis => Ok(Box::new(redis_info_storage::RedisStorage::new(
                 config
                     .info_storage_opts

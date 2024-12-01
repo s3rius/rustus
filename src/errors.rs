@@ -23,9 +23,6 @@ pub enum RustusError {
     SizeAlreadyKnown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
-    #[cfg(feature = "db_info_storage")]
-    #[error("Database error: {0}")]
-    DatabaseError(#[from] rbatis::error::Error),
     #[error("Redis error: {0}")]
     RedisError(#[from] redis::RedisError),
     #[error("Redis pooling error: {0}")]
