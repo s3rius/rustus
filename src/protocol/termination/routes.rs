@@ -3,6 +3,7 @@ use actix_web::{web, HttpRequest, HttpResponse};
 use crate::{
     data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
+    info_storage::base::InfoStorage,
     metrics,
     notifiers::Hook,
     State,
@@ -58,7 +59,7 @@ pub async fn terminate(
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},

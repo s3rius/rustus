@@ -1,6 +1,9 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
-use crate::{data_storage::base::DataStorage, errors::RustusError, RustusResult, State};
+use crate::{
+    data_storage::base::DataStorage, errors::RustusError, info_storage::base::InfoStorage,
+    RustusResult, State,
+};
 
 /// Retrieve actual file.
 ///
@@ -20,7 +23,10 @@ pub async fn get_file(request: HttpRequest, state: web::Data<State>) -> RustusRe
 
 #[cfg(test)]
 mod test {
-    use crate::{data_storage::base::DataStorage, server::test::get_service, State};
+    use crate::{
+        data_storage::base::DataStorage, info_storage::base::InfoStorage,
+        server::test::get_service, State,
+    };
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},

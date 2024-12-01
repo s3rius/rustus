@@ -1,9 +1,10 @@
 use mobc::{Manager, Pool};
 
-use crate::errors::{RustusError, RustusResult};
-
-use super::FileInfo;
-use super::InfoStorage;
+use crate::{
+    errors::{RustusError, RustusResult},
+    file_info::FileInfo,
+    info_storage::base::InfoStorage,
+};
 
 struct RedisConnectionManager {
     client: redis::Client,
@@ -34,12 +35,12 @@ impl Manager for RedisConnectionManager {
 }
 
 #[derive(Clone, Debug)]
-pub struct RedisStorage {
+pub struct RedisInfoStorage {
     pool: Pool<RedisConnectionManager>,
     expiration: Option<usize>,
 }
 
-impl RedisStorage {
+impl RedisInfoStorage {
     /// Create new `RedisStorage`.
     ///
     /// # Errors
@@ -53,8 +54,7 @@ impl RedisStorage {
     }
 }
 
-#[async_trait::async_trait(?Send)]
-impl InfoStorage for RedisStorage {
+impl InfoStorage for RedisInfoStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }

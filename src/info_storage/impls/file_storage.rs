@@ -3,7 +3,6 @@ use std::{
     path::PathBuf,
 };
 
-use async_trait::async_trait;
 use log::error;
 use std::{
     fs::{remove_file, File, OpenOptions},
@@ -13,10 +12,11 @@ use tokio::fs::DirBuilder;
 
 use crate::{
     errors::{RustusError, RustusResult},
-    info_storages::{FileInfo, InfoStorage},
+    file_info::FileInfo,
+    info_storage::base::InfoStorage,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FileInfoStorage {
     info_dir: PathBuf,
 }
@@ -31,7 +31,6 @@ impl FileInfoStorage {
     }
 }
 
-#[async_trait(?Send)]
 impl InfoStorage for FileInfoStorage {
     async fn prepare(&mut self) -> RustusResult<()> {
         if !self.info_dir.exists() {
@@ -100,8 +99,9 @@ impl InfoStorage for FileInfoStorage {
 
 #[cfg(test)]
 mod tests {
+    use crate::{file_info::FileInfo, info_storage::base::InfoStorage};
+
     use super::FileInfoStorage;
-    use crate::{info_storages::FileInfo, InfoStorage};
     use std::{
         collections::HashMap,
         fs::File,

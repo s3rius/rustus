@@ -1,4 +1,4 @@
-use crate::{from_str, info_storages::FileInfo};
+use crate::{file_info::FileInfo, from_str};
 use actix_web::{http::header::HeaderMap, HttpRequest};
 use derive_more::{Display, From};
 use serde::Serialize;

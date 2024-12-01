@@ -4,7 +4,7 @@ use clap::Parser;
 
 use crate::{
     data_storage::AvailableDataStorages,
-    info_storages::AvailableInfoStores,
+    info_storage::AvailableInfoStorages,
     notifiers::{Format, Hook},
     protocol::extensions::Extensions,
 };
@@ -136,7 +136,7 @@ pub struct InfoStoreOptions {
         default_value = "file-info-storage",
         env = "RUSTUS_INFO_STORAGE"
     )]
-    pub info_storage: AvailableInfoStores,
+    pub info_storage: AvailableInfoStorages,
 
     /// Rustus info directory
     ///

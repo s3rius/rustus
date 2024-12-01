@@ -6,16 +6,10 @@ use actix_web::{
 };
 
 use crate::{
-    data_storage::base::DataStorage,
-    errors::RustusError,
-    metrics,
-    notifiers::Hook,
-    protocol::extensions::Extensions,
-    utils::{
+    data_storage::base::DataStorage, errors::RustusError, info_storage::base::InfoStorage, metrics, notifiers::Hook, protocol::extensions::Extensions, utils::{
         hashes::verify_chunk_checksum,
         headers::{check_header, parse_header},
-    },
-    RustusResult, State,
+    }, RustusResult, State
 };
 
 pub async fn write_bytes(
@@ -150,7 +144,7 @@ pub async fn write_bytes(
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},

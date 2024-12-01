@@ -12,7 +12,7 @@ use std::{
 use crate::{
     data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
-    info_storages::FileInfo,
+    file_info::FileInfo,
     utils::dir_struct::substr_now,
 };
 use derive_more::Display;

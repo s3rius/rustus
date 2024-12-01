@@ -11,6 +11,7 @@ use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
+use info_storage::base::InfoStorage;
 use log::error;
 
 use config::RustusConf;
@@ -20,7 +21,6 @@ use wildmatch::WildMatch;
 
 use crate::{
     errors::{RustusError, RustusResult},
-    info_storages::InfoStorage,
     notifiers::models::notification_manager::NotificationManager,
     server::rustus_service,
     state::State,
@@ -29,7 +29,8 @@ use crate::{
 mod config;
 mod data_storage;
 mod errors;
-mod info_storages;
+mod file_info;
+mod info_storage;
 mod metrics;
 mod notifiers;
 mod protocol;
@@ -276,20 +277,11 @@ async fn main() -> std::io::Result<()> {
     // Printing cool message.
     greeting(&app_conf);
 
-    // Creating info storage.
-    // It's used to store info about files.
-    let mut info_storage = app_conf
-        .info_storage_opts
-        .info_storage
-        .get(&app_conf)
-        .await?;
-    // Preparing it, lol.
-    info_storage.prepare().await?;
-
     // Creating notification manager.
     let notification_manager = NotificationManager::new(&app_conf).await?;
 
-    let mut state = State::new(app_conf.clone(), info_storage, notification_manager);
+    let mut state = State::new(app_conf.clone(), notification_manager)?;
+    state.info_storage.prepare().await?;
     state.data_storage.prepare().await?;
 
     // Creating actual server and running it.

@@ -1,4 +1,6 @@
-use crate::{data_storage::base::DataStorage, errors::RustusError};
+use crate::{
+    data_storage::base::DataStorage, errors::RustusError, info_storage::base::InfoStorage,
+};
 use actix_web::{
     http::header::{CacheControl, CacheDirective},
     web, HttpRequest, HttpResponse,
@@ -62,7 +64,7 @@ pub async fn get_file_info(
 mod tests {
     use actix_web::http::{Method, StatusCode};
 
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::test::{call_service, TestRequest};
 
     use base64::{engine::general_purpose, Engine};

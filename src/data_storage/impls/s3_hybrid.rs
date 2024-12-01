@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf};
 use crate::{
     data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
-    info_storages::FileInfo,
+    file_info::FileInfo,
     utils::headers::generate_disposition,
 };
 

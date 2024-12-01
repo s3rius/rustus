@@ -2,7 +2,7 @@ use std::{fs::File, io::Read, path::PathBuf};
 
 use base::DataStorage;
 
-use crate::{config::RustusConf, from_str};
+use crate::{config::RustusConf, file_info::FileInfo, from_str};
 
 pub mod base;
 pub mod impls;
@@ -106,7 +106,7 @@ impl DataStorage for DataStorageImpl {
 
     async fn get_contents(
         &self,
-        file_info: &crate::info_storages::FileInfo,
+        file_info: &FileInfo,
         request: &actix_web::HttpRequest,
     ) -> crate::errors::RustusResult<actix_web::HttpResponse> {
         match self {
@@ -123,7 +123,7 @@ impl DataStorage for DataStorageImpl {
 
     async fn add_bytes(
         &self,
-        file_info: &crate::info_storages::FileInfo,
+        file_info: &FileInfo,
         bytes: bytes::Bytes,
     ) -> crate::errors::RustusResult<()> {
         match self {
@@ -136,10 +136,7 @@ impl DataStorage for DataStorageImpl {
         }
     }
 
-    async fn create_file(
-        &self,
-        file_info: &crate::info_storages::FileInfo,
-    ) -> crate::errors::RustusResult<String> {
+    async fn create_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<String> {
         match self {
             DataStorageImpl::File(file_data_storage) => {
                 file_data_storage.create_file(file_info).await
@@ -152,8 +149,8 @@ impl DataStorage for DataStorageImpl {
 
     async fn concat_files(
         &self,
-        file_info: &crate::info_storages::FileInfo,
-        parts_info: Vec<crate::info_storages::FileInfo>,
+        file_info: &FileInfo,
+        parts_info: Vec<FileInfo>,
     ) -> crate::errors::RustusResult<()> {
         match self {
             DataStorageImpl::File(file_data_storage) => {
@@ -167,10 +164,7 @@ impl DataStorage for DataStorageImpl {
         }
     }
 
-    async fn remove_file(
-        &self,
-        file_info: &crate::info_storages::FileInfo,
-    ) -> crate::errors::RustusResult<()> {
+    async fn remove_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<()> {
         match self {
             DataStorageImpl::File(file_data_storage) => {
                 file_data_storage.remove_file(file_info).await

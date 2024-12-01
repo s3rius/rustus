@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use crate::{
     data_storage::base::DataStorage,
-    info_storages::FileInfo,
+    file_info::FileInfo,
+    info_storage::base::InfoStorage,
     metrics,
     notifiers::Hook,
     protocol::extensions::Extensions,
@@ -268,7 +269,7 @@ pub async fn create_file(
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},

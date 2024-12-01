@@ -1,4 +1,4 @@
-use crate::{errors::RustusResult, info_storages::FileInfo};
+use crate::{errors::RustusResult, file_info::FileInfo};
 use actix_web::{HttpRequest, HttpResponse};
 use bytes::Bytes;
 

@@ -1,33 +1,38 @@
 #[cfg(test)]
-use crate::info_storages::FileInfo;
-use crate::{data_storage::DataStorageImpl, InfoStorage, NotificationManager, RustusConf};
+use crate::file_info::FileInfo;
+use crate::{
+    data_storage::DataStorageImpl, errors::RustusResult, info_storage::InfoStorageImpl,
+    NotificationManager, RustusConf,
+};
 
 #[derive(Clone)]
 pub struct State {
     pub config: RustusConf,
     pub data_storage: DataStorageImpl,
-    pub info_storage: Box<dyn InfoStorage + Send + Sync>,
+    pub info_storage: InfoStorageImpl,
     pub notification_manager: NotificationManager,
 }
 
 impl State {
     pub fn new(
         config: RustusConf,
-        info_storage: Box<dyn InfoStorage + Send + Sync>,
         notification_manager: NotificationManager,
-    ) -> Self {
+    ) -> RustusResult<Self> {
         let data_storage = config.storage_opts.storage.get(&config);
+        let info_storage = config.info_storage_opts.info_storage.get(&config)?;
 
-        Self {
+        Ok(Self {
             config,
             data_storage,
             info_storage,
             notification_manager,
-        }
+        })
     }
 
     #[cfg(test)]
     pub async fn from_config_test(config: RustusConf) -> Self {
+        use crate::info_storage::InfoStorageImpl;
+
         Self {
             config: config.clone(),
             data_storage: DataStorageImpl::File(
@@ -37,8 +42,8 @@ impl State {
                     config.storage_opts.force_fsync,
                 ),
             ),
-            info_storage: Box::new(
-                crate::info_storages::file_info_storage::FileInfoStorage::new(
+            info_storage: InfoStorageImpl::File(
+                crate::info_storage::impls::file_storage::FileInfoStorage::new(
                     config.info_storage_opts.info_dir.clone(),
                 ),
             ),
