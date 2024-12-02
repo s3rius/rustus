@@ -6,12 +6,10 @@ use actix_web::{
     http::{KeepAlive, Method},
     middleware, web, App, HttpServer,
 };
-use data_storage::base::DataStorage;
 use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
-use info_storage::base::InfoStorage;
 use log::error;
 
 use config::RustusConf;

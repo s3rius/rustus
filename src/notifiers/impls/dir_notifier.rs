@@ -4,7 +4,6 @@ use crate::{
     RustusResult,
 };
 use actix_web::http::header::HeaderMap;
-use async_trait::async_trait;
 use log::debug;
 use std::path::PathBuf;
 use tokio::process::Command;
