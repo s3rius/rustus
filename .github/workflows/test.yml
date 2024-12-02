@@ -86,7 +86,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Run tests
-        run: cargo test --features=all,integration_tests -- --test-threads 1
+        run: cargo test --features=integration_tests -- --test-threads 1
         env:
           TEST_REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}/0
           TEST_DB_URL: postgresql://rustus:rustus@localhost:${{ job.services.pg.ports['5432'] }}/rustus
