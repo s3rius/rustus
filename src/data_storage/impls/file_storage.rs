@@ -106,7 +106,7 @@ impl DataStorage for FileDataStorage {
             // It means that we're going to append some
             // bytes to the end of a file.
             let file = OpenOptions::new()
-                .write(true)
+                
                 .append(true)
                 .create(false)
                 .read(false)
@@ -158,7 +158,7 @@ impl DataStorage for FileDataStorage {
         let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
-                .write(true)
+                
                 .append(true)
                 .create(true)
                 .open(path)
@@ -221,9 +221,9 @@ mod tests {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let target_path = dir.into_path().join("not_exist");
         let mut storage = FileDataStorage::new(target_path.clone(), String::new(), false);
-        assert_eq!(target_path.exists(), false);
+        assert!(!target_path.exists());
         storage.prepare().await.unwrap();
-        assert_eq!(target_path.exists(), true);
+        assert!(target_path.exists());
     }
 
     #[actix_rt::test]

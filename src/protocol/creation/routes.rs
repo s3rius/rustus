@@ -285,7 +285,7 @@ mod tests {
             .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 100))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -310,7 +310,7 @@ mod tests {
             .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 0))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
@@ -323,7 +323,7 @@ mod tests {
             .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 0))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
     }
 
@@ -338,7 +338,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload(web::Bytes::from(test_data))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -366,7 +366,7 @@ mod tests {
             .insert_header(("Content-Type", "random"))
             .set_payload(web::Bytes::from(test_data))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -391,7 +391,7 @@ mod tests {
             .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Defer-Length", "1"))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -417,7 +417,7 @@ mod tests {
             .insert_header(("Upload-Length", 100))
             .insert_header(("Upload-Concat", "partial"))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -432,7 +432,7 @@ mod tests {
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
         assert!(file_info.is_partial);
-        assert_eq!(file_info.is_final, false);
+        assert!(!file_info.is_final);
     }
 
     #[actix_rt::test]
@@ -460,7 +460,7 @@ mod tests {
                 format!("final;/files/{} /files/{}", part1.id, part2.id),
             ))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -487,7 +487,7 @@ mod tests {
             .insert_header(("Upload-Length", 100))
             .insert_header(("Upload-Concat", "final;"))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
@@ -507,7 +507,7 @@ mod tests {
                 ),
             ))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -541,7 +541,7 @@ mod tests {
                 ),
             ))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CREATED);
         // Getting file from location header.
         let item_id = resp
@@ -567,7 +567,7 @@ mod tests {
         let request = TestRequest::post()
             .uri(state.config.test_url().as_str())
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
@@ -580,7 +580,7 @@ mod tests {
             .uri(state.config.test_url().as_str())
             .insert_header(("Upload-Length", 1001))
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 }

@@ -1,3 +1,20 @@
+#![warn(
+    // Base lints.
+    clippy::all,
+    // Some pedantic lints.
+    clippy::pedantic,
+    // New lints which are cool.
+    clippy::nursery,
+)]
+#![
+    allow(
+        // I don't care about this.
+        clippy::module_name_repetitions, 
+        // Yo, the hell you should put
+        // it in docs, if signature is clear as sky.
+        clippy::missing_errors_doc
+    )
+]
 use std::str::FromStr;
 
 use actix_cors::Cors;
@@ -195,10 +212,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                 async move {
                     let srv_response = fut.await?;
                     if let Some(err) = srv_response.response().error() {
-                        let url = match srv_response.request().match_pattern() {
-                            Some(pattern) => pattern,
-                            None => String::new(),
-                        };
+                        let url = srv_response.request().match_pattern().unwrap_or_default();
                         let err_desc = format!("{err}");
                         error_counter
                             .clone()

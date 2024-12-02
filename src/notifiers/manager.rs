@@ -21,7 +21,7 @@ pub enum NotifierImpl {
     File(FileNotifier),
     Dir(DirNotifier),
     Http(HttpNotifier),
-    AMQP(AMQPNotifier),
+    Amqp(AMQPNotifier),
 }
 
 impl NotificationManager {
@@ -60,7 +60,7 @@ impl NotificationManager {
             .is_some()
         {
             debug!("Found AMQP notifier.");
-            manager.notifiers.push(NotifierImpl::AMQP(AMQPNotifier::new(
+            manager.notifiers.push(NotifierImpl::Amqp(AMQPNotifier::new(
                 rustus_config.notification_opts.amqp_hook_opts.clone(),
             )));
         }
@@ -93,7 +93,7 @@ impl Notifier for NotifierImpl {
             NotifierImpl::File(file_notifier) => file_notifier.prepare().await,
             NotifierImpl::Dir(dir_notifier) => dir_notifier.prepare().await,
             NotifierImpl::Http(http_notifier) => http_notifier.prepare().await,
-            NotifierImpl::AMQP(amqp_notifier) => amqp_notifier.prepare().await,
+            NotifierImpl::Amqp(amqp_notifier) => amqp_notifier.prepare().await,
         }
     }
 
@@ -113,7 +113,7 @@ impl Notifier for NotifierImpl {
             NotifierImpl::Http(http_notifier) => {
                 http_notifier.send_message(message, hook, headers_map).await
             }
-            NotifierImpl::AMQP(amqp_notifier) => {
+            NotifierImpl::Amqp(amqp_notifier) => {
                 amqp_notifier.send_message(message, hook, headers_map).await
             }
         }

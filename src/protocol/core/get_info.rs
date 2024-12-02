@@ -84,7 +84,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         let offset = response
             .headers()
             .get("Upload-Offset")
@@ -112,7 +112,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         let metadata = response
             .headers()
             .get("Upload-Metadata")
@@ -140,7 +140,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -166,7 +166,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -194,7 +194,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -218,7 +218,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url("unknknown").as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 
@@ -236,7 +236,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

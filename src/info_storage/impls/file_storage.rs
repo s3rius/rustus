@@ -136,7 +136,7 @@ mod tests {
             .unwrap()
             .read_to_string(&mut buffer)
             .unwrap();
-        assert!(buffer.len() > 0);
+        assert!(!buffer.is_empty());
     }
 
     #[actix_rt::test]

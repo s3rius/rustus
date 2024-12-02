@@ -116,7 +116,7 @@ impl S3HybridDataStorage {
     // Construct an S3 key which is used to upload files.
     fn get_s3_key(&self, file_info: &FileInfo) -> String {
         let base_path = substr_time(self.dir_struct.as_str(), file_info.created_at);
-        let trimmed_path = base_path.trim_end_matches(|c: char| c == '/');
+        let trimmed_path = base_path.trim_end_matches('/');
         format!("{trimmed_path}/{}", file_info.id)
     }
 }

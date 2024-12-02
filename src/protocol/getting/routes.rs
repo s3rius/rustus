@@ -46,7 +46,7 @@ mod test {
         let request = TestRequest::get()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert!(resp.status().is_success());
     }
 
@@ -57,7 +57,7 @@ mod test {
         let request = TestRequest::get()
             .uri(state.config.file_url("random_str").as_str())
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
@@ -75,7 +75,7 @@ mod test {
         let request = TestRequest::get()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 }

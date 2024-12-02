@@ -99,7 +99,7 @@ mod tests {
     async fn test_check_header_unknown_header() {
         let request = TestRequest::get().to_http_request();
         let check = check_header(&request, "unknown", |value| value == "1");
-        assert_eq!(check, false);
+        assert!(!check);
     }
 
     #[actix_rt::test]

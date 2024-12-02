@@ -176,7 +176,7 @@ mod tests {
             .insert_header(("Upload-Offset", file.offset))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NO_CONTENT);
         assert_eq!(
             resp.headers()
@@ -216,7 +216,7 @@ mod tests {
             .insert_header(("Upload-Length", "20"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NO_CONTENT);
         assert_eq!(
             resp.headers()
@@ -232,7 +232,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(new_info.offset, test_data.len());
-        assert_eq!(new_info.deferred_size, false);
+        assert!(!new_info.deferred_size);
         assert_eq!(new_info.length, Some(20));
     }
 
@@ -255,7 +255,7 @@ mod tests {
             .insert_header(("Upload-Length", "20"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CONFLICT);
     }
 
@@ -279,7 +279,7 @@ mod tests {
             .insert_header(("Upload-Length", "120"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
@@ -298,7 +298,7 @@ mod tests {
             .insert_header(("Upload-Offset", "0"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
 
@@ -316,7 +316,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
 
@@ -335,7 +335,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CONFLICT);
     }
 
@@ -353,7 +353,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
     }
 
@@ -371,7 +371,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
@@ -391,7 +391,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         println!("{:?}", resp.response().body());
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
@@ -408,7 +408,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
@@ -428,7 +428,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::EXPECTATION_FAILED);
     }
 }

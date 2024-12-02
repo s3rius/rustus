@@ -76,7 +76,7 @@ mod tests {
         let hook = Hook::PostCreate;
         let test_message = uuid::Uuid::new_v4().to_string();
         notifier
-            .send_message(test_message.clone(), hook.clone(), &HeaderMap::new())
+            .send_message(test_message.clone(), hook, &HeaderMap::new())
             .await
             .unwrap();
         let output_path = dir.join("output");
@@ -84,7 +84,7 @@ mod tests {
         let mut buffer = String::new();
         let mut out_file = File::open(output_path).unwrap();
         out_file.read_to_string(&mut buffer).unwrap();
-        assert_eq!(buffer, format!("{} {}\n", hook.to_string(), test_message));
+        assert_eq!(buffer, format!("{} {}\n", hook, test_message));
     }
 
     #[cfg(unix)]

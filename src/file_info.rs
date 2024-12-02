@@ -47,10 +47,7 @@ impl FileInfo {
         if length.is_some() {
             deferred_size = false;
         }
-        let metadata = match initial_metadata {
-            Some(meta) => meta,
-            None => HashMap::new(),
-        };
+        let metadata = initial_metadata.unwrap_or_default();
 
         FileInfo {
             id,

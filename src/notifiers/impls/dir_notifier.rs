@@ -90,7 +90,7 @@ mod tests {
         let notifier = DirNotifier::new(dir.to_path_buf());
         let test_message = uuid::Uuid::new_v4().to_string();
         notifier
-            .send_message(test_message.clone(), hook.clone(), &HeaderMap::new())
+            .send_message(test_message.clone(), hook, &HeaderMap::new())
             .await
             .unwrap();
         let output_path = dir.join("output");

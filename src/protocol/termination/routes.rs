@@ -69,12 +69,12 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let file_info = state.create_test_file().await;
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NO_CONTENT);
         assert!(state
             .info_storage
@@ -91,7 +91,7 @@ mod tests {
         let request = TestRequest::delete()
             .param("file_id", "not_exists")
             .to_request();
-        let result = call_service(&mut rustus, request).await;
+        let result = call_service(&rustus, request).await;
         assert_eq!(result.status(), StatusCode::NOT_FOUND);
     }
 
@@ -109,7 +109,7 @@ mod tests {
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }
