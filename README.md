@@ -36,15 +36,6 @@ cd rustus
 cargo install --path .
 ```
 
-### With cargo
-
-If you have cargo installed maybe it would be easier to
-install it directly from crates.io.
-
-```bash
-cargo install rustus --features=all
-```
-
 ### Binaries
 
 All precompiled binaries available on github releases page.
@@ -60,14 +51,8 @@ Make sure that you download version for your cpu and os.
 
 One of the most simple ways to run rustus is docker.
 
-Rustus has two containers for each version.
-1. debian based image
-2. alpine based image
-
-Alpine based images are more lightweight than debian
-
 To run rustus you just need to run this command
 
 ```bash
-docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"
+docker run --rm -p "1081:1081" -d "ghcr.io/s3rius/rustus" --log-level "DEBUG"
 ```

@@ -11,9 +11,9 @@ COPY imgs ./imgs
 
 ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
 
-RUN cargo build --release --bin rustus --features=all
+RUN cargo build --locked --release --bin rustus
 
-FROM bookworm-20241111-slim AS base
+FROM debian:bookworm-20241111-slim AS base
 
 RUN apt-get update -y && apt-get install -y ca-certificates \
     && apt-get clean -y
@@ -22,7 +22,7 @@ COPY --from=builder /app/target/release/rustus /usr/local/bin/
 
 ENTRYPOINT ["/usr/local/bin/rustus"]
 
-FROM base as rootless
+FROM base AS rootless
 
 RUN useradd --create-home  -u 1000 --user-group rustus
 WORKDIR /home/rustus

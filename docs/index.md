@@ -57,7 +57,7 @@ Alpine based images are more lightweight than Debian
 To run Rustus with Docker you just need to run this command
 
 ```bash
-docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"
+docker run --rm -p "1081:1081" -d ghcr.io/s3rius/rustus --log-level "DEBUG"
 ```
 
 More information about Rustus docker images you can find on [Docker hub page](https://hub.docker.com/r/s3rius/rustus/).
