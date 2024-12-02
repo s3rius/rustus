@@ -21,7 +21,6 @@ use wildmatch::WildMatch;
 
 use crate::{
     errors::{RustusError, RustusResult},
-    notifiers::models::notification_manager::NotificationManager,
     server::rustus_service,
     state::State,
 };
@@ -277,12 +276,7 @@ async fn main() -> std::io::Result<()> {
     // Printing cool message.
     greeting(&app_conf);
 
-    // Creating notification manager.
-    let notification_manager = NotificationManager::new(&app_conf).await?;
-
-    let mut state = State::new(app_conf.clone(), notification_manager)?;
-    state.info_storage.prepare().await?;
-    state.data_storage.prepare().await?;
+    let state = State::new(app_conf.clone()).await?;
 
     // Creating actual server and running it.
     let server = create_server(state)?;

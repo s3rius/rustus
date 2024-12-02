@@ -6,10 +6,17 @@ use actix_web::{
 };
 
 use crate::{
-    data_storage::base::DataStorage, errors::RustusError, info_storage::base::InfoStorage, metrics, notifiers::Hook, protocol::extensions::Extensions, utils::{
+    data_storage::base::DataStorage,
+    errors::RustusError,
+    info_storage::base::InfoStorage,
+    metrics,
+    notifiers::Hook,
+    protocol::extensions::Extensions,
+    utils::{
         hashes::verify_chunk_checksum,
         headers::{check_header, parse_header},
-    }, RustusResult, State
+    },
+    RustusResult, State,
 };
 
 pub async fn write_bytes(

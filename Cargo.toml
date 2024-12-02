@@ -77,3 +77,4 @@ lto = "fat"
 panic = "abort"
 opt-level = 3
 codegen-units = 1
+strip = true

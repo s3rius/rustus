@@ -1,12 +1,9 @@
 use crate::errors::RustusResult;
 use actix_web::http::header::HeaderMap;
 
-use crate::notifiers::Hook;
-use async_trait::async_trait;
-use dyn_clone::DynClone;
+use crate::notifiers::hooks::Hook;
 
-#[async_trait(?Send)]
-pub trait Notifier: DynClone {
+pub trait Notifier {
     async fn prepare(&mut self) -> RustusResult<()>;
     async fn send_message(
         &self,
@@ -15,5 +12,3 @@ pub trait Notifier: DynClone {
         headers_map: &HeaderMap,
     ) -> RustusResult<()>;
 }
-
-dyn_clone::clone_trait_object!(Notifier);

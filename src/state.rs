@@ -1,8 +1,11 @@
 #[cfg(test)]
 use crate::file_info::FileInfo;
 use crate::{
-    data_storage::DataStorageImpl, errors::RustusResult, info_storage::InfoStorageImpl,
-    NotificationManager, RustusConf,
+    data_storage::{base::DataStorage, DataStorageImpl},
+    errors::RustusResult,
+    info_storage::{base::InfoStorage, InfoStorageImpl},
+    notifiers::NotificationManager,
+    RustusConf,
 };
 
 #[derive(Clone)]
@@ -14,12 +17,12 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(
-        config: RustusConf,
-        notification_manager: NotificationManager,
-    ) -> RustusResult<Self> {
-        let data_storage = config.storage_opts.storage.get(&config);
-        let info_storage = config.info_storage_opts.info_storage.get(&config)?;
+    pub async fn new(config: RustusConf) -> RustusResult<Self> {
+        let mut data_storage = config.storage_opts.storage.get(&config);
+        data_storage.prepare().await?;
+        let mut info_storage = config.info_storage_opts.info_storage.get(&config)?;
+        info_storage.prepare().await?;
+        let notification_manager = NotificationManager::new(&config).await?;
 
         Ok(Self {
             config,

@@ -12,10 +12,9 @@ use strum::IntoEnumIterator;
 use crate::{
     config::AMQPHooksOptions,
     errors::RustusResult,
+    notifiers::{base::Notifier, hooks::Hook},
     utils::lapin_pool::{ChannelPool, ConnnectionPool},
 };
-
-use super::{Hook, Notifier};
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Clone, Debug)]
@@ -107,7 +106,6 @@ impl AMQPNotifier {
     }
 }
 
-#[async_trait::async_trait(?Send)]
 impl Notifier for AMQPNotifier {
     async fn prepare(&mut self) -> RustusResult<()> {
         let chan = self.channel_pool.get().await?;
@@ -192,8 +190,9 @@ impl Notifier for AMQPNotifier {
 #[cfg(feature = "test_rmq")]
 #[cfg(test)]
 mod tests {
+    use crate::notifiers::{base::Notifier, hooks::Hook};
+
     use super::AMQPNotifier;
-    use crate::notifiers::{amqp_notifier::DeclareOptions, Hook, Notifier};
     use actix_web::http::header::HeaderMap;
     use lapin::options::{BasicAckOptions, BasicGetOptions};
 
@@ -214,9 +213,7 @@ mod tests {
             hooks_amqp_channel_pool_size: 1,
             hooks_amqp_idle_connection_timeout: None,
             hooks_amqp_idle_channels_timeout: None,
-        })
-        .await
-        .unwrap();
+        });
         notifier.prepare().await.unwrap();
         notifier
     }

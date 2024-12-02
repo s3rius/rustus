@@ -1,9 +1,9 @@
-use crate::errors::{RustusError, RustusResult};
-
-use crate::notifiers::{Hook, Notifier};
+use crate::{
+    errors::{RustusError, RustusResult},
+    notifiers::{base::Notifier, hooks::Hook},
+};
 
 use actix_web::http::header::HeaderMap;
-use async_trait::async_trait;
 use log::debug;
 use reqwest::Client;
 use std::time::Duration;
@@ -28,9 +28,7 @@ impl HttpNotifier {
     }
 }
 
-#[async_trait(?Send)]
 impl Notifier for HttpNotifier {
-    
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
@@ -83,8 +81,9 @@ impl Notifier for HttpNotifier {
 
 #[cfg(test)]
 mod tests {
+    use crate::notifiers::{base::Notifier, hooks::Hook};
+
     use super::HttpNotifier;
-    use crate::notifiers::{Hook, Notifier};
     use actix_web::http::header::{HeaderMap, HeaderName, HeaderValue};
     use httptest::{matchers::contains, responders::status_code};
     use std::{str::FromStr, time::Duration};

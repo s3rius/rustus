@@ -1,6 +1,6 @@
 use crate::{
     errors::RustusError,
-    notifiers::{Hook, Notifier},
+    notifiers::{base::Notifier, hooks::Hook},
     RustusResult,
 };
 use actix_web::http::header::HeaderMap;
@@ -20,9 +20,7 @@ impl DirNotifier {
     }
 }
 
-#[async_trait(?Send)]
 impl Notifier for DirNotifier {
-    
     async fn prepare(&mut self) -> RustusResult<()> {
         Ok(())
     }
@@ -52,8 +50,9 @@ impl Notifier for DirNotifier {
 
 #[cfg(test)]
 mod tests {
+    use crate::notifiers::{base::Notifier, hooks::Hook};
+
     use super::DirNotifier;
-    use crate::notifiers::{Hook, Notifier};
     use actix_web::http::header::HeaderMap;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
