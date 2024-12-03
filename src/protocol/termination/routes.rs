@@ -87,7 +87,7 @@ mod tests {
     #[actix_rt::test]
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let request = TestRequest::delete()
             .param("file_id", "not_exists")
             .to_request();
@@ -98,7 +98,7 @@ mod tests {
     #[actix_rt::test]
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = "unknown_storage".into();
         state

@@ -14,7 +14,7 @@ pub struct DirNotifier {
 }
 
 impl DirNotifier {
-    pub fn new(dir: PathBuf) -> Self {
+    pub const fn new(dir: PathBuf) -> Self {
         Self { dir }
     }
 }
@@ -87,7 +87,7 @@ mod tests {
             file.write_all(script.as_bytes()).unwrap();
             file.sync_all().unwrap();
         }
-        let notifier = DirNotifier::new(dir.to_path_buf());
+        let notifier = DirNotifier::new(dir.clone());
         let test_message = uuid::Uuid::new_v4().to_string();
         notifier
             .send_message(test_message.clone(), hook, &HeaderMap::new())
@@ -98,6 +98,6 @@ mod tests {
         let mut buffer = String::new();
         let mut out_file = File::open(output_path).unwrap();
         out_file.read_to_string(&mut buffer).unwrap();
-        assert_eq!(buffer, format!("{}\n", test_message));
+        assert_eq!(buffer, format!("{test_message}\n"));
     }
 }

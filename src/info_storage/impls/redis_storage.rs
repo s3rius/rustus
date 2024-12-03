@@ -60,7 +60,6 @@ impl InfoStorage for RedisInfoStorage {
     }
 
     async fn set_info(&self, file_info: &FileInfo, _create: bool) -> RustusResult<()> {
-        let mut conn = self.pool.get().await?;
         let mut cmd = redis::cmd("SET");
         let mut cmd = cmd
             .arg(file_info.id.as_str())
@@ -68,7 +67,9 @@ impl InfoStorage for RedisInfoStorage {
         if let Some(expiration) = self.expiration.as_ref() {
             cmd = cmd.arg("EX").arg(expiration);
         }
+        let mut conn = self.pool.get().await?;
         cmd.query_async::<String>(&mut *conn).await?;
+        drop(conn);
         Ok(())
     }
 
@@ -78,6 +79,7 @@ impl InfoStorage for RedisInfoStorage {
             .arg(file_id)
             .query_async::<Option<String>>(&mut *conn)
             .await?;
+        drop(conn);
 
         res.map_or(Err(RustusError::FileNotFound), |res| {
             serde_json::from_str::<FileInfo>(res.as_str()).map_err(RustusError::from)
@@ -90,6 +92,7 @@ impl InfoStorage for RedisInfoStorage {
             .arg(file_id)
             .query_async::<Option<usize>>(&mut *conn)
             .await?;
+        drop(conn);
         match resp {
             None | Some(0) => Err(RustusError::FileNotFound),
             _ => Ok(()),

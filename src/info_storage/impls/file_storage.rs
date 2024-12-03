@@ -22,7 +22,7 @@ pub struct FileInfoStorage {
 }
 
 impl FileInfoStorage {
-    pub fn new(info_dir: PathBuf) -> Self {
+    pub const fn new(info_dir: PathBuf) -> Self {
         Self { info_dir }
     }
 
@@ -168,7 +168,7 @@ mod tests {
         let storage = FileInfoStorage::new(dir.into_path());
         let file_id = "random_file";
         let mut file = File::create(storage.info_file_path(file_id)).unwrap();
-        file.write_all("{not a json}".as_bytes()).unwrap();
+        file.write_all(b"{not a json}").unwrap();
         let read_info = storage.get_info(file_id).await;
         assert!(read_info.is_err());
     }

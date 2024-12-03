@@ -5,6 +5,7 @@ use digest::Digest;
 
 /// Checks if hash-sum of a slice matches the given checksum.
 fn checksum_verify(algo: &str, bytes: &[u8], checksum: &[u8]) -> RustusResult<bool> {
+    #[allow(clippy::branches_sharing_code)]
     match algo {
         "sha1" => {
             let sum = sha1::Sha1::digest(bytes);
@@ -41,6 +42,7 @@ fn checksum_verify(algo: &str, bytes: &[u8], checksum: &[u8]) -> RustusResult<bo
 /// It may return error if header value can't be represented as string,
 /// if checksum can't be decoded with base64 or if unknown algorithm is used.
 pub fn verify_chunk_checksum(header: &HeaderValue, data: &[u8]) -> RustusResult<bool> {
+    #[allow(clippy::branches_sharing_code)]
     if let Ok(val) = header.to_str() {
         let mut split = val.split(' ');
         if let Some(algo) = split.next() {
@@ -94,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_sum_unknown_algo_checksum_verify() {
-        let res = checksum_verify("base64", "test".as_bytes(), b"dGVzdAo=");
+        let res = checksum_verify("base64", b"test", b"dGVzdAo=");
         assert!(res.is_err());
     }
 

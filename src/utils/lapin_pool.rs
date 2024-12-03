@@ -13,7 +13,7 @@ pub struct ChannelPool {
 
 impl ChannelPool {
     #[must_use]
-    pub fn new(pool: mobc::Pool<ConnnectionPool>) -> Self {
+    pub const fn new(pool: mobc::Pool<ConnnectionPool>) -> Self {
         Self { pool }
     }
 }
@@ -49,8 +49,9 @@ impl mobc::Manager for ChannelPool {
     type Error = lapin::Error;
 
     async fn connect(&self) -> Result<Self::Connection, Self::Error> {
-        match self.pool.get().await {
-            Ok(conn) => conn.create_channel().await,
+        let conn = self.pool.get().await;
+        match conn {
+            Ok(inner) => inner.create_channel().await,
             Err(mobc::Error::Inner(inner)) => Err(inner),
             _ => Err(lapin::Error::ChannelsLimitReached),
         }

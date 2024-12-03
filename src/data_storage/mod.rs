@@ -72,6 +72,7 @@ impl AvailableDataStorages {
 
 // TODO this should probably be a COW
 fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+    #[allow(clippy::option_if_let_else)]
     if let Some(variable) = variable {
         variable.to_string()
     } else if let Some(path) = path {
@@ -90,15 +91,15 @@ fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> Str
 impl DataStorage for DataStorageImpl {
     fn get_name(&self) -> &'static str {
         match self {
-            DataStorageImpl::File(file_data_storage) => file_data_storage.get_name(),
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => s3_hybrid_data_storage.get_name(),
+            Self::File(file_data_storage) => file_data_storage.get_name(),
+            Self::S3Hybrid(s3_hybrid_data_storage) => s3_hybrid_data_storage.get_name(),
         }
     }
 
     async fn prepare(&mut self) -> crate::errors::RustusResult<()> {
         match self {
-            DataStorageImpl::File(file_data_storage) => file_data_storage.prepare().await,
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::File(file_data_storage) => file_data_storage.prepare().await,
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.prepare().await
             }
         }
@@ -110,10 +111,10 @@ impl DataStorage for DataStorageImpl {
         request: &actix_web::HttpRequest,
     ) -> crate::errors::RustusResult<actix_web::HttpResponse> {
         match self {
-            DataStorageImpl::File(file_data_storage) => {
+            Self::File(file_data_storage) => {
                 file_data_storage.get_contents(file_info, request).await
             }
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage
                     .get_contents(file_info, request)
                     .await
@@ -127,10 +128,10 @@ impl DataStorage for DataStorageImpl {
         bytes: bytes::Bytes,
     ) -> crate::errors::RustusResult<()> {
         match self {
-            DataStorageImpl::File(file_data_storage) => {
+            Self::File(file_data_storage) => {
                 file_data_storage.add_bytes(file_info, bytes).await
             }
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.add_bytes(file_info, bytes).await
             }
         }
@@ -138,10 +139,10 @@ impl DataStorage for DataStorageImpl {
 
     async fn create_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<String> {
         match self {
-            DataStorageImpl::File(file_data_storage) => {
+            Self::File(file_data_storage) => {
                 file_data_storage.create_file(file_info).await
             }
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.create_file(file_info).await
             }
         }
@@ -153,10 +154,10 @@ impl DataStorage for DataStorageImpl {
         parts_info: Vec<FileInfo>,
     ) -> crate::errors::RustusResult<()> {
         match self {
-            DataStorageImpl::File(file_data_storage) => {
+            Self::File(file_data_storage) => {
                 file_data_storage.concat_files(file_info, parts_info).await
             }
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage
                     .concat_files(file_info, parts_info)
                     .await
@@ -166,10 +167,10 @@ impl DataStorage for DataStorageImpl {
 
     async fn remove_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<()> {
         match self {
-            DataStorageImpl::File(file_data_storage) => {
+            Self::File(file_data_storage) => {
                 file_data_storage.remove_file(file_info).await
             }
-            DataStorageImpl::S3Hybrid(s3_hybrid_data_storage) => {
+            Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.remove_file(file_info).await
             }
         }

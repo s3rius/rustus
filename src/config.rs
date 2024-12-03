@@ -21,7 +21,7 @@ pub struct DataStorageOptions {
     /// Rustus data directory
     ///
     /// This directory is used to store files
-    /// for all *file_storage storages.
+    /// for all *`file_storage` storages.
     #[arg(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
@@ -167,73 +167,114 @@ pub struct InfoStoreOptions {
 
 pub struct AMQPHooksOptions {
     /// Url for AMQP server.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
-    pub hooks_amqp_url: Option<String>,
+    #[arg(name = "hooks-amqp-url", long, env = "RUSTUS_HOOKS_AMQP_URL")]
+    pub url: Option<String>,
 
     /// Rustus will create exchange if enabled.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
-    pub hooks_amqp_declare_exchange: bool,
+    #[arg(
+        name = "hooks-amqp-declare-exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE"
+    )]
+    pub declare_exchange: bool,
 
     /// Rustus will create all queues for communication and bind them
     /// to exchange if enabled.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
-    pub hooks_amqp_declare_queues: bool,
+    #[arg(
+        name = "hooks-amqp-declare-queues",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES"
+    )]
+    pub declare_queues: bool,
 
     /// Durability type of exchange.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
-    pub hooks_amqp_durable_exchange: bool,
+    #[arg(
+        name = "hooks_amqp_durable_exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE"
+    )]
+    pub durable_exchange: bool,
 
     /// Durability type of queues.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
-    pub hooks_amqp_durable_queues: bool,
+    #[arg(
+        name = "hooks-amqp-durable-queues",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES"
+    )]
+    pub durable_queues: bool,
 
     /// Adds celery specific headers.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
-    pub hooks_amqp_celery: bool,
+    #[arg(name = "hooks-amqp-celery", long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
+    pub celery: bool,
 
     /// Name of amqp exchange.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
-    pub hooks_amqp_exchange: String,
+    #[arg(
+        name = "hooks-amqp-exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_EXCHANGE",
+        default_value = "rustus"
+    )]
+    pub exchange: String,
 
     /// Exchange kind.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
-    pub hooks_amqp_exchange_kind: String,
+    #[arg(
+        name = "hooks-amqp-exchange-kind",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND",
+        default_value = "topic"
+    )]
+    pub exchange_kind: String,
 
     /// Routing key to use when sending message to an exchange.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
-    pub hooks_amqp_routing_key: Option<String>,
+    #[arg(
+        name = "hooks-amqp-routing-key",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY"
+    )]
+    pub routing_key: Option<String>,
 
     /// Prefix for all AMQP queues.
     #[arg(
+        name = "hooks-amqp-queues-prefix",
         long,
         env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
         default_value = "rustus"
     )]
-    pub hooks_amqp_queues_prefix: String,
+    pub queues_prefix: String,
 
-    /// Maximum number of connections for RabbitMQ.
+    /// Maximum number of connections for `RabbitMQ`.
     #[arg(
+        name = "hooks-amqp-connection-pool-size",
         long,
         env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_connection_pool_size: u64,
+    pub connection_pool_size: u64,
 
     /// Maximum number of opened channels for each connection.
     #[arg(
+        name = "hooks-amqp-channel-pool-size",
         long,
         env = "RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_channel_pool_size: u64,
+    pub channel_pool_size: u64,
 
     /// After this amount of time the connection will be dropped.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT")]
-    pub hooks_amqp_idle_connection_timeout: Option<u64>,
+    #[arg(
+        name = "hooks-amqp-idle-connection-timeout",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT"
+    )]
+    pub idle_connection_timeout: Option<u64>,
 
     /// After this amount of time in seconds, the channel will be closed.
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT")]
-    pub hooks_amqp_idle_channels_timeout: Option<u64>,
+    #[arg(
+        name = "hooks-amqp-idle-channels-timeout",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT"
+    )]
+    pub idle_channels_timeout: Option<u64>,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -400,18 +441,18 @@ impl RustusConf {
     ///
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
-    pub fn from_args() -> RustusConf {
-        let mut conf = RustusConf::parse();
+    pub fn from_args() -> Self {
+        let mut conf = Self::parse();
         conf.normalize_extentions();
         conf
     }
 
-    pub fn from_iter<I>(iter: I) -> RustusConf
+    pub fn from_iter<I>(iter: I) -> Self
     where
         I: IntoIterator,
         I::Item: Into<OsString> + Clone,
     {
-        <RustusConf as Parser>::parse_from(iter)
+        <Self as Parser>::parse_from(iter)
     }
 
     /// Base API url.

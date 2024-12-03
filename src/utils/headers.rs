@@ -17,18 +17,10 @@ pub fn parse_header<T: FromStr>(request: &HttpRequest, header_name: &str) -> Opt
         .headers()
         // Get header
         .get(header_name)
-        .and_then(|value|
-            // Parsing it to string.
-            match value.to_str() {
-                Ok(header_str) => Some(header_str),
-                Err(_) => None,
-            })
-        .and_then(|val|
-            // Parsing to type T.
-            match val.parse::<T>() {
-                Ok(num) => Some(num),
-                Err(_) => None,
-            })
+        // Parsing it to string.
+        .and_then(|value| value.to_str().ok())
+        // Parsing to type T.
+        .and_then(|val| val.parse::<T>().ok())
 }
 
 /// Check that header value satisfies some predicate.
@@ -38,11 +30,10 @@ pub fn check_header(request: &HttpRequest, header_name: &str, expr: fn(&str) -> 
     request
         .headers()
         .get(header_name)
-        .and_then(|header_val| match header_val.to_str() {
-            Ok(val) => Some(expr(val)),
-            Err(_) => None,
-        })
-        .unwrap_or(false)
+        // Parsing it to string.
+        .and_then(|header_val| header_val.to_str().ok())
+        // Applying predicate.
+        .is_some_and(expr)
 }
 
 /// This function generates content disposition

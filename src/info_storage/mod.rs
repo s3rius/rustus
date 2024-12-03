@@ -37,7 +37,7 @@ impl AvailableInfoStorages {
                     config.info_storage_opts.info_dir.clone(),
                 ),
             )),
-            AvailableInfoStorages::Redis => Ok(InfoStorageImpl::Redis(
+            Self::Redis => Ok(InfoStorageImpl::Redis(
                 impls::redis_storage::RedisInfoStorage::new(
                     config
                         .info_storage_opts

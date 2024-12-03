@@ -12,7 +12,10 @@
         clippy::module_name_repetitions, 
         // Yo, the hell you should put
         // it in docs, if signature is clear as sky.
-        clippy::missing_errors_doc
+        clippy::missing_errors_doc,
+        // Actix is buit upon ?Send,
+        // to maximize performance of a single thread.
+        clippy::future_not_send
     )
 ]
 use std::str::FromStr;
@@ -155,7 +158,6 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
-
 #[allow(clippy::too_many_lines)]
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
@@ -262,7 +264,6 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 }
 
 /// Main program entrypoint.
-
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
@@ -271,7 +272,7 @@ async fn main() -> std::io::Result<()> {
     // I may change it to another log system like `fern` later, idk.
     setup_logging(&app_conf)?;
 
-    #[allow(clippy::no_effect_underscore_binding)]
+    #[allow(clippy::collection_is_never_read)]
     let mut _guard = None;
     if let Some(dsn) = &app_conf.sentry_opts.dsn {
         log::info!("Setting up sentry .");

@@ -26,8 +26,8 @@ pub struct FileDataStorage {
 }
 
 impl FileDataStorage {
-    pub fn new(data_dir: PathBuf, dir_struct: String, force_fsync: bool) -> FileDataStorage {
-        FileDataStorage {
+    pub const fn new(data_dir: PathBuf, dir_struct: String, force_fsync: bool) -> Self {
+        Self {
             data_dir,
             dir_struct,
             force_fsync,
@@ -229,7 +229,7 @@ mod tests {
     #[actix_rt::test]
     async fn create_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         let new_path = storage.create_file(&file_info).await.unwrap();
         assert!(PathBuf::from(new_path).exists());
@@ -249,7 +249,7 @@ mod tests {
     #[actix_rt::test]
     async fn adding_bytes() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         let new_path = storage.create_file(&file_info).await.unwrap();
         let test_data = "MyTestData";
@@ -261,13 +261,13 @@ mod tests {
         let mut file = File::open(new_path).unwrap();
         let mut contents = String::new();
         file.read_to_string(&mut contents).unwrap();
-        assert_eq!(contents, String::from(test_data))
+        assert_eq!(contents, String::from(test_data));
     }
 
     #[actix_rt::test]
     async fn adding_bytes_to_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -277,13 +277,13 @@ mod tests {
         );
         let test_data = "MyTestData";
         let result = storage.add_bytes(&file_info, Bytes::from(test_data)).await;
-        assert!(result.is_err())
+        assert!(result.is_err());
     }
 
     #[actix_rt::test]
     async fn get_contents_of_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -299,7 +299,7 @@ mod tests {
     #[actix_rt::test]
     async fn remove_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let file_info = FileInfo::new(
             "test_id",
             Some(5),
@@ -314,12 +314,12 @@ mod tests {
     #[actix_rt::test]
     async fn success_concatenation() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
-        let storage = FileDataStorage::new(dir.into_path().clone(), String::new(), false);
+        let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
 
         let mut parts = Vec::new();
         let part1_path = storage.data_dir.as_path().join("part1");
         let mut part1 = File::create(part1_path.clone()).unwrap();
-        let size1 = part1.write("hello ".as_bytes()).unwrap();
+        let size1 = part1.write(b"hello ").unwrap();
 
         parts.push(FileInfo::new(
             "part_id1",
@@ -331,7 +331,7 @@ mod tests {
 
         let part2_path = storage.data_dir.as_path().join("part2");
         let mut part2 = File::create(part2_path.clone()).unwrap();
-        let size2 = part2.write("world".as_bytes()).unwrap();
+        let size2 = part2.write(b"world").unwrap();
         parts.push(FileInfo::new(
             "part_id2",
             Some(size2),

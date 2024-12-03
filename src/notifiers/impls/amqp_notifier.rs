@@ -56,40 +56,29 @@ impl AMQPNotifier {
     ///
     /// TODO: add separate type for this structure.
     pub fn new(options: AMQPHooksOptions) -> Self {
-        let manager = ConnnectionPool::new(
-            options.hooks_amqp_url.unwrap(),
-            ConnectionProperties::default(),
-        );
+        let manager = ConnnectionPool::new(options.url.unwrap(), ConnectionProperties::default());
         let connection_pool = mobc::Pool::builder()
-            .max_idle_lifetime(
-                options
-                    .hooks_amqp_idle_connection_timeout
-                    .map(Duration::from_secs),
-            )
-            .max_open(options.hooks_amqp_connection_pool_size)
+            .max_idle_lifetime(options.idle_connection_timeout.map(Duration::from_secs))
+            .max_open(options.connection_pool_size)
             .build(manager);
         let channel_pool = mobc::Pool::builder()
-            .max_idle_lifetime(
-                options
-                    .hooks_amqp_idle_channels_timeout
-                    .map(Duration::from_secs),
-            )
-            .max_open(options.hooks_amqp_channel_pool_size)
+            .max_idle_lifetime(options.idle_channels_timeout.map(Duration::from_secs))
+            .max_open(options.channel_pool_size)
             .build(ChannelPool::new(connection_pool));
 
         Self {
             channel_pool,
-            celery: options.hooks_amqp_celery,
-            routing_key: options.hooks_amqp_routing_key,
+            celery: options.celery,
+            routing_key: options.routing_key,
             declare_options: DeclareOptions {
-                declare_exchange: options.hooks_amqp_declare_exchange,
-                durable_exchange: options.hooks_amqp_durable_exchange,
-                declare_queues: options.hooks_amqp_declare_queues,
-                durable_queues: options.hooks_amqp_durable_queues,
+                declare_exchange: options.declare_exchange,
+                durable_exchange: options.durable_exchange,
+                declare_queues: options.declare_queues,
+                durable_queues: options.durable_queues,
             },
-            exchange_kind: options.hooks_amqp_exchange_kind,
-            exchange_name: options.hooks_amqp_exchange,
-            queues_prefix: options.hooks_amqp_queues_prefix,
+            exchange_kind: options.exchange_kind,
+            exchange_name: options.exchange,
+            queues_prefix: options.queues_prefix,
         }
     }
 
@@ -98,9 +87,9 @@ impl AMQPNotifier {
     /// If specific routing key is not empty, it returns it.
     /// Otherwise it will generate queue name based on hook name.
     #[must_use]
-    pub fn get_queue_name(&self, hook: &Hook) -> String {
-        self.routing_key.as_ref().map_or(
-            format!("{}.{hook}", self.queues_prefix.as_str()),
+    pub fn get_queue_name(&self, hook: Hook) -> String {
+        self.routing_key.as_ref().map_or_else(
+            || format!("{}.{hook}", self.queues_prefix.as_str()),
             std::convert::Into::into,
         )
     }
@@ -123,7 +112,7 @@ impl Notifier for AMQPNotifier {
         }
         if self.declare_options.declare_queues {
             for hook in Hook::iter() {
-                let queue_name = self.get_queue_name(&hook);
+                let queue_name = self.get_queue_name(hook);
                 chan.queue_declare(
                     queue_name.as_str(),
                     QueueDeclareOptions {
@@ -142,6 +131,7 @@ impl Notifier for AMQPNotifier {
                 )
                 .await?;
             }
+            drop(chan);
         }
         Ok(())
     }
@@ -153,8 +143,7 @@ impl Notifier for AMQPNotifier {
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
         log::info!("Sending message to AMQP.");
-        let chan = self.channel_pool.get().await?;
-        let queue = self.get_queue_name(&hook);
+        let queue = self.get_queue_name(hook);
         let routing_key = self.routing_key.as_ref().unwrap_or(&queue);
         let payload = if self.celery {
             format!("[[{message}], {{}}, {{}}]").as_bytes().to_vec()
@@ -172,6 +161,7 @@ impl Notifier for AMQPNotifier {
                 AMQPValue::LongString(LongString::from(format!("rustus.{hook}"))),
             );
         }
+        let chan = self.channel_pool.get().await?;
         chan.basic_publish(
             self.exchange_name.as_str(),
             routing_key.as_str(),
@@ -183,6 +173,7 @@ impl Notifier for AMQPNotifier {
                 .with_content_encoding("utf-8".into()),
         )
         .await?;
+        drop(chan);
         Ok(())
     }
 }
@@ -199,20 +190,20 @@ mod tests {
     async fn get_notifier() -> AMQPNotifier {
         let amqp_url = std::env::var("TEST_AMQP_URL").unwrap();
         let mut notifier = AMQPNotifier::new(crate::config::AMQPHooksOptions {
-            hooks_amqp_url: Some(amqp_url),
-            hooks_amqp_declare_exchange: true,
-            hooks_amqp_declare_queues: true,
-            hooks_amqp_durable_exchange: false,
-            hooks_amqp_durable_queues: false,
-            hooks_amqp_celery: true,
-            hooks_amqp_exchange: uuid::Uuid::new_v4().to_string(),
-            hooks_amqp_exchange_kind: String::from("topic"),
-            hooks_amqp_routing_key: None,
-            hooks_amqp_queues_prefix: uuid::Uuid::new_v4().to_string(),
-            hooks_amqp_connection_pool_size: 1,
-            hooks_amqp_channel_pool_size: 1,
-            hooks_amqp_idle_connection_timeout: None,
-            hooks_amqp_idle_channels_timeout: None,
+            url: Some(amqp_url),
+            declare_exchange: true,
+            declare_queues: true,
+            durable_exchange: false,
+            durable_queues: false,
+            celery: true,
+            exchange: uuid::Uuid::new_v4().to_string(),
+            exchange_kind: String::from("topic"),
+            routing_key: None,
+            queues_prefix: uuid::Uuid::new_v4().to_string(),
+            connection_pool_size: 1,
+            channel_pool_size: 1,
+            idle_connection_timeout: None,
+            idle_channels_timeout: None,
         });
         notifier.prepare().await.unwrap();
         notifier
@@ -250,20 +241,20 @@ mod tests {
     #[actix_rt::test]
     async fn unknown_url() {
         let notifier = AMQPNotifier::new(crate::config::AMQPHooksOptions {
-            hooks_amqp_url: Some(String::from("http://unknown")),
-            hooks_amqp_declare_exchange: true,
-            hooks_amqp_declare_queues: true,
-            hooks_amqp_durable_exchange: false,
-            hooks_amqp_durable_queues: false,
-            hooks_amqp_celery: false,
-            hooks_amqp_exchange: uuid::Uuid::new_v4().to_string(),
-            hooks_amqp_exchange_kind: String::from("topic"),
-            hooks_amqp_routing_key: None,
-            hooks_amqp_queues_prefix: uuid::Uuid::new_v4().to_string(),
-            hooks_amqp_connection_pool_size: 1,
-            hooks_amqp_channel_pool_size: 1,
-            hooks_amqp_idle_connection_timeout: None,
-            hooks_amqp_idle_channels_timeout: None,
+            url: Some(String::from("http://unknown")),
+            declare_exchange: true,
+            declare_queues: true,
+            durable_exchange: false,
+            durable_queues: false,
+            celery: false,
+            exchange: uuid::Uuid::new_v4().to_string(),
+            exchange_kind: String::from("topic"),
+            routing_key: None,
+            queues_prefix: uuid::Uuid::new_v4().to_string(),
+            connection_pool_size: 1,
+            channel_pool_size: 1,
+            idle_connection_timeout: None,
+            idle_channels_timeout: None,
         })
         .await
         .unwrap();

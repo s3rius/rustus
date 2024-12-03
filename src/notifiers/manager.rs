@@ -56,7 +56,7 @@ impl NotificationManager {
         if rustus_config
             .notification_opts
             .amqp_hook_opts
-            .hooks_amqp_url
+            .url
             .is_some()
         {
             debug!("Found AMQP notifier.");
@@ -90,10 +90,10 @@ impl NotificationManager {
 impl Notifier for NotifierImpl {
     async fn prepare(&mut self) -> RustusResult<()> {
         match self {
-            NotifierImpl::File(file_notifier) => file_notifier.prepare().await,
-            NotifierImpl::Dir(dir_notifier) => dir_notifier.prepare().await,
-            NotifierImpl::Http(http_notifier) => http_notifier.prepare().await,
-            NotifierImpl::Amqp(amqp_notifier) => amqp_notifier.prepare().await,
+            Self::File(file_notifier) => file_notifier.prepare().await,
+            Self::Dir(dir_notifier) => dir_notifier.prepare().await,
+            Self::Http(http_notifier) => http_notifier.prepare().await,
+            Self::Amqp(amqp_notifier) => amqp_notifier.prepare().await,
         }
     }
 
@@ -104,16 +104,16 @@ impl Notifier for NotifierImpl {
         headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         match self {
-            NotifierImpl::File(file_notifier) => {
+            Self::File(file_notifier) => {
                 file_notifier.send_message(message, hook, headers_map).await
             }
-            NotifierImpl::Dir(dir_notifier) => {
+            Self::Dir(dir_notifier) => {
                 dir_notifier.send_message(message, hook, headers_map).await
             }
-            NotifierImpl::Http(http_notifier) => {
+            Self::Http(http_notifier) => {
                 http_notifier.send_message(message, hook, headers_map).await
             }
-            NotifierImpl::Amqp(amqp_notifier) => {
+            Self::Amqp(amqp_notifier) => {
                 amqp_notifier.send_message(message, hook, headers_map).await
             }
         }

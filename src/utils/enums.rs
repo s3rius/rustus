@@ -47,12 +47,12 @@ mod tests {
     #[test]
     fn test_from_str_unknown_val() {
         let result = TestEnum::from_str("unknown");
-        assert!(result.is_err())
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_from_str() {
         let result = TestEnum::from_str("test-val-1");
-        assert_eq!(result.unwrap(), TestEnum::TestVal1)
+        assert_eq!(result.unwrap(), TestEnum::TestVal1);
     }
 }

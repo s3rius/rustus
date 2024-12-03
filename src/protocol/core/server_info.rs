@@ -31,7 +31,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_server_info() {
         let mut state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         state.config.tus_extensions = vec![
             Extensions::Creation,
             Extensions::Concatenation,

@@ -13,7 +13,7 @@ pub struct FileNotifier {
 }
 
 impl FileNotifier {
-    pub fn new(command: String) -> Self {
+    pub const fn new(command: String) -> Self {
         Self { command }
     }
 }
@@ -84,7 +84,7 @@ mod tests {
         let mut buffer = String::new();
         let mut out_file = File::open(output_path).unwrap();
         out_file.read_to_string(&mut buffer).unwrap();
-        assert_eq!(buffer, format!("{} {}\n", hook, test_message));
+        assert_eq!(buffer, format!("{hook} {test_message}\n"));
     }
 
     #[cfg(unix)]
@@ -97,9 +97,9 @@ mod tests {
             let mut permissions = file.metadata().unwrap().permissions();
             permissions.set_mode(0o755);
             file.set_permissions(permissions).unwrap();
-            let script = r#"#!/bin/sh
+            let script = r"#!/bin/sh
             read -t 0.1 MESSAGE
-            exit 1"#;
+            exit 1";
             file.write_all(script.as_bytes()).unwrap();
             file.sync_all().unwrap();
         }

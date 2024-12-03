@@ -21,7 +21,7 @@ pub trait DataStorage {
 
     /// Get contents of a file.
     ///
-    /// This method must return HttpResponse.
+    /// This method must return `HttpResponse`.
     /// This resposne would be sent directly.
     ///
     /// # Params
