@@ -31,7 +31,6 @@ impl AvailableDataStorages {
     /// `config` - Rustus configuration.
     /// `info_storage` - Storage for information about files.
     ///
-
     pub fn get(&self, config: &RustusConf) -> DataStorageImpl {
         #[allow(clippy::single_match)]
         match self {
@@ -43,22 +42,22 @@ impl AvailableDataStorages {
             Self::HybridS3 => {
                 log::warn!("Hybrid S3 is an unstable feature. If you ecounter a problem, please raise an issue: https://github.com/s3rius/rustus/issues.");
                 let access_key = from_string_or_path(
-                    &config.storage_opts.s3_access_key,
-                    &config.storage_opts.s3_access_key_path,
+                    config.storage_opts.s3_access_key.as_ref(),
+                    config.storage_opts.s3_access_key_path.as_ref(),
                 );
                 let secret_key = from_string_or_path(
-                    &config.storage_opts.s3_secret_key,
-                    &config.storage_opts.s3_secret_key_path,
+                    config.storage_opts.s3_secret_key.as_ref(),
+                    config.storage_opts.s3_secret_key_path.as_ref(),
                 );
                 DataStorageImpl::S3Hybrid(impls::s3_hybrid::S3HybridDataStorage::new(
                     config.storage_opts.s3_url.clone().unwrap(),
                     config.storage_opts.s3_region.clone().unwrap(),
-                    &Some(access_key),
-                    &Some(secret_key),
-                    &config.storage_opts.s3_security_token,
-                    &config.storage_opts.s3_session_token,
-                    &config.storage_opts.s3_profile,
-                    &config.storage_opts.s3_headers,
+                    Some(&access_key),
+                    Some(&secret_key),
+                    config.storage_opts.s3_security_token.as_ref(),
+                    config.storage_opts.s3_session_token.as_ref(),
+                    config.storage_opts.s3_profile.as_ref(),
+                    config.storage_opts.s3_headers.as_ref(),
                     config.storage_opts.s3_bucket.clone().unwrap().as_str(),
                     config.storage_opts.s3_force_path_style,
                     config.storage_opts.data_dir.clone(),
@@ -71,7 +70,7 @@ impl AvailableDataStorages {
 }
 
 // TODO this should probably be a COW
-fn from_string_or_path(variable: &Option<String>, path: &Option<PathBuf>) -> String {
+fn from_string_or_path(variable: Option<&String>, path: Option<&PathBuf>) -> String {
     #[allow(clippy::option_if_let_else)]
     if let Some(variable) = variable {
         variable.to_string()

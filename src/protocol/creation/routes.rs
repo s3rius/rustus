@@ -550,7 +550,7 @@ mod tests {
             .unwrap();
         let file_info = state.info_storage.get_info(item_id).await.unwrap();
         assert_eq!(file_info.length, Some(100));
-        assert!(file_info.metadata.get("test").is_none());
+        assert!(!file_info.metadata.contains_key("test"));
         assert_eq!(file_info.metadata.get("pest").unwrap(), "data");
         assert_eq!(file_info.offset, 0);
     }

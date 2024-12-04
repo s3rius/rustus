@@ -164,7 +164,6 @@ pub struct InfoStoreOptions {
 }
 #[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
-
 pub struct AMQPHooksOptions {
     /// Url for AMQP server.
     #[arg(name = "hooks-amqp-url", long, env = "RUSTUS_HOOKS_AMQP_URL")]

@@ -29,7 +29,6 @@ impl AvailableInfoStorages {
     /// # Params
     /// `config` - Rustus configuration.
     ///
-
     pub fn get(&self, config: &RustusConf) -> RustusResult<InfoStorageImpl> {
         match self {
             Self::Files => Ok(InfoStorageImpl::File(

@@ -70,7 +70,6 @@ pub enum RustusError {
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
-
 impl From<RustusError> for Error {
     fn from(err: RustusError) -> Self {
         Self::new(ErrorKind::Other, err)
@@ -78,7 +77,6 @@ impl From<RustusError> for Error {
 }
 
 /// Trait to convert errors to http-responses.
-
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
         error!("{}", self);

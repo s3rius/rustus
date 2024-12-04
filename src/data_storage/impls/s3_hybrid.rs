@@ -38,12 +38,12 @@ impl S3HybridDataStorage {
     pub fn new(
         endpoint: String,
         region: String,
-        access_key: &Option<String>,
-        secret_key: &Option<String>,
-        security_token: &Option<String>,
-        session_token: &Option<String>,
-        profile: &Option<String>,
-        custom_headers: &Option<String>,
+        access_key: Option<&String>,
+        secret_key: Option<&String>,
+        security_token: Option<&String>,
+        session_token: Option<&String>,
+        profile: Option<&String>,
+        custom_headers: Option<&String>,
         bucket_name: &str,
         force_path_style: bool,
         data_dir: PathBuf,
@@ -52,11 +52,11 @@ impl S3HybridDataStorage {
     ) -> Self {
         let local_storage = FileDataStorage::new(data_dir, dir_struct.clone(), force_fsync);
         let creds = s3::creds::Credentials::new(
-            access_key.as_deref(),
-            secret_key.as_deref(),
-            security_token.as_deref(),
-            session_token.as_deref(),
-            profile.as_deref(),
+            access_key.map(String::as_str),
+            secret_key.map(String::as_str),
+            security_token.map(String::as_str),
+            session_token.map(String::as_str),
+            profile.map(String::as_str),
         );
         if let Err(err) = creds {
             panic!("Cannot build credentials: {err}")

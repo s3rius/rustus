@@ -5,7 +5,6 @@ mod routes;
 ///
 /// This extension allows you
 /// to create file before sending data.
-
 pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app.service(
         // Post /base

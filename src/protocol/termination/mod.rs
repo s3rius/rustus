@@ -6,7 +6,6 @@ mod routes;
 ///
 /// This extension allows you
 /// to terminate file upload.
-
 pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app.service(
         // DELETE /base/file
