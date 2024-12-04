@@ -99,9 +99,7 @@ impl DataStorage for DataStorageImpl {
     async fn prepare(&mut self) -> crate::errors::RustusResult<()> {
         match self {
             Self::File(file_data_storage) => file_data_storage.prepare().await,
-            Self::S3Hybrid(s3_hybrid_data_storage) => {
-                s3_hybrid_data_storage.prepare().await
-            }
+            Self::S3Hybrid(s3_hybrid_data_storage) => s3_hybrid_data_storage.prepare().await,
         }
     }
 
@@ -128,9 +126,7 @@ impl DataStorage for DataStorageImpl {
         bytes: bytes::Bytes,
     ) -> crate::errors::RustusResult<()> {
         match self {
-            Self::File(file_data_storage) => {
-                file_data_storage.add_bytes(file_info, bytes).await
-            }
+            Self::File(file_data_storage) => file_data_storage.add_bytes(file_info, bytes).await,
             Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.add_bytes(file_info, bytes).await
             }
@@ -139,9 +135,7 @@ impl DataStorage for DataStorageImpl {
 
     async fn create_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<String> {
         match self {
-            Self::File(file_data_storage) => {
-                file_data_storage.create_file(file_info).await
-            }
+            Self::File(file_data_storage) => file_data_storage.create_file(file_info).await,
             Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.create_file(file_info).await
             }
@@ -167,9 +161,7 @@ impl DataStorage for DataStorageImpl {
 
     async fn remove_file(&self, file_info: &FileInfo) -> crate::errors::RustusResult<()> {
         match self {
-            Self::File(file_data_storage) => {
-                file_data_storage.remove_file(file_info).await
-            }
+            Self::File(file_data_storage) => file_data_storage.remove_file(file_info).await,
             Self::S3Hybrid(s3_hybrid_data_storage) => {
                 s3_hybrid_data_storage.remove_file(file_info).await
             }

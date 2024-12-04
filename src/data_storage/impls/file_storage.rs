@@ -106,7 +106,6 @@ impl DataStorage for FileDataStorage {
             // It means that we're going to append some
             // bytes to the end of a file.
             let file = OpenOptions::new()
-                
                 .append(true)
                 .create(false)
                 .read(false)
@@ -158,7 +157,6 @@ impl DataStorage for FileDataStorage {
         let path = file_info.path.as_ref().unwrap().clone();
         tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
-                
                 .append(true)
                 .create(true)
                 .open(path)

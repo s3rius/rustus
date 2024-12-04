@@ -9,7 +9,7 @@
 #![
     allow(
         // I don't care about this.
-        clippy::module_name_repetitions, 
+        clippy::module_name_repetitions,
         // Yo, the hell you should put
         // it in docs, if signature is clear as sky.
         clippy::missing_errors_doc,
@@ -18,6 +18,7 @@
         clippy::future_not_send
     )
 ]
+
 use std::str::FromStr;
 
 use actix_cors::Cors;

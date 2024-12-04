@@ -53,12 +53,7 @@ impl NotificationManager {
                 rustus_config.notification_opts.http_hook_timeout,
             )));
         }
-        if rustus_config
-            .notification_opts
-            .amqp_hook_opts
-            .url
-            .is_some()
-        {
+        if rustus_config.notification_opts.amqp_hook_opts.url.is_some() {
             debug!("Found AMQP notifier.");
             manager.notifiers.push(NotifierImpl::Amqp(AMQPNotifier::new(
                 rustus_config.notification_opts.amqp_hook_opts.clone(),
@@ -107,9 +102,7 @@ impl Notifier for NotifierImpl {
             Self::File(file_notifier) => {
                 file_notifier.send_message(message, hook, headers_map).await
             }
-            Self::Dir(dir_notifier) => {
-                dir_notifier.send_message(message, hook, headers_map).await
-            }
+            Self::Dir(dir_notifier) => dir_notifier.send_message(message, hook, headers_map).await,
             Self::Http(http_notifier) => {
                 http_notifier.send_message(message, hook, headers_map).await
             }
