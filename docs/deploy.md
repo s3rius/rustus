@@ -22,7 +22,7 @@ version: "3.7"
 
 services:
   rustus:
-    image: s3rius/rustus
+    image: ghcr.io/s3rius/rustus
     volumes:
     # Volume mounted to default data directory
     # So it's available across multiple containers.
@@ -53,7 +53,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
 
   rustus:
-    image: s3rius/rustus
+    image: ghcr.io/s3rius/rustus
     ports:
     # Ports definition
     # To generate correct nginx config.
@@ -96,9 +96,7 @@ create a volume to mount data and info directories.
 
 You can install rustus by running this set of commands:
 ``` bash
-helm repo add "rustus" "https://s3rius.github.io/rustus/helm_releases"
-helm repo update
-helm install "rustus" "rustus/rustus"
+helm install "rustus" "oci://ghcr.io/s3rius/charts/rustus"
 ```
 
 ### Configuration
@@ -112,7 +110,7 @@ At first you need to save default values on disk.
 
 ``` bash
 # You can download basic configuration by running
-helm show values "rustus/rustus" > values.yml
+helm show values "oci://ghcr.io/s3rius/charts/rustus" > values.yml
 ```
 
 !!! warning
@@ -134,7 +132,7 @@ helm upgrade \
 --atomic \ # Ensures that everything is deployed correctly
 --values "values.yml" \ # Link to values.yml file
 "rustus" \ # name of a release
-"rustus/rustus" # Name of the chart
+"oci://ghcr.io/s3rius/charts/rustus" # Url to the chart
 ```
 
 ### Persistence

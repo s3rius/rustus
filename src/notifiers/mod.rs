@@ -1,8 +1,9 @@
-#[cfg(feature = "amqp_notifier")]
-pub mod amqp_notifier;
-pub mod dir_notifier;
-mod file_notifier;
-pub mod http_notifier;
-pub mod models;
+pub mod base;
+pub mod hooks;
+pub mod impls;
+pub mod manager;
+pub mod message_format;
 
-pub use models::{hooks::Hook, message_format::Format, notifier::Notifier};
+pub use hooks::Hook;
+pub use manager::NotificationManager;
+pub use message_format::Format;

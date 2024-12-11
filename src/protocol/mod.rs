@@ -12,7 +12,6 @@ mod termination;
 ///
 /// This function resolves all protocol extensions
 /// provided by CLI into services and adds it to the application.
-#[cfg_attr(coverage, no_coverage)]
 pub fn setup(app_conf: RustusConf) -> impl Fn(&mut web::ServiceConfig) {
     move |web_app| {
         for extension in &app_conf.tus_extensions {

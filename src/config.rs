@@ -3,26 +3,25 @@ use std::{ffi::OsString, path::PathBuf};
 use clap::Parser;
 
 use crate::{
-    info_storages::AvailableInfoStores,
+    data_storage::AvailableDataStorages,
+    info_storage::AvailableInfoStorages,
     notifiers::{Format, Hook},
     protocol::extensions::Extensions,
 };
 
-use crate::storages::AvailableStores;
-
 #[derive(Parser, Debug, Clone)]
-pub struct StorageOptions {
+pub struct DataStorageOptions {
     /// Rustus storage type.
     ///
     /// Storages are used to store
     /// uploads.
     #[arg(long, short, default_value = "file-storage", env = "RUSTUS_STORAGE")]
-    pub storage: AvailableStores,
+    pub storage: AvailableDataStorages,
 
     /// Rustus data directory
     ///
     /// This directory is used to store files
-    /// for all *file_storage storages.
+    /// for all *`file_storage` storages.
     #[arg(long, env = "RUSTUS_DATA_DIR", default_value = "./data")]
     pub data_dir: PathBuf,
 
@@ -137,7 +136,7 @@ pub struct InfoStoreOptions {
         default_value = "file-info-storage",
         env = "RUSTUS_INFO_STORAGE"
     )]
-    pub info_storage: AvailableInfoStores,
+    pub info_storage: AvailableInfoStorages,
 
     /// Rustus info directory
     ///
@@ -153,7 +152,6 @@ pub struct InfoStoreOptions {
     /// are `Postgres`, `MySQL` or `Redis`.
     ///
     /// Value must include all connection details.
-    #[cfg(any(feature = "redis_info_storage", feature = "db_info_storage"))]
     #[arg(
         long,
         required_if_eq_any([("info_storage", "db-info-storage"), ("info_storage", "redis-info-storage")]),
@@ -161,96 +159,129 @@ pub struct InfoStoreOptions {
     )]
     pub info_db_dsn: Option<String>,
 
-    #[cfg(feature = "redis_info_storage")]
     #[arg(long, env = "RUSTUS_REDIS_INFO_EXPIRATION")]
     pub redis_info_expiration: Option<usize>,
 }
 #[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
-
 pub struct AMQPHooksOptions {
     /// Url for AMQP server.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_URL")]
-    pub hooks_amqp_url: Option<String>,
+    #[arg(name = "hooks-amqp-url", long, env = "RUSTUS_HOOKS_AMQP_URL")]
+    pub url: Option<String>,
 
     /// Rustus will create exchange if enabled.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE")]
-    pub hooks_amqp_declare_exchange: bool,
+    #[arg(
+        name = "hooks-amqp-declare-exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DECLARE_EXCHANGE"
+    )]
+    pub declare_exchange: bool,
 
     /// Rustus will create all queues for communication and bind them
     /// to exchange if enabled.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES")]
-    pub hooks_amqp_declare_queues: bool,
+    #[arg(
+        name = "hooks-amqp-declare-queues",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DECLARE_QUEUES"
+    )]
+    pub declare_queues: bool,
 
     /// Durability type of exchange.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE")]
-    pub hooks_amqp_durable_exchange: bool,
+    #[arg(
+        name = "hooks_amqp_durable_exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DURABLE_EXCHANGE"
+    )]
+    pub durable_exchange: bool,
 
     /// Durability type of queues.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES")]
-    pub hooks_amqp_durable_queues: bool,
+    #[arg(
+        name = "hooks-amqp-durable-queues",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_DURABLE_QUEUES"
+    )]
+    pub durable_queues: bool,
 
     /// Adds celery specific headers.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
-    pub hooks_amqp_celery: bool,
+    #[arg(name = "hooks-amqp-celery", long, env = "RUSTUS_HOOKS_AMQP_CELERY")]
+    pub celery: bool,
 
     /// Name of amqp exchange.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE", default_value = "rustus")]
-    pub hooks_amqp_exchange: String,
+    #[arg(
+        name = "hooks-amqp-exchange",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_EXCHANGE",
+        default_value = "rustus"
+    )]
+    pub exchange: String,
 
     /// Exchange kind.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND", default_value = "topic")]
-    pub hooks_amqp_exchange_kind: String,
+    #[arg(
+        name = "hooks-amqp-exchange-kind",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_EXCHANGE_KIND",
+        default_value = "topic"
+    )]
+    pub exchange_kind: String,
 
     /// Routing key to use when sending message to an exchange.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY")]
-    pub hooks_amqp_routing_key: Option<String>,
+    #[arg(
+        name = "hooks-amqp-routing-key",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_ROUTING_KEY"
+    )]
+    pub routing_key: Option<String>,
 
     /// Prefix for all AMQP queues.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(
+        name = "hooks-amqp-queues-prefix",
         long,
         env = "RUSTUS_HOOKS_AMQP_QUEUES_PREFIX",
         default_value = "rustus"
     )]
-    pub hooks_amqp_queues_prefix: String,
+    pub queues_prefix: String,
 
-    /// Maximum number of connections for RabbitMQ.
-    #[cfg(feature = "amqp_notifier")]
+    /// Maximum number of connections for `RabbitMQ`.
     #[arg(
+        name = "hooks-amqp-connection-pool-size",
         long,
         env = "RUSTUS_HOOKS_AMQP_CONNECTION_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_connection_pool_size: u32,
+    pub connection_pool_size: u64,
 
     /// Maximum number of opened channels for each connection.
-    #[cfg(feature = "amqp_notifier")]
     #[arg(
+        name = "hooks-amqp-channel-pool-size",
         long,
         env = "RUSTUS_HOOKS_AMQP_CHANNEL_POOL_SIZE",
         default_value = "10"
     )]
-    pub hooks_amqp_channel_pool_size: u32,
+    pub channel_pool_size: u64,
 
     /// After this amount of time the connection will be dropped.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT")]
-    pub hooks_amqp_idle_connection_timeout: Option<u64>,
+    #[arg(
+        name = "hooks-amqp-idle-connection-timeout",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_IDLE_CONNECTION_TIMEOUT"
+    )]
+    pub idle_connection_timeout: Option<u64>,
 
     /// After this amount of time in seconds, the channel will be closed.
-    #[cfg(feature = "amqp_notifier")]
-    #[arg(long, env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT")]
-    pub hooks_amqp_idle_channels_timeout: Option<u64>,
+    #[arg(
+        name = "hooks-amqp-idle-channels-timeout",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT"
+    )]
+    pub idle_channels_timeout: Option<u64>,
+
+    /// Declares all objects with auto-delete property set.
+    #[arg(
+        name = "hooks-amqp-auto-delete",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_AUTO_DELETE"
+    )]
+    pub auto_delete: bool,
 }
 
 #[derive(Parser, Debug, Clone)]
@@ -400,7 +431,7 @@ pub struct RustusConf {
     pub max_file_size: Option<usize>,
 
     #[command(flatten)]
-    pub storage_opts: StorageOptions,
+    pub storage_opts: DataStorageOptions,
 
     #[command(flatten)]
     pub info_storage_opts: InfoStoreOptions,
@@ -412,24 +443,23 @@ pub struct RustusConf {
     pub sentry_opts: SentryOptions,
 }
 
-#[cfg_attr(coverage, no_coverage)]
 impl RustusConf {
     /// Function to parse CLI parametes.
     ///
     /// This is a workaround for issue mentioned
     /// [here](https://www.reddit.com/r/rust/comments/8ddd19/confusion_with_splitting_mainrs_into_smaller/).
-    pub fn from_args() -> RustusConf {
-        let mut conf = RustusConf::parse();
+    pub fn from_args() -> Self {
+        let mut conf = Self::parse();
         conf.normalize_extentions();
         conf
     }
 
-    pub fn from_iter<I>(iter: I) -> RustusConf
+    pub fn from_iter<I>(iter: I) -> Self
     where
         I: IntoIterator,
         I::Item: Into<OsString> + Clone,
     {
-        <RustusConf as Parser>::parse_from(iter)
+        <Self as Parser>::parse_from(iter)
     }
 
     /// Base API url.

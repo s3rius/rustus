@@ -1,7 +1,9 @@
 use actix_web::{web, HttpRequest, HttpResponse};
 
 use crate::{
+    data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
+    info_storage::base::InfoStorage,
     metrics,
     notifiers::Hook,
     State,
@@ -19,7 +21,7 @@ pub async fn terminate(
     let file_id_opt = request.match_info().get("file_id").map(String::from);
     if let Some(file_id) = file_id_opt {
         let file_info = state.info_storage.get_info(file_id.as_str()).await?;
-        if file_info.storage != state.data_storage.to_string() {
+        if file_info.storage != state.data_storage.get_name() {
             return Err(RustusError::FileNotFound);
         }
         if state.config.hook_is_active(Hook::PreTerminate) {
@@ -57,7 +59,7 @@ pub async fn terminate(
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},
@@ -67,12 +69,12 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let file_info = state.create_test_file().await;
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NO_CONTENT);
         assert!(state
             .info_storage
@@ -85,18 +87,18 @@ mod tests {
     #[actix_rt::test]
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let request = TestRequest::delete()
             .param("file_id", "not_exists")
             .to_request();
-        let result = call_service(&mut rustus, request).await;
+        let result = call_service(&rustus, request).await;
         assert_eq!(result.status(), StatusCode::NOT_FOUND);
     }
 
     #[actix_rt::test]
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = "unknown_storage".into();
         state
@@ -107,7 +109,7 @@ mod tests {
         let request = TestRequest::delete()
             .uri(state.config.file_url(file_info.id.as_str()).as_str())
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

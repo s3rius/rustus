@@ -6,7 +6,9 @@ use actix_web::{
 };
 
 use crate::{
+    data_storage::base::DataStorage,
     errors::RustusError,
+    info_storage::base::InfoStorage,
     metrics,
     notifiers::Hook,
     protocol::extensions::Extensions,
@@ -74,7 +76,7 @@ pub async fn write_bytes(
     }
 
     // Checking if file was stored in the same storage.
-    if file_info.storage != state.data_storage.to_string() {
+    if file_info.storage != state.data_storage.get_name() {
         return Err(RustusError::FileNotFound);
     }
     // Checking if offset from request is the same as the real offset.
@@ -116,11 +118,11 @@ pub async fn write_bytes(
     // Saving info to info storage.
     state.info_storage.set_info(&file_info, false).await?;
 
-    let mut hook = Hook::PostReceive;
-
-    if file_info.length == Some(file_info.offset) {
-        hook = Hook::PostFinish;
-    }
+    let hook = if file_info.length == Some(file_info.offset) {
+        Hook::PostFinish
+    } else {
+        Hook::PostReceive
+    };
     if state.config.hook_is_active(hook) {
         let message = state.config.notification_opts.hooks_format.format(
             &request,
@@ -149,7 +151,7 @@ pub async fn write_bytes(
 
 #[cfg(test)]
 mod tests {
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::{
         http::StatusCode,
         test::{call_service, TestRequest},
@@ -161,7 +163,7 @@ mod tests {
     /// This test creates file and writes bytes to it.
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -174,7 +176,7 @@ mod tests {
             .insert_header(("Upload-Offset", file.offset))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NO_CONTENT);
         assert_eq!(
             resp.headers()
@@ -199,7 +201,7 @@ mod tests {
     /// file's length while writing bytes to it.
     async fn success_update_file_length() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = None;
         file.deferred_size = true;
@@ -214,7 +216,7 @@ mod tests {
             .insert_header(("Upload-Length", "20"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NO_CONTENT);
         assert_eq!(
             resp.headers()
@@ -230,7 +232,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(new_info.offset, test_data.len());
-        assert_eq!(new_info.deferred_size, false);
+        assert!(!new_info.deferred_size);
         assert_eq!(new_info.length, Some(20));
     }
 
@@ -239,7 +241,7 @@ mod tests {
     /// is less than current offset, error is thrown.
     async fn new_file_length_lt_offset() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = None;
         file.deferred_size = true;
@@ -253,7 +255,7 @@ mod tests {
             .insert_header(("Upload-Length", "20"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CONFLICT);
     }
 
@@ -263,7 +265,7 @@ mod tests {
     /// error is thrown.
     async fn new_file_length_size_already_known() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.deferred_size = false;
@@ -277,7 +279,7 @@ mod tests {
             .insert_header(("Upload-Length", "120"))
             .set_payload(test_data)
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 
@@ -286,7 +288,7 @@ mod tests {
     /// wrong status code is returned.
     async fn no_content_header() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -296,7 +298,7 @@ mod tests {
             .insert_header(("Upload-Offset", "0"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
 
@@ -304,7 +306,7 @@ mod tests {
     /// Tests that method will return error if no offset header specified.
     async fn no_offset_header() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -314,7 +316,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
 
@@ -322,7 +324,7 @@ mod tests {
     /// Tests that method will return error if wrong offset is passed.
     async fn wrong_offset_header() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.length = Some(100);
         file.offset = 0;
@@ -333,7 +335,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::CONFLICT);
     }
 
@@ -341,7 +343,7 @@ mod tests {
     /// Tests that method would return error if file was already uploaded.
     async fn final_upload() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.is_final = true;
         state.info_storage.set_info(&file, false).await.unwrap();
@@ -351,7 +353,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::FORBIDDEN);
     }
 
@@ -359,7 +361,7 @@ mod tests {
     /// Tests that method would return 404 if file was saved in other storage.
     async fn wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.storage = "unknown".into();
         state.info_storage.set_info(&file, false).await.unwrap();
@@ -369,7 +371,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
@@ -378,7 +380,7 @@ mod tests {
     /// file if it's offset already equal to length.
     async fn frozen_file() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.offset = 10;
         file.length = Some(10);
@@ -389,7 +391,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         println!("{:?}", resp.response().body());
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
@@ -399,14 +401,14 @@ mod tests {
     /// unknown file_id is passed.
     async fn unknown_file_id() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let request = TestRequest::patch()
             .uri(state.config.file_url("unknown").as_str())
             .insert_header(("Upload-Offset", "0"))
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
 
@@ -414,7 +416,7 @@ mod tests {
     /// Tests checksum validation.
     async fn wrong_checksum() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file = state.create_test_file().await;
         file.offset = 0;
         file.length = Some(10);
@@ -426,7 +428,7 @@ mod tests {
             .insert_header(("Content-Type", "application/offset+octet-stream"))
             .set_payload("memes")
             .to_request();
-        let resp = call_service(&mut rustus, request).await;
+        let resp = call_service(&rustus, request).await;
         assert_eq!(resp.status(), StatusCode::EXPECTATION_FAILED);
     }
 }

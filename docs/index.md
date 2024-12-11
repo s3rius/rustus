@@ -30,27 +30,7 @@ you can use last stable release.
 ```bash
 git clone https://github.com/s3rius/rustus.git
 cd rustus
-cargo install --path . --features=all
-```
-
-Also, you can speedup build by disabling some features.
-
-Available features:
-
-* `amqp_notifier` - adds `AMQP` protocol support for notifying about upload status;
-* `db_info_storage` - adds support for storing information about upload in different databases (`Postgres`, `MySQL`, `SQLite`);
-* `redis_info_storage` - adds support for storing information about upload in `Redis` database;
-* `all` - enables all rustus features.
-
-All precompiled binaries have all features enabled.
-
-### With cargo
-
-If you have cargo installed, it might be easier to
-install it directly from crates.io.
-
-```bash
-cargo install rustus --features=all
+cargo install --path .
 ```
 
 ### Binaries
@@ -77,7 +57,7 @@ Alpine based images are more lightweight than Debian
 To run Rustus with Docker you just need to run this command
 
 ```bash
-docker run --rm -p "1081:1081" -d s3rius/rustus --log-level "DEBUG"
+docker run --rm -p "1081:1081" -d ghcr.io/s3rius/rustus --log-level "DEBUG"
 ```
 
 More information about Rustus docker images you can find on [Docker hub page](https://hub.docker.com/r/s3rius/rustus/).

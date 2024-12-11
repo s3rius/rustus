@@ -5,157 +5,76 @@ edition = "2021"
 description = "TUS protocol implementation written in Rust."
 keywords = ["tus", "server", "actix-web"]
 license-file = "LICENSE"
-authors = [
-    "Pavel Kirilin <win10@list.ru>",
-    "Maxim Naumov <overlordin777@gmail.com>",
-]
+authors = ["Pavel Kirilin <win10@list.ru>"]
 homepage = "https://github.com/s3rius/rustus"
 readme = "README.md"
-
 
 [[bin]]
 name = "rustus"
 
 [dependencies]
-bytes = "^1.3.0"
-bb8 = "^0.8.0"
-async-trait = "^0.1.52"
-base64 = "^0.21.0"
-log = "^0.4.14"
+actix-web = "^4.9.0"
+actix-files = "^0.6.6"
+bytes = "^1.9.0"
+async-trait = "^0.1.83"
+base64 = "^0.22.1"
+log = "^0.4.22"
 serde_json = "^1"
-thiserror = "^1.0"
-url = "^2.2.2"
-prometheus = "^0.13.0"
-actix-web-prom = "^0.6.0"
-dyn-clone = "^1.0.5"
-actix-cors = "0.6.1"
-wildmatch = "2.1.0"
-md-5 = "^0.10.1"
-digest = "0.10.3"
-mimalloc = { version = "~0.1.30", default-features = false }
-clap = { version = "4.1.8", features = ["derive", "env"] }
-dotenvy = { version = "0.15.6", features = ["clap"] }
-sentry = "0.30.0"
-sentry-actix = "0.30.0"
+thiserror = "^2.0"
+url = "^2.5.4"
+prometheus = "^0.13.4"
+actix-web-prom = "^0.9.0"
+dyn-clone = "^1.0.17"
+actix-cors = "0.7.0"
+wildmatch = "2.4.0"
+md-5 = "^0.10.6"
+digest = "0.10.7"
+sentry = "0.35.0"
+sentry-actix = "0.35.0"
 mime = "0.3.17"
-mime_guess = "2.0.4"
+mime_guess = "2.0.5"
+mobc = "0.8.5"
+rust-s3 = "~0.35.1"
+futures = "^0.3.31"
+lapin = "^2.5.0"
+serde = { version = "^1", features = ["derive"] }
+clap = { version = "4.5.21", features = ["derive", "env"] }
+dotenvy = { version = "0.15.7", features = ["clap"] }
+redis = { version  = "^0.27.5", features = ["tokio", "tokio-comp"]}
+tokio = { version = "^1.41.1", features = ["full"] }
+uuid = { version = "^1.11.0", features = ["v4"] }
+strum = { version = "0.26.3", features = ["derive"] }
+sha1 = { version = "^0.10.6", features = ["compress"] }
+sha2 = { version = "^0.10.8", features = ["compress"] }
+openssl = { version = "^0.10.68", features = ["vendored"] }
+chrono = { version = "^0.4.38", features = ["serde"] }
+fern = { version = "^0.7.0", features = ["colored"] }
+reqwest = { version = "^0.12.9", features = ["json"] }
+derive_more = { version = "^1.0.0", features = ["display", "from", "from_str"], default-features = false }
 
-[dependencies.sha1]
-version = "^0.10.1"
-features = ["compress"]
-
-[dependencies.sha2]
-version = "^0.10.1"
-features = ["compress"]
-
-[dependencies.futures]
-version = "^0.3.21"
-
-[dependencies.serde]
-version = "^1"
-features = ["derive"]
-
-[dependencies.openssl]
-version = "^0.10.38"
-features = ["vendored"]
-
-[dependencies.actix-files]
-version = "^0.6.0-beta.13"
-
-[dependencies.actix-web]
-version = "^4.0.1"
-
-[dependencies.chrono]
-features = ["serde"]
-version = "^0.4.19"
-
-[dependencies.derive_more]
-default-features = false
-features = ["display", "from", "from_str"]
-version = "^0.99.9"
-
-[dependencies.fern]
-features = ["colored"]
-version = "^0.6.0"
-
-[dependencies.lapin]
-optional = true
-version = "^2.0.0"
-
-[dependencies.bb8-lapin]
-version = "^0.4.0"
-optional = true
-
-[dependencies.bb8-redis]
-optional = true
-version = "^0.12.0"
-
-[dependencies.redis]
-optional = true
-version = "^0.22.3"
-
-[dependencies.rbatis]
-default-features = false
-features = ["runtime-tokio-rustls", "all-database"]
-optional = true
-version = "^3.0"
-
-[dependencies.rbson]
-optional = true
-version = "^2.0"
-
-[dependencies.reqwest]
-features = ["json"]
-version = "^0.11.8"
-
-[dependencies.strum]
-features = ["derive"]
-version = "0.24.0"
-
-[dependencies.tokio]
+[target.'cfg(not(target_env = "msvc"))'.dependencies.tikv-jemallocator]
+version = "0.6"
 features = [
-    "time",
-    "process",
-    "fs",
-    "io-std",
-    "io-util",
-    "rt-multi-thread",
-    "bytes",
-    "rt",
-    "macros",
+  "background_threads",
+  "background_threads_runtime_support"
 ]
-version = "^1.4.0"
-
-[dependencies.uuid]
-features = ["v4"]
-version = "^1.0.0-alpha.1"
-
-[dependencies.rust-s3]
-version = "~0.32.3"
 
 [features]
-all = ["redis_info_storage", "db_info_storage", "amqp_notifier"]
-amqp_notifier = ["lapin", "bb8-lapin"]
-db_info_storage = ["rbatis", "rbson"]
-default = []
-redis_info_storage = ["bb8-redis", "redis"]
-
 ### For testing
 test_redis = []
-test_db = []
 test_rmq = []
-integration_tests = ["test_redis", "test_db", "test_rmq"]
+integration_tests = ["test_redis", "test_rmq"]
 
 [dev-dependencies]
 tempdir = "0.3.7"
-actix-rt = "2.6.0"
-httptest = "0.15.4"
-actix-http = "3.2.2"
+actix-rt = "2.10.0"
+httptest = "0.16.1"
+actix-http = "3.9.0"
 
-[profile]
 [profile.release]
 debug = false
 lto = "fat"
 panic = "abort"
 opt-level = 3
 codegen-units = 1
+strip = true

@@ -1,0 +1,35 @@
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - released
+
+jobs:
+  upload_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - name: Install dependencies
+        run: pip install mkdocs-material pygments
+      - name: Build docs
+        run: mkdocs build -d /tmp/docs
+      - uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+      - name: Commit files
+        run: |
+          ls -A | grep -vE "^(.git|.gitignore|helm_releases)" | xargs rm -rfv
+          cp -a /tmp/docs/. .
+          git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --local user.name "${{ github.actor }}"
+          git add .
+          git commit -m "Docs update"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages

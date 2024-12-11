@@ -23,15 +23,10 @@ pub enum RustusError {
     SizeAlreadyKnown,
     #[error("Unable to serialize object")]
     UnableToSerialize(#[from] serde_json::Error),
-    #[cfg(feature = "db_info_storage")]
-    #[error("Database error: {0}")]
-    DatabaseError(#[from] rbatis::error::Error),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis error: {0}")]
     RedisError(#[from] redis::RedisError),
-    #[cfg(feature = "redis_info_storage")]
     #[error("Redis pooling error: {0}")]
-    MobcError(#[from] bb8::RunError<redis::RedisError>),
+    MobcError(#[from] mobc::Error<redis::RedisError>),
     #[error("Unable to get file information")]
     UnableToReadInfo,
     #[error("Unable to write file {0}")]
@@ -50,12 +45,10 @@ pub enum RustusError {
     HookError(String),
     #[error("Unable to configure logging: {0}")]
     LogConfigError(#[from] log::SetLoggerError),
-    #[cfg(feature = "amqp_notifier")]
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
-    #[cfg(feature = "amqp_notifier")]
-    #[error("AMQP pooling error error: {0}")]
-    AMQPPoolError(#[from] bb8::RunError<lapin::Error>),
+    #[error("AMQP pooling error: {0}")]
+    AMQPPoolError(#[from] mobc::Error<lapin::Error>),
     #[error("Std error: {0}")]
     StdError(#[from] std::io::Error),
     #[error("Can't spawn task: {0}")]
@@ -77,20 +70,18 @@ pub enum RustusError {
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.
-#[cfg_attr(coverage, no_coverage)]
 impl From<RustusError> for Error {
     fn from(err: RustusError) -> Self {
-        Error::new(ErrorKind::Other, err)
+        Self::new(ErrorKind::Other, err)
     }
 }
 
 /// Trait to convert errors to http-responses.
-#[cfg_attr(coverage, no_coverage)]
 impl ResponseError for RustusError {
     fn error_response(&self) -> HttpResponse {
         error!("{}", self);
         match self {
-            RustusError::HTTPHookError(_, proxy_response, content_type) => {
+            Self::HTTPHookError(_, proxy_response, content_type) => {
                 HttpResponseBuilder::new(self.status_code())
                     .insert_header((
                         "Content-Type",
@@ -108,15 +99,15 @@ impl ResponseError for RustusError {
 
     fn status_code(&self) -> StatusCode {
         match self {
-            RustusError::FileNotFound => StatusCode::NOT_FOUND,
-            RustusError::WrongOffset => StatusCode::CONFLICT,
-            RustusError::FrozenFile
-            | RustusError::SizeAlreadyKnown
-            | RustusError::HookError(_)
-            | RustusError::UnknownHashAlgorithm
-            | RustusError::WrongHeaderValue => StatusCode::BAD_REQUEST,
-            RustusError::WrongChecksum => StatusCode::EXPECTATION_FAILED,
-            RustusError::HTTPHookError(status, _, _) => {
+            Self::FileNotFound => StatusCode::NOT_FOUND,
+            Self::WrongOffset => StatusCode::CONFLICT,
+            Self::FrozenFile
+            | Self::SizeAlreadyKnown
+            | Self::HookError(_)
+            | Self::UnknownHashAlgorithm
+            | Self::WrongHeaderValue => StatusCode::BAD_REQUEST,
+            Self::WrongChecksum => StatusCode::EXPECTATION_FAILED,
+            Self::HTTPHookError(status, _, _) => {
                 StatusCode::from_u16(*status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
             }
             _ => StatusCode::INTERNAL_SERVER_ERROR,

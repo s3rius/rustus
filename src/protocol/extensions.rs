@@ -6,19 +6,19 @@ use crate::from_str;
 /// Enum of available Protocol Extensions
 #[derive(PartialEq, Debug, PartialOrd, Display, EnumIter, From, Clone, Ord, Eq)]
 pub enum Extensions {
-    #[display(fmt = "creation-defer-length")]
+    #[display("creation-defer-length")]
     CreationDeferLength,
-    #[display(fmt = "creation-with-upload")]
+    #[display("creation-with-upload")]
     CreationWithUpload,
-    #[display(fmt = "creation")]
+    #[display("creation")]
     Creation,
-    #[display(fmt = "termination")]
+    #[display("termination")]
     Termination,
-    #[display(fmt = "concatenation")]
+    #[display("concatenation")]
     Concatenation,
-    #[display(fmt = "getting")]
+    #[display("getting")]
     Getting,
-    #[display(fmt = "checksum")]
+    #[display("checksum")]
     Checksum,
 }
 

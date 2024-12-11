@@ -12,7 +12,6 @@ mod write_bytes;
 /// OPTIONS /api    - to get info about the app.
 /// HEAD /api/file  - to get info about the file.
 /// PATCH /api/file - to add bytes to file.
-#[cfg_attr(coverage, no_coverage)]
 pub fn add_extension(web_app: &mut web::ServiceConfig) {
     web_app
         .service(

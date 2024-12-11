@@ -1,4 +1,6 @@
-use crate::errors::RustusError;
+use crate::{
+    data_storage::base::DataStorage, errors::RustusError, info_storage::base::InfoStorage,
+};
 use actix_web::{
     http::header::{CacheControl, CacheDirective},
     web, HttpRequest, HttpResponse,
@@ -19,7 +21,7 @@ pub async fn get_file_info(
 
     // Getting file info from info_storage.
     let file_info = state.info_storage.get_info(file_id).await?;
-    if file_info.storage != state.data_storage.to_string() {
+    if file_info.storage != state.data_storage.get_name() {
         return Err(RustusError::FileNotFound);
     }
     let mut builder = HttpResponse::Ok();
@@ -62,7 +64,7 @@ pub async fn get_file_info(
 mod tests {
     use actix_web::http::{Method, StatusCode};
 
-    use crate::{server::test::get_service, State};
+    use crate::{info_storage::base::InfoStorage, server::test::get_service, State};
     use actix_web::test::{call_service, TestRequest};
 
     use base64::{engine::general_purpose, Engine};
@@ -70,7 +72,7 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.offset = 100;
         file_info.length = Some(100);
@@ -82,7 +84,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         let offset = response
             .headers()
             .get("Upload-Offset")
@@ -91,13 +93,13 @@ mod tests {
             .unwrap()
             .parse::<usize>()
             .unwrap();
-        assert_eq!(file_info.offset, offset)
+        assert_eq!(file_info.offset, offset);
     }
 
     #[actix_rt::test]
     async fn success_metadata() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.offset = 100;
         file_info.length = Some(100);
@@ -110,7 +112,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         let metadata = response
             .headers()
             .get("Upload-Metadata")
@@ -120,13 +122,13 @@ mod tests {
         assert_eq!(
             String::from(metadata),
             format!("{} {}", "test", general_purpose::STANDARD.encode("value"))
-        )
+        );
     }
 
     #[actix_rt::test]
     async fn success_defer_len() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.deferred_size = true;
         file_info.length = None;
@@ -138,7 +140,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -153,7 +155,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_get_file_info_partial() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.is_partial = true;
         state
@@ -164,7 +166,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -179,7 +181,7 @@ mod tests {
     #[actix_rt::test]
     async fn success_final() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.is_partial = false;
         file_info.is_final = true;
@@ -192,7 +194,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(
             response
                 .headers()
@@ -212,18 +214,18 @@ mod tests {
     #[actix_rt::test]
     async fn no_file() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let request = TestRequest::with_uri(state.config.file_url("unknknown").as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 
     #[actix_rt::test]
     async fn test_get_file_info_wrong_storage() {
         let state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         let mut file_info = state.create_test_file().await;
         file_info.storage = String::from("unknown");
         state
@@ -234,7 +236,7 @@ mod tests {
         let request = TestRequest::with_uri(state.config.file_url(file_info.id.as_str()).as_str())
             .method(Method::HEAD)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

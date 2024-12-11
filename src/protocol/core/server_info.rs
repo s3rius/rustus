@@ -31,7 +31,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_server_info() {
         let mut state = State::test_new().await;
-        let mut rustus = get_service(state.clone()).await;
+        let rustus = get_service(state.clone()).await;
         state.config.tus_extensions = vec![
             Extensions::Creation,
             Extensions::Concatenation,
@@ -40,14 +40,13 @@ mod tests {
         let request = TestRequest::with_uri(state.config.test_url().as_str())
             .method(Method::OPTIONS)
             .to_request();
-        let response = call_service(&mut rustus, request).await;
+        let response = call_service(&rustus, request).await;
         let extensions = response
             .headers()
             .get("Tus-Extension")
             .unwrap()
             .to_str()
-            .unwrap()
-            .clone();
+            .unwrap();
         assert!(extensions.contains(Extensions::Creation.to_string().as_str()));
         assert!(extensions.contains(Extensions::Concatenation.to_string().as_str()));
         assert!(extensions.contains(Extensions::Termination.to_string().as_str()));

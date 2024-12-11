@@ -1,7 +1,23 @@
-#![cfg_attr(coverage, feature(no_coverage))]
-
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+#![warn(
+    // Base lints.
+    clippy::all,
+    // Some pedantic lints.
+    clippy::pedantic,
+    // New lints which are cool.
+    clippy::nursery,
+)]
+#![
+    allow(
+        // I don't care about this.
+        clippy::module_name_repetitions,
+        // Yo, the hell you should put
+        // it in docs, if signature is clear as sky.
+        clippy::missing_errors_doc,
+        // Actix is buit upon ?Send,
+        // to maximize performance of a single thread.
+        clippy::future_not_send
+    )
+]
 
 use std::str::FromStr;
 
@@ -15,7 +31,7 @@ use fern::{
     colors::{Color, ColoredLevelConfig},
     Dispatch,
 };
-use log::{error, LevelFilter};
+use log::error;
 
 use config::RustusConf;
 
@@ -24,26 +40,27 @@ use wildmatch::WildMatch;
 
 use crate::{
     errors::{RustusError, RustusResult},
-    info_storages::InfoStorage,
-    notifiers::models::notification_manager::NotificationManager,
     server::rustus_service,
     state::State,
-    storages::Storage,
 };
 
 mod config;
+mod data_storage;
 mod errors;
-mod info_storages;
+mod file_info;
+mod info_storage;
 mod metrics;
 mod notifiers;
 mod protocol;
 mod routes;
 mod server;
 mod state;
-mod storages;
 mod utils;
 
-#[cfg_attr(coverage, no_coverage)]
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 fn greeting(app_conf: &RustusConf) {
     let extensions = app_conf
         .tus_extensions
@@ -142,7 +159,6 @@ fn create_cors(origins: Vec<String>, additional_headers: Vec<String>) -> Cors {
 /// This function may throw an error
 /// if the server can't be bound to the
 /// given address.
-#[cfg_attr(coverage, no_coverage)]
 #[allow(clippy::too_many_lines)]
 pub fn create_server(state: State) -> RustusResult<Server> {
     let host = state.config.host.clone();
@@ -199,10 +215,7 @@ pub fn create_server(state: State) -> RustusResult<Server> {
                 async move {
                     let srv_response = fut.await?;
                     if let Some(err) = srv_response.response().error() {
-                        let url = match srv_response.request().match_pattern() {
-                            Some(pattern) => pattern,
-                            None => String::new(),
-                        };
+                        let url = srv_response.request().match_pattern().unwrap_or_default();
                         let err_desc = format!("{err}");
                         error_counter
                             .clone()
@@ -227,7 +240,6 @@ pub fn create_server(state: State) -> RustusResult<Server> {
     Ok(server.run())
 }
 
-#[cfg_attr(coverage, no_coverage)]
 fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
     let colors = ColoredLevelConfig::new()
         // use builder methods
@@ -239,7 +251,6 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 
     Dispatch::new()
         .level(app_config.log_level)
-        .level_for("rbatis", LevelFilter::Error)
         .chain(std::io::stdout())
         .format(move |out, message, record| {
             out.finish(format_args!(
@@ -254,7 +265,6 @@ fn setup_logging(app_config: &RustusConf) -> RustusResult<()> {
 }
 
 /// Main program entrypoint.
-#[cfg_attr(coverage, no_coverage)]
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
@@ -263,7 +273,7 @@ async fn main() -> std::io::Result<()> {
     // I may change it to another log system like `fern` later, idk.
     setup_logging(&app_conf)?;
 
-    #[allow(clippy::no_effect_underscore_binding)]
+    #[allow(clippy::collection_is_never_read)]
     let mut _guard = None;
     if let Some(dsn) = &app_conf.sentry_opts.dsn {
         log::info!("Setting up sentry .");
@@ -280,30 +290,9 @@ async fn main() -> std::io::Result<()> {
     // Printing cool message.
     greeting(&app_conf);
 
-    // Creating info storage.
-    // It's used to store info about files.
-    let mut info_storage = app_conf
-        .info_storage_opts
-        .info_storage
-        .get(&app_conf)
-        .await?;
-    // Preparing it, lol.
-    info_storage.prepare().await?;
-
-    // Creating file storage.
-    let mut storage = app_conf.storage_opts.storage.get(&app_conf);
-    // Preparing it.
-    storage.prepare().await?;
-
-    // Creating notification manager.
-    let notification_manager = NotificationManager::new(&app_conf).await?;
+    let state = State::new(app_conf.clone()).await?;
 
     // Creating actual server and running it.
-    let server = create_server(State::new(
-        app_conf.clone(),
-        storage,
-        info_storage,
-        notification_manager,
-    ))?;
+    let server = create_server(state)?;
     server.await
 }
