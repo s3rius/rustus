@@ -55,6 +55,8 @@ jobs:
     needs: pre_job
     if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v2
         with:
@@ -66,7 +68,7 @@ jobs:
           override: true
       - uses: KengoTODA/actions-setup-docker-compose@v1
         with:
-          version: "latest"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: start docker services
         run: docker compose up -d --wait
       - name: Run tests
