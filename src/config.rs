@@ -274,6 +274,14 @@ pub struct AMQPHooksOptions {
         env = "RUSTUS_HOOKS_AMQP_IDLE_CHANNELS_TIMEOUT"
     )]
     pub idle_channels_timeout: Option<u64>,
+
+    /// Declares all objects with auto-delete property set.
+    #[arg(
+        name = "hooks-amqp-auto-delete",
+        long,
+        env = "RUSTUS_HOOKS_AMQP_AUTO_DELETE"
+    )]
+    pub auto_delete: bool,
 }
 
 #[derive(Parser, Debug, Clone)]

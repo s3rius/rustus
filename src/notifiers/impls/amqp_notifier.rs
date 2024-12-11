@@ -34,6 +34,7 @@ pub struct AMQPNotifier {
     routing_key: Option<String>,
     declare_options: DeclareOptions,
     celery: bool,
+    auto_delete: bool,
 }
 
 /// `ManagerConnection` for `ChannelPool`.
@@ -79,6 +80,7 @@ impl AMQPNotifier {
             exchange_kind: options.exchange_kind,
             exchange_name: options.exchange,
             queues_prefix: options.queues_prefix,
+            auto_delete: options.auto_delete,
         }
     }
 
@@ -104,6 +106,7 @@ impl Notifier for AMQPNotifier {
                 ExchangeKind::Custom(self.exchange_kind.clone()),
                 ExchangeDeclareOptions {
                     durable: self.declare_options.durable_exchange,
+                    auto_delete: self.auto_delete,
                     ..ExchangeDeclareOptions::default()
                 },
                 FieldTable::default(),
@@ -117,6 +120,7 @@ impl Notifier for AMQPNotifier {
                     queue_name.as_str(),
                     QueueDeclareOptions {
                         durable: self.declare_options.durable_queues,
+                        auto_delete: self.auto_delete,
                         ..QueueDeclareOptions::default()
                     },
                     FieldTable::default(),
@@ -178,7 +182,6 @@ impl Notifier for AMQPNotifier {
     }
 }
 
-#[cfg(feature = "test_rmq")]
 #[cfg(test)]
 mod tests {
     use crate::notifiers::{base::Notifier, hooks::Hook};
@@ -186,15 +189,18 @@ mod tests {
     use super::AMQPNotifier;
     use actix_web::http::header::HeaderMap;
     use lapin::options::{BasicAckOptions, BasicGetOptions};
+    use strum::IntoEnumIterator;
 
     async fn get_notifier() -> AMQPNotifier {
-        let amqp_url = std::env::var("TEST_AMQP_URL").unwrap();
+        let amqp_url = std::env::var("TEST_AMQP_URL")
+            .unwrap_or("amqp://guest:guest@localhost:5672".to_string());
         let mut notifier = AMQPNotifier::new(crate::config::AMQPHooksOptions {
             url: Some(amqp_url),
             declare_exchange: true,
             declare_queues: true,
             durable_exchange: false,
             durable_queues: false,
+            auto_delete: true,
             celery: true,
             exchange: uuid::Uuid::new_v4().to_string(),
             exchange_kind: String::from("topic"),
@@ -212,30 +218,31 @@ mod tests {
     #[actix_rt::test]
     async fn success() {
         let notifier = get_notifier().await;
-        let hook = Hook::PostCreate;
-        let test_msg = String::from("Test Message");
-        notifier
-            .send_message(test_msg.clone(), hook.clone(), &HeaderMap::new())
-            .await
-            .unwrap();
-        let chan = notifier.channel_pool.get().await.unwrap();
-        let message = chan
-            .basic_get(
-                format!("{}.{}", notifier.queues_prefix.as_str(), hook).as_str(),
-                BasicGetOptions::default(),
-            )
-            .await
-            .unwrap();
-        assert!(message.is_some());
-        assert_eq!(
-            String::from_utf8(message.as_ref().unwrap().data.clone()).unwrap(),
-            format!("[[{}], {{}}, {{}}]", test_msg)
-        );
-        message
-            .unwrap()
-            .ack(BasicAckOptions::default())
-            .await
-            .unwrap();
+        for hook in Hook::iter() {
+            let test_msg = uuid::Uuid::new_v4().to_string();
+            notifier
+                .send_message(test_msg.clone(), hook.clone(), &HeaderMap::new())
+                .await
+                .unwrap();
+            let chan = notifier.channel_pool.get().await.unwrap();
+            let message = chan
+                .basic_get(
+                    notifier.get_queue_name(hook).as_str(),
+                    BasicGetOptions::default(),
+                )
+                .await
+                .unwrap();
+            assert!(message.is_some());
+            assert_eq!(
+                String::from_utf8(message.as_ref().unwrap().data.clone()).unwrap(),
+                format!("[[{}], {{}}, {{}}]", test_msg)
+            );
+            message
+                .unwrap()
+                .ack(BasicAckOptions::default())
+                .await
+                .unwrap();
+        }
     }
 
     #[actix_rt::test]
@@ -246,6 +253,7 @@ mod tests {
             declare_queues: true,
             durable_exchange: false,
             durable_queues: false,
+            auto_delete: true,
             celery: false,
             exchange: uuid::Uuid::new_v4().to_string(),
             exchange_kind: String::from("topic"),
@@ -255,9 +263,7 @@ mod tests {
             channel_pool_size: 1,
             idle_connection_timeout: None,
             idle_channels_timeout: None,
-        })
-        .await
-        .unwrap();
+        });
         let res = notifier
             .send_message("Test Message".into(), Hook::PostCreate, &HeaderMap::new())
             .await;

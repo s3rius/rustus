@@ -41,7 +41,7 @@ pub struct RedisInfoStorage {
 }
 
 impl RedisInfoStorage {
-    /// Create new `RedisStorage`.
+    /// Create new `RedisInfoStorage`.
     ///
     /// # Errors
     ///
@@ -97,5 +97,83 @@ impl InfoStorage for RedisInfoStorage {
             None | Some(0) => Err(RustusError::FileNotFound),
             _ => Ok(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{file_info::FileInfo, info_storage::base::InfoStorage};
+
+    use super::RedisInfoStorage;
+    use redis::AsyncCommands;
+
+    fn get_url() -> String {
+        std::env::var("TEST_REDIS_URL").unwrap_or("redis://localhost/0".to_string())
+    }
+
+    async fn get_storage() -> RedisInfoStorage {
+        RedisInfoStorage::new(get_url().as_str(), None).unwrap()
+    }
+
+    async fn get_redis() -> redis::aio::MultiplexedConnection {
+        let redis = redis::Client::open(get_url()).unwrap();
+        redis.get_multiplexed_async_connection().await.unwrap()
+    }
+
+    #[actix_rt::test]
+    async fn success() {
+        let info_storage = get_storage().await;
+        let file_info = FileInfo::new_test();
+        info_storage.set_info(&file_info, true).await.unwrap();
+        let mut redis = get_redis().await;
+        let value: Option<String> = redis.get(file_info.id.as_str()).await.unwrap();
+        assert!(value.is_some());
+
+        let file_info_from_storage = info_storage.get_info(file_info.id.as_str()).await.unwrap();
+
+        assert_eq!(file_info.id, file_info_from_storage.id);
+        assert_eq!(file_info.path, file_info_from_storage.path);
+        assert_eq!(file_info.storage, file_info_from_storage.storage);
+    }
+
+    #[actix_rt::test]
+    async fn no_connection() {
+        let info_storage = RedisInfoStorage::new("redis://unknonwn_url/0", None).unwrap();
+        let file_info = FileInfo::new_test();
+        let res = info_storage.set_info(&file_info, true).await;
+        assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn unknown_id() {
+        let info_storage = get_storage().await;
+        let res = info_storage
+            .get_info(uuid::Uuid::new_v4().to_string().as_str())
+            .await;
+        assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn expiration() {
+        let info_storage = get_storage().await;
+        let res = info_storage
+            .get_info(uuid::Uuid::new_v4().to_string().as_str())
+            .await;
+        assert!(res.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn deletion_success() {
+        let mut info_storage = get_storage().await;
+        info_storage.expiration = Some(1);
+        let mut redis = get_redis().await;
+        let file_info = FileInfo::new_test();
+        info_storage.set_info(&file_info, true).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+        assert!(redis
+            .get::<&str, Option<String>>(file_info.id.as_str())
+            .await
+            .unwrap()
+            .is_none());
     }
 }
