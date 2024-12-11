@@ -4,7 +4,7 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: 
+      test:
         - CMD
         - redis-cli
         - ping
@@ -19,7 +19,7 @@ services:
     healthcheck:
       test:
         - CMD
-        - rabbitmq-diagnostics 
+        - rabbitmq-diagnostics
         - check_running
         - -q
       interval: 3s

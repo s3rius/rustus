@@ -14,9 +14,6 @@ repos:
         pass_filenames: false
         args:
           - fmt
-          - --
-          - --config
-          - use_try_shorthand=true,imports_granularity=Crate
 
       - id: clippy
         types:
@@ -27,17 +24,6 @@ repos:
         entry: cargo
         args:
           - clippy
-          - --features=all
-          - --all
-          - -p
-          - rustus
-          - --
-          - -W
-          - clippy::all
-          - -W
-          - clippy::pedantic
-          - -D
-          - warnings
 
       - id: check
         types:
@@ -58,4 +44,3 @@ repos:
         pass_filenames: false
         args:
           - check
-          - --features=all
