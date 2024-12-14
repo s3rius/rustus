@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   publish:
-    name: Building ${{ matrix.job.target }}
+    name: Building ${{ matrix.platform.target }}
     runs-on: ${{ matrix.platform.runs-on }}
     strategy:
       matrix:
