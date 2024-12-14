@@ -44,6 +44,7 @@ jobs:
         with:
           executable-name: rustus 
           changes-file: ""
+          release-tag-prefix: ""
           target: ${{ matrix.platform.target }}
 
   docker_build:
