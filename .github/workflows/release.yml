@@ -43,6 +43,7 @@ jobs:
         uses: houseabsolute/actions-rust-release@v0
         with:
           executable-name: rustus 
+          changes-file: ""
           target: ${{ matrix.platform.target }}
 
   docker_build:
