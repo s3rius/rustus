@@ -9,7 +9,7 @@ COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY imgs ./imgs
 
-ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,metadata_thp:auto,tcache:true,tcache_max:4096,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
+ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
 
 RUN cargo build --locked --release --bin rustus
 
