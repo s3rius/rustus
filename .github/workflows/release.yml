@@ -14,8 +14,7 @@ jobs:
     runs-on: ${{ matrix.platform.runs-on }}
     strategy:
       matrix:
-        rust: [stable]
-        job:
+        platform:
           - os-name: Linux-x86_64
             runs-on: ubuntu-20.04
             target: x86_64-unknown-linux-musl
@@ -73,7 +72,7 @@ jobs:
           push: true
           file: ./Dockerfile
           target: base
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ghcr.io/s3rius/rustus:latest,ghcr.io/s3rius/rustus:${{ github.ref_name }}
       - name: Build and push rootless
         uses: docker/build-push-action@v2
