@@ -21,6 +21,7 @@ jobs:
         with:
           ref: gh-pages
       - name: Commit files
+        continue-on-error: true
         run: |
           ls -A | grep -vE "^(.git|.gitignore|helm_releases)" | xargs rm -rfv
           cp -a /tmp/docs/. .
@@ -30,6 +31,7 @@ jobs:
           git commit -m "Docs update"
       - name: Push changes
         uses: ad-m/github-push-action@master
+        continue-on-error: true
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
