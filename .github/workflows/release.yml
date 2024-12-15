@@ -29,9 +29,13 @@ jobs:
             target: x86_64-apple-darwin
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+      - name: Install cargo-bump
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-bump
       - name: Update version
-        run: sed -i '0,/^version = .*/{s/version = .*/version = "${{ github.ref_name }}"/}' Cargo.toml
+        run: cargo-bump "${{  github.ref_name }}"
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
@@ -60,8 +64,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Install cargo-bump
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-bump
       - name: Update version
-        run: sed -i '0,/^version = .*/{s/version = .*/version = "${{ github.ref_name }}"/}' Cargo.toml
+        run: cargo-bump "${{  github.ref_name }}"
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
