@@ -50,7 +50,7 @@ jobs:
         run: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
       - name: Zip artifacts (mental illness)
         if: ${{ 'windows-latest' == matrix.platform.runs-on }}
-        run: Compress-Archive -LiteralPath "target\${{ matrix.platform.target }}\release\rustus" -DestinationPath "rustus-${{ matrix.platform.os-name }}.zip"
+        run: Compress-Archive -LiteralPath "target\${{ matrix.platform.target }}\release\rustus.exe" -DestinationPath "rustus-${{ matrix.platform.os-name }}.zip"
       - name: Update release
         uses: softprops/action-gh-release@v2
         with:
