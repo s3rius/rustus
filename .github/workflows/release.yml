@@ -47,17 +47,11 @@ jobs:
           JEMALLOC_SYS_WITH_MALLOC_CONF: "background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
       - name: Zip artifcats
         run: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
-      - name: Generate checksums
-        uses: Solratic/checksum-action@v1
-        with:
-          pattern: "rustus-${{ matrix.platform.os-name }}.zip"
-          suffix: "checksum"
       - name: Update release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./rustus-${{ matrix.platform.os-name }}.zip
-            rustus-${{ matrix.platform.os-name }}.zip.checksum
 
   docker_build:
     runs-on: ubuntu-latest
