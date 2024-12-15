@@ -30,6 +30,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      - name: Update version
+        run: sed -i '0,/^version = .*/{s/version = .*/version = "${{ github.ref_name }}"/}' Cargo.toml
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
@@ -40,9 +42,7 @@ jobs:
         env:
           JEMALLOC_SYS_WITH_MALLOC_CONF: "background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
       - name: Zip artifcats
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
+        run: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
       - name: Generate checksums
         uses: Solratic/checksum-action@v1
         with:
