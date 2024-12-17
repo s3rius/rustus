@@ -20,7 +20,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
       
@@ -395,15 +395,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#db-info-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      DB info storage
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -564,15 +555,6 @@
   <a href="#redis-info-storage" class="md-nav__link">
     <span class="md-ellipsis">
       Redis info storage
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#db-info-storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      DB info storage
     </span>
   </a>
   
@@ -873,30 +855,6 @@ Since rustus need to have latest information and it writes a lot.</p>
 </div>
 </div>
 </div>
-<h3 id="db-info-storage">DB info storage</h3>
-<p>Rustus can store information about upload in a database.</p>
-<p>It's a good and reliable option. But Rustus can't work
-with replicas, since it requires the most recent information
-about uploads.</p>
-<p>You can use <code>postgresql</code>, <code>mysql</code> or even <code>sqlite</code> schemas to
-connect to database.</p>
-<p><code>--info-db-dsn</code> - connection string for your database.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">CLI</label><label for="__tabbed_7_2">ENV</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>rustus<span class="w"> </span>--info-storage<span class="w"> </span><span class="s2">&quot;db-info-storage&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--info-db-dsn<span class="w"> </span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_STORAGE</span><span class="o">=</span><span class="s2">&quot;redis-info-storage&quot;</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_INFO_DB_DSN</span><span class="o">=</span><span class="s2">&quot;postgresql://user:password@localhost/db&quot;</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>rustus
-</code></pre></div>
-</div>
-</div>
-</div>
 <h2 id="configuring-tus">Configuring TUS</h2>
 <p>Since TUS protocol offers extensibility you can turn off some protocol extensions.</p>
 <p>Available extensions:</p>
@@ -913,18 +871,18 @@ connect to database.</p>
 <p><code>--tus-extensions</code> - a list of enabled extensions.
 <code>--remove-parts</code> - remove parts files after successful concatenation (disabled by default).</p>
 <p>By default all extensions are enabled.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">CLI</label><label for="__tabbed_8_2">ENV</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">CLI</label><label for="__tabbed_7_2">ENV</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>rustus<span class="w"> </span>--remove-parts<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span>--tus-extensions<span class="w"> </span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>rustus<span class="w"> </span>--remove-parts<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span>--tus-extensions<span class="w"> </span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_TUS_EXTENSIONS</span><span class="o">=</span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_REMOVE_PARTS</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>rustus
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_TUS_EXTENSIONS</span><span class="o">=</span><span class="s2">&quot;getting,creation,termination,creation-with-upload,creation-defer-length,concatenation,checksum&quot;</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_REMOVE_PARTS</span><span class="o">=</span><span class="s2">&quot;true&quot;</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>rustus
 </code></pre></div>
 </div>
 </div>
@@ -981,7 +939,7 @@ connect to database.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.expand", "search.suggest", "header.autohide"], "search": "../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../assets/javascripts/bundle.88dd0f4e.min.js"></script>
       
     
   </body>
