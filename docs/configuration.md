@@ -300,36 +300,6 @@ Configuration parameters:
     rustus
     ```
 
-
-### DB info storage
-
-Rustus can store information about upload in a database.
-
-It's a good and reliable option. But Rustus can't work
-with replicas, since it requires the most recent information
-about uploads.
-
-You can use `postgresql`, `mysql` or even `sqlite` schemas to
-connect to database.
-
-`--info-db-dsn` - connection string for your database.
-
-=== "CLI"
-
-    ``` bash
-    rustus --info-storage "db-info-storage" \
-        --info-db-dsn "postgresql://user:password@localhost/db"
-    ```
-
-=== "ENV"
-
-    ``` bash
-    export RUSTUS_INFO_STORAGE="redis-info-storage"
-    export RUSTUS_INFO_DB_DSN="postgresql://user:password@localhost/db"
-
-    rustus
-    ```
-
 ## Configuring TUS
 
 Since TUS protocol offers extensibility you can turn off some protocol extensions.
