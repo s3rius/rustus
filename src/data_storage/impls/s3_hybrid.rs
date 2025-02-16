@@ -11,6 +11,7 @@ use crate::utils::dir_struct::substr_time;
 
 use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 use s3::{
     command::Command,
     request::{tokio_backend::HyperRequest, Request as S3Request},
@@ -101,23 +102,26 @@ impl S3HybridDataStorage {
         if file_info.path.is_none() {
             return Err(RustusError::UnableToWrite("Cannot get upload path.".into()));
         }
-        let s3_path = self.get_s3_key(file_info);
+        let local_path = self
+            .local_storage
+            .data_file_path(&file_info.id, file_info.created_at)?;
+        let s3_path = self.get_s3_key(&file_info.id, file_info.created_at);
         log::debug!(
             "Starting uploading {} to S3 with key `{}`",
             file_info.id,
             s3_path,
         );
-        let file = tokio::fs::File::open(file_info.path.clone().unwrap()).await?;
+        let file = tokio::fs::File::open(local_path).await?;
         let mut reader = tokio::io::BufReader::new(file);
         self.bucket.put_object_stream(&mut reader, s3_path).await?;
         Ok(())
     }
 
     // Construct an S3 key which is used to upload files.
-    fn get_s3_key(&self, file_info: &FileInfo) -> String {
-        let base_path = substr_time(self.dir_struct.as_str(), file_info.created_at);
+    fn get_s3_key(&self, id: &str, created_at: DateTime<Utc>) -> String {
+        let base_path = substr_time(self.dir_struct.as_str(), created_at);
         let trimmed_path = base_path.trim_end_matches('/');
-        format!("{trimmed_path}/{}", file_info.id)
+        format!("{trimmed_path}/{}", id)
     }
 }
 
@@ -129,21 +133,6 @@ impl DataStorage for S3HybridDataStorage {
         Ok(())
     }
 
-    // async fn get_contents(
-    //     &self,
-    //     file_info: &FileInfo,
-    //     request: &HttpRequest,
-    // ) -> RustusResult<HttpResponse> {
-    //     if file_info.length != Some(file_info.offset) {
-    //         log::debug!("File isn't uploaded. Returning from local storage.");
-    //         return self.local_storage.get_contents(file_info, request).await;
-    //     }
-    //     let key = self.get_s3_key(file_info);
-    //     let command = Command::GetObject;
-    //     let s3_request = Reqwest::new(&self.bucket, &key, command);
-    //     let s3_response = s3_request.response().await?;
-    // }
-
     async fn get_contents(
         &self,
         file_info: &FileInfo,
@@ -153,7 +142,7 @@ impl DataStorage for S3HybridDataStorage {
             log::debug!("File isn't uploaded. Returning from local storage.");
             return self.local_storage.get_contents(file_info, request).await;
         }
-        let key = self.get_s3_key(file_info);
+        let key = self.get_s3_key(&file_info.id, file_info.created_at);
         let command = Command::GetObject;
         let s3_request = HyperRequest::new(&self.bucket, &key, command).await?;
         let s3_response = s3_request.response_data_to_stream().await?;
@@ -175,7 +164,8 @@ impl DataStorage for S3HybridDataStorage {
     }
 
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
-        self.local_storage.create_file(file_info).await
+        self.local_storage.create_file(file_info).await?;
+        Ok(self.get_s3_key(&file_info.id, file_info.created_at))
     }
 
     async fn concat_files(
@@ -191,7 +181,7 @@ impl DataStorage for S3HybridDataStorage {
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         if Some(file_info.offset) == file_info.length {
             self.bucket
-                .delete_object(self.get_s3_key(file_info))
+                .delete_object(self.get_s3_key(&file_info.id, file_info.created_at))
                 .await?;
         } else {
             self.local_storage.remove_file(file_info).await?;

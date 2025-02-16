@@ -3,6 +3,7 @@ use std::{fs::File, io::Write, path::PathBuf};
 use actix_files::NamedFile;
 use actix_web::{HttpRequest, HttpResponse};
 use bytes::Bytes;
+use chrono::{DateTime, Utc};
 use log::error;
 use std::{
     fs::{remove_file, DirBuilder, OpenOptions},
@@ -13,7 +14,7 @@ use crate::{
     data_storage::base::DataStorage,
     errors::{RustusError, RustusResult},
     file_info::FileInfo,
-    utils::dir_struct::substr_now,
+    utils::dir_struct::substr_time,
 };
 use derive_more::Display;
 
@@ -34,7 +35,11 @@ impl FileDataStorage {
         }
     }
 
-    pub fn data_file_path(&self, file_id: &str) -> RustusResult<PathBuf> {
+    pub fn data_file_path(
+        &self,
+        file_id: &str,
+        created_at: DateTime<Utc>,
+    ) -> RustusResult<PathBuf> {
         let dir = self
             .data_dir
             // We're working wit absolute paths, because tus.io says so.
@@ -43,7 +48,7 @@ impl FileDataStorage {
                 error!("{}", err);
                 RustusError::UnableToWrite(err.to_string())
             })?
-            .join(substr_now(self.dir_struct.as_str()));
+            .join(substr_time(self.dir_struct.as_str(), created_at));
         DirBuilder::new()
             .recursive(true)
             .create(dir.as_path())
@@ -99,7 +104,7 @@ impl DataStorage for FileDataStorage {
         if file_info.path.is_none() {
             return Err(RustusError::FileNotFound);
         }
-        let path = file_info.path.as_ref().unwrap().clone();
+        let path = self.data_file_path(&file_info.id, file_info.created_at)?;
         let force_sync = self.force_fsync;
         tokio::task::spawn_blocking(move || {
             // Opening file in w+a mode.
@@ -110,7 +115,7 @@ impl DataStorage for FileDataStorage {
                 .create(false)
                 .read(false)
                 .truncate(false)
-                .open(path.as_str())
+                .open(path)
                 .map_err(|err| {
                     error!("{:?}", err);
                     RustusError::UnableToWrite(err.to_string())
@@ -130,7 +135,7 @@ impl DataStorage for FileDataStorage {
 
     async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
         // New path to file.
-        let file_path = self.data_file_path(file_info.id.as_str())?;
+        let file_path = self.data_file_path(file_info.id.as_str(), file_info.created_at)?;
         tokio::task::spawn_blocking(move || {
             // Creating new file.
             OpenOptions::new()
@@ -154,7 +159,11 @@ impl DataStorage for FileDataStorage {
         parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
         let force_fsync = self.force_fsync;
-        let path = file_info.path.as_ref().unwrap().clone();
+        let path = self.data_file_path(&file_info.id, file_info.created_at)?;
+        let part_paths = parts_info
+            .iter()
+            .map(|info| self.data_file_path(&info.id, info.created_at))
+            .collect::<Result<Vec<PathBuf>, _>>()?;
         tokio::task::spawn_blocking(move || {
             let file = OpenOptions::new()
                 .append(true)
@@ -165,13 +174,8 @@ impl DataStorage for FileDataStorage {
                     RustusError::UnableToWrite(err.to_string())
                 })?;
             let mut writer = BufWriter::new(file);
-            for part in parts_info {
-                if part.path.is_none() {
-                    return Err(RustusError::FileNotFound);
-                }
-                let part_file = OpenOptions::new()
-                    .read(true)
-                    .open(part.path.as_ref().unwrap())?;
+            for part in part_paths {
+                let part_file = OpenOptions::new().read(true).open(part)?;
                 let mut reader = BufReader::new(part_file);
                 copy(&mut reader, &mut writer)?;
             }
@@ -186,13 +190,13 @@ impl DataStorage for FileDataStorage {
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {
         let info = file_info.clone();
+        let file_path = self.data_file_path(&info.id, info.created_at)?;
         tokio::task::spawn_blocking(move || {
             // Let's remove the file itself.
-            let data_path = PathBuf::from(info.path.as_ref().unwrap().clone());
-            if !data_path.exists() {
+            if !file_path.exists() {
                 return Err(RustusError::FileNotFound);
             }
-            remove_file(data_path).map_err(|err| {
+            remove_file(file_path).map_err(|err| {
                 error!("{:?}", err);
                 RustusError::UnableToRemove(info.id.clone())
             })?;
@@ -315,36 +319,41 @@ mod tests {
         let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
 
         let mut parts = Vec::new();
-        let part1_path = storage.data_dir.as_path().join("part1");
-        let mut part1 = File::create(part1_path.clone()).unwrap();
-        let size1 = part1.write(b"hello ").unwrap();
-
-        parts.push(FileInfo::new(
-            "part_id1",
-            Some(size1),
-            Some(part1_path.display().to_string()),
-            storage.to_string(),
-            None,
-        ));
-
-        let part2_path = storage.data_dir.as_path().join("part2");
-        let mut part2 = File::create(part2_path.clone()).unwrap();
-        let size2 = part2.write(b"world").unwrap();
-        parts.push(FileInfo::new(
-            "part_id2",
-            Some(size2),
-            Some(part2_path.display().to_string()),
-            storage.to_string(),
-            None,
-        ));
-
-        let final_info = FileInfo::new(
-            "final_id",
-            None,
-            Some(storage.data_dir.join("final_info").display().to_string()),
-            storage.to_string(),
-            None,
+        let mut part1 = FileInfo::new("part_id1", None, None, storage.to_string(), None);
+        part1.path = Some(
+            storage
+                .data_file_path(&part1.id, part1.created_at)
+                .unwrap()
+                .display()
+                .to_string(),
         );
+        let mut part1_file = File::create(part1.path.clone().unwrap()).unwrap();
+        part1.length = Some(part1_file.write(b"hello ").unwrap());
+
+        parts.push(part1);
+
+        let mut part2 = FileInfo::new("part_id2", None, None, storage.to_string(), None);
+        part2.path = Some(
+            storage
+                .data_file_path(&part2.id, part2.created_at)
+                .unwrap()
+                .display()
+                .to_string(),
+        );
+        let mut part2_file = File::create(part2.path.clone().unwrap()).unwrap();
+        part2.length = Some(part2_file.write(b"world").unwrap());
+
+        parts.push(part2);
+
+        let mut final_info = FileInfo::new("final_id", None, None, storage.to_string(), None);
+        final_info.path = Some(
+            storage
+                .data_file_path(&final_info.id, final_info.created_at)
+                .unwrap()
+                .display()
+                .to_string(),
+        );
+
         storage.concat_files(&final_info, parts).await.unwrap();
         let mut final_file = File::open(final_info.path.unwrap()).unwrap();
         let mut buffer = String::new();
