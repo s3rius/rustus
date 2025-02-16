@@ -223,6 +223,7 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_DATA_DIR="./data/"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
     export RUSTUS_FORCE_FSYNC="true"
+    export RUSTUS_S3_FORCE_PATH_STYLE="true"
 
     rustus
     ```
