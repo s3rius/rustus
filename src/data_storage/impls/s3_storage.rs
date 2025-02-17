@@ -236,20 +236,20 @@ mod test {
 
     fn get_s3_storage() -> S3DataStorage {
         let endpoint =
-            std::env::var("S3_ENDPOINT").unwrap_or(String::from("http://localhost:9000"));
-        let region = std::env::var("S3_REGION").unwrap_or(String::from("eu-west-1"));
-        let access_key = std::env::var("S3_ACCESS_KEY").ok();
-        let secret_key = std::env::var("S3_SECRET_KEY").ok();
-        let bucket = std::env::var("S3_BUCKET").unwrap_or(String::from("rustus"));
-        let path_style = env::var("S3_FORCE_PATH_STYLE")
+            std::env::var("TEST_S3_ENDPOINT").unwrap_or(String::from("http://localhost:9000"));
+        let region = std::env::var("TEST_S3_REGION").unwrap_or(String::from("eu-west-1"));
+        let access_key = std::env::var("TEST_S3_ACCESS_KEY").unwrap_or(String::from("rustus-test"));
+        let secret_key = std::env::var("TEST_S3_SECRET_KEY").unwrap_or(String::from("rustus-test"));
+        let bucket = std::env::var("TEST_S3_BUCKET").unwrap_or(String::from("rustus"));
+        let path_style = env::var("TEST_S3_FORCE_PATH_STYLE")
             .unwrap_or(String::from("true"))
             .parse()
             .unwrap();
         S3DataStorage::new(
             endpoint,
             region,
-            access_key.as_ref(),
-            secret_key.as_ref(),
+            Some(&access_key),
+            Some(&secret_key),
             None,
             None,
             None,
