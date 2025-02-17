@@ -278,7 +278,9 @@ mod tests {
             None,
         );
         let test_data = "MyTestData";
-        let result = storage.add_bytes(&mut file_info, Bytes::from(test_data)).await;
+        let result = storage
+            .add_bytes(&mut file_info, Bytes::from(test_data))
+            .await;
         assert!(result.is_err());
     }
 

@@ -42,4 +42,4 @@ services:
       MINIO_DEFAULT_BUCKETS: "rustus"
       MINIO_ROOT_USER: "rustus-test"
       MINIO_ROOT_PASSWORD: "rustus-test"
-      
+
