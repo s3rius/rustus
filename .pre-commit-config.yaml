@@ -24,6 +24,9 @@ repos:
         entry: cargo
         args:
           - clippy
+          - --
+          - -D
+          - warnings
 
       - id: check
         types:

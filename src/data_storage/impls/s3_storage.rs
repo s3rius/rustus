@@ -52,6 +52,7 @@ impl From<Part> for S3MPUPart {
 }
 
 impl S3DataStorage {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         endpoint: String,
         region: String,
@@ -110,7 +111,7 @@ impl S3DataStorage {
     fn get_s3_key(&self, id: &str, created_at: DateTime<Utc>) -> String {
         let base_path = substr_time(self.dir_struct.as_str(), created_at);
         let trimmed_path = base_path.trim_end_matches('/');
-        format!("{trimmed_path}/{}", id)
+        format!("{trimmed_path}/{id}")
     }
 }
 
@@ -147,13 +148,13 @@ impl DataStorage for S3DataStorage {
         let part_num: u32 = file_info
             .metadata
             .entry(PART_NUMBER_KEY.to_string())
-            .or_insert(String::from("1"))
+            .or_insert_with(|| String::from("1"))
             .parse()?;
         let mut parts: Vec<S3MPUPart> = serde_json::from_str(
             file_info
                 .metadata
                 .entry(PARTS_KEY.to_string())
-                .or_insert(String::from("[]")),
+                .or_insert_with(|| String::from("[]")),
         )?;
         let upload_id = file_info
             .metadata
@@ -166,14 +167,14 @@ impl DataStorage for S3DataStorage {
         );
         let resp = self
             .bucket
-            .put_multipart_chunk(bytes.to_vec(), &s3_path, part_num, &upload_id, "")
+            .put_multipart_chunk(bytes.to_vec(), &s3_path, part_num, upload_id, "")
             .await?;
         parts.push(resp.into());
         if Some(file_info.offset + bytes.len()) == file_info.length {
             self.bucket
                 .complete_multipart_upload(
                     &s3_path,
-                    &upload_id,
+                    upload_id,
                     parts.iter().cloned().map(Part::from).collect(),
                 )
                 .await?;
@@ -268,7 +269,7 @@ mod test {
             &uuid::Uuid::new_v4().to_string(),
             Some(data.len()),
             None,
-            "s3".to_string(),
+            storage.get_name().to_string(),
             None,
         );
         let s3_path = storage.create_file(&mut file_info).await.unwrap();
@@ -296,7 +297,7 @@ mod test {
             &uuid::Uuid::new_v4().to_string(),
             Some(data.len()),
             None,
-            "s3".to_string(),
+            storage.get_name().to_string(),
             None,
         );
         let s3_path = storage.create_file(&mut file_info).await.unwrap();
@@ -306,5 +307,32 @@ mod test {
             .unwrap();
         let object = storage.bucket.get_object(s3_path).await.unwrap();
         assert_eq!(object.bytes(), data);
+    }
+
+    #[actix_rt::test]
+    async fn test_successfull_delete() {
+        let storage = get_s3_storage();
+        let data = "Hello World".as_bytes();
+        let mut file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(data.len()),
+            None,
+            storage.get_name().to_string(),
+            None,
+        );
+        let s3_path = storage.create_file(&mut file_info).await.unwrap();
+        storage
+            .add_bytes(&mut file_info, data.into())
+            .await
+            .unwrap();
+        file_info.offset += data.len();
+        let object = storage.bucket.get_object(s3_path.clone()).await.unwrap();
+        assert_eq!(object.bytes(), data);
+        storage.remove_file(&file_info).await.unwrap();
+        let resp = storage.bucket.get_object(s3_path).await.unwrap_err();
+        match resp {
+            S3Error::HttpFailWithBody(404, _) => {}
+            _ => panic!("Unexpected error: {resp}"),
+        }
     }
 }

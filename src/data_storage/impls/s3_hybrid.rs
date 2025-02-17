@@ -121,7 +121,7 @@ impl S3HybridDataStorage {
     fn get_s3_key(&self, id: &str, created_at: DateTime<Utc>) -> String {
         let base_path = substr_time(self.dir_struct.as_str(), created_at);
         let trimmed_path = base_path.trim_end_matches('/');
-        format!("{trimmed_path}/{}", id)
+        format!("{trimmed_path}/{id}")
     }
 }
 
@@ -157,8 +157,8 @@ impl DataStorage for S3HybridDataStorage {
         self.local_storage.add_bytes(file_info, bytes).await?;
         // If upload is complete. Upload the resulting file onto S3.
         if Some(file_info.offset + part_len) == file_info.length {
-            self.upload_file(&file_info).await?;
-            self.local_storage.remove_file(&file_info).await?;
+            self.upload_file(file_info).await?;
+            self.local_storage.remove_file(file_info).await?;
         }
         Ok(())
     }
