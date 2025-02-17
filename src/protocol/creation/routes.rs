@@ -158,7 +158,7 @@ pub async fn create_file(
     }
 
     // Create file and get the it's path.
-    file_info.path = Some(state.data_storage.create_file(&file_info).await?);
+    file_info.path = Some(state.data_storage.create_file(&mut file_info).await?);
 
     // Incrementing number of active uploads
 
@@ -213,7 +213,7 @@ pub async fn create_file(
             // Writing first bytes.
             let chunk_len = bytes.len();
             // Appending bytes to file.
-            state.data_storage.add_bytes(&file_info, bytes).await?;
+            state.data_storage.add_bytes(&mut file_info, bytes).await?;
             // Updating offset.
             file_info.offset += chunk_len;
         }

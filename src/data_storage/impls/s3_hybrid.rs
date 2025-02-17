@@ -152,18 +152,18 @@ impl DataStorage for S3HybridDataStorage {
             .streaming(s3_response.bytes))
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &mut FileInfo, bytes: Bytes) -> RustusResult<()> {
         let part_len = bytes.len();
         self.local_storage.add_bytes(file_info, bytes).await?;
         // If upload is complete. Upload the resulting file onto S3.
         if Some(file_info.offset + part_len) == file_info.length {
-            self.upload_file(file_info).await?;
-            self.local_storage.remove_file(file_info).await?;
+            self.upload_file(&file_info).await?;
+            self.local_storage.remove_file(&file_info).await?;
         }
         Ok(())
     }
 
-    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
+    async fn create_file(&self, file_info: &mut FileInfo) -> RustusResult<String> {
         self.local_storage.create_file(file_info).await?;
         Ok(self.get_s3_key(&file_info.id, file_info.created_at))
     }

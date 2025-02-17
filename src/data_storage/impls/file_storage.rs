@@ -98,7 +98,7 @@ impl DataStorage for FileDataStorage {
         }
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &mut FileInfo, mut bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if file_info.path.is_none() {
@@ -133,7 +133,7 @@ impl DataStorage for FileDataStorage {
         .await?
     }
 
-    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
+    async fn create_file(&self, file_info: &mut FileInfo) -> RustusResult<String> {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str(), file_info.created_at)?;
         tokio::task::spawn_blocking(move || {
@@ -233,7 +233,7 @@ mod tests {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
-        let new_path = storage.create_file(&file_info).await.unwrap();
+        let new_path = storage.create_file(file_info).await.unwrap();
         assert!(PathBuf::from(new_path).exists());
     }
 
