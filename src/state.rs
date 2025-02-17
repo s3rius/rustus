@@ -82,7 +82,7 @@ impl State {
             self.data_storage.get_name().to_string(),
             None,
         );
-        new_file.path = Some(self.data_storage.create_file(&new_file).await.unwrap());
+        new_file.path = Some(self.data_storage.create_file(&mut new_file).await.unwrap());
         self.info_storage.set_info(&new_file, true).await.unwrap();
         new_file
     }

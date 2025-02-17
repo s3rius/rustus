@@ -223,3 +223,88 @@ impl DataStorage for S3DataStorage {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::env;
+
+    use s3::error::S3Error;
+
+    use crate::data_storage::base::DataStorage;
+
+    use super::S3DataStorage;
+
+    fn get_s3_storage() -> S3DataStorage {
+        let endpoint =
+            std::env::var("S3_ENDPOINT").unwrap_or(String::from("http://localhost:9000"));
+        let region = std::env::var("S3_REGION").unwrap_or(String::from("eu-west-1"));
+        let access_key = std::env::var("S3_ACCESS_KEY").ok();
+        let secret_key = std::env::var("S3_SECRET_KEY").ok();
+        let bucket = std::env::var("S3_BUCKET").unwrap_or(String::from("rustus"));
+        let path_style = env::var("S3_FORCE_PATH_STYLE")
+            .unwrap_or(String::from("true"))
+            .parse()
+            .unwrap();
+        S3DataStorage::new(
+            endpoint,
+            region,
+            access_key.as_ref(),
+            secret_key.as_ref(),
+            None,
+            None,
+            None,
+            None,
+            &bucket,
+            path_style,
+            "".to_string(),
+        )
+    }
+
+    #[actix_rt::test]
+    async fn test_successfull_create_upload() {
+        let storage = get_s3_storage();
+        let data = "Hello World".as_bytes();
+        let mut file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(data.len()),
+            None,
+            "s3".to_string(),
+            None,
+        );
+        let s3_path = storage.create_file(&mut file_info).await.unwrap();
+        let resp = storage.bucket.get_object(s3_path).await.unwrap_err();
+        match resp {
+            S3Error::HttpFailWithBody(404, _) => {}
+            _ => panic!("Unexpected error: {resp}"),
+        }
+        let ups = storage
+            .bucket
+            .list_multiparts_uploads(
+                Some(&storage.get_s3_key(&file_info.id, file_info.created_at)),
+                None,
+            )
+            .await
+            .unwrap();
+        assert_eq!(ups.len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_successfull_upload() {
+        let storage = get_s3_storage();
+        let data = "Hello World".as_bytes();
+        let mut file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(data.len()),
+            None,
+            "s3".to_string(),
+            None,
+        );
+        let s3_path = storage.create_file(&mut file_info).await.unwrap();
+        storage
+            .add_bytes(&mut file_info, data.into())
+            .await
+            .unwrap();
+        let object = storage.bucket.get_object(s3_path).await.unwrap();
+        assert_eq!(object.bytes(), data);
+    }
+}
