@@ -98,7 +98,7 @@ impl DataStorage for FileDataStorage {
         }
     }
 
-    async fn add_bytes(&self, file_info: &FileInfo, mut bytes: Bytes) -> RustusResult<()> {
+    async fn add_bytes(&self, file_info: &mut FileInfo, mut bytes: Bytes) -> RustusResult<()> {
         // In normal situation this `if` statement is not
         // gonna be called, but what if it is ...
         if file_info.path.is_none() {
@@ -133,7 +133,7 @@ impl DataStorage for FileDataStorage {
         .await?
     }
 
-    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String> {
+    async fn create_file(&self, file_info: &mut FileInfo) -> RustusResult<String> {
         // New path to file.
         let file_path = self.data_file_path(file_info.id.as_str(), file_info.created_at)?;
         tokio::task::spawn_blocking(move || {
@@ -232,8 +232,8 @@ mod tests {
     async fn create_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
-        let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
-        let new_path = storage.create_file(&file_info).await.unwrap();
+        let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        let new_path = storage.create_file(&mut file_info).await.unwrap();
         assert!(PathBuf::from(new_path).exists());
     }
 
@@ -242,9 +242,9 @@ mod tests {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let base_path = dir.into_path().clone();
         let storage = FileDataStorage::new(base_path.clone(), String::new(), false);
-        let file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
+        let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
         File::create(base_path.join("test_id")).unwrap();
-        let result = storage.create_file(&file_info).await;
+        let result = storage.create_file(&mut file_info).await;
         assert!(result.is_err());
     }
 
@@ -253,11 +253,11 @@ mod tests {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
         let mut file_info = FileInfo::new("test_id", Some(5), None, storage.to_string(), None);
-        let new_path = storage.create_file(&file_info).await.unwrap();
+        let new_path = storage.create_file(&mut file_info).await.unwrap();
         let test_data = "MyTestData";
         file_info.path = Some(new_path.clone());
         storage
-            .add_bytes(&file_info, Bytes::from(test_data))
+            .add_bytes(&mut file_info, Bytes::from(test_data))
             .await
             .unwrap();
         let mut file = File::open(new_path).unwrap();
@@ -270,7 +270,7 @@ mod tests {
     async fn adding_bytes_to_unknown_file() {
         let dir = tempdir::TempDir::new("file_storage").unwrap();
         let storage = FileDataStorage::new(dir.into_path(), String::new(), false);
-        let file_info = FileInfo::new(
+        let mut file_info = FileInfo::new(
             "test_id",
             Some(5),
             Some(String::from("some_file")),
@@ -278,7 +278,9 @@ mod tests {
             None,
         );
         let test_data = "MyTestData";
-        let result = storage.add_bytes(&file_info, Bytes::from(test_data)).await;
+        let result = storage
+            .add_bytes(&mut file_info, Bytes::from(test_data))
+            .await;
         assert!(result.is_err());
     }
 

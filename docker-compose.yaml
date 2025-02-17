@@ -25,3 +25,21 @@ services:
       interval: 3s
       timeout: 3s
       retries: 50
+  minio:
+    image: "bitnami/minio:2025.2.7"
+    ports:
+      - 9000:9000
+      - 9001:9001
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - http://localhost:9000/minio/health/live
+      interval: 3s
+      timeout: 1s
+      retries: 30
+    environment:
+      MINIO_DEFAULT_BUCKETS: "rustus"
+      MINIO_ROOT_USER: "rustus-test"
+      MINIO_ROOT_PASSWORD: "rustus-test"
+

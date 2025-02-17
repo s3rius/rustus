@@ -67,6 +67,10 @@ pub enum RustusError {
     HTTPHookError(u16, String, Option<String>),
     #[error("Found S3 error: {0}")]
     S3Error(#[from] s3::error::S3Error),
+    #[error("Missing S3 upload id in metadata")]
+    S3UploadIdMissing,
+    #[error("Can't parse integer: {0}")]
+    ParseIntError(#[from] std::num::ParseIntError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

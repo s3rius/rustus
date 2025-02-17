@@ -47,7 +47,7 @@ pub trait DataStorage {
     /// # Params
     /// `file_info` - info about current file.
     /// `bytes` - bytes to append to the file.
-    async fn add_bytes(&self, file_info: &FileInfo, bytes: Bytes) -> RustusResult<()>;
+    async fn add_bytes(&self, file_info: &mut FileInfo, bytes: Bytes) -> RustusResult<()>;
 
     /// Create file in storage.
     ///
@@ -57,7 +57,7 @@ pub trait DataStorage {
     ///
     /// # Params
     /// `file_info` - info about current file.
-    async fn create_file(&self, file_info: &FileInfo) -> RustusResult<String>;
+    async fn create_file(&self, file_info: &mut FileInfo) -> RustusResult<String>;
 
     /// Concatenate files.
     ///

@@ -37,10 +37,10 @@ mod test {
     async fn success() {
         let state = State::test_new().await;
         let rustus = get_service(state.clone()).await;
-        let file_info = state.create_test_file().await;
+        let mut file_info = state.create_test_file().await;
         state
             .data_storage
-            .add_bytes(&file_info, Bytes::from("testing"))
+            .add_bytes(&mut file_info, Bytes::from("testing"))
             .await
             .unwrap();
         let request = TestRequest::get()
