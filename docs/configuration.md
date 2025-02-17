@@ -6,7 +6,7 @@ description: "How to configure Rusts"
 Rustus is highly configurable. You can adjust it with CLI or you can use environment variables.
 
 !!! info
-    Information about hooks you can find on [Hooks page](../hooks).
+    Information about hooks you can find on [Hooks page](hooks.md).
 
 
 ## Configuring server
@@ -95,8 +95,9 @@ your local file system.
 
 Availabe storages:
 
-* `file-storage`
-* `hybrid-s3`
+* [file-storage](#file-storage)
+* [hybrid-s3](#hybrid-s3-storage)
+* [s3](#s3-storage)
 
 ### File storage
 
@@ -228,6 +229,79 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     rustus
     ```
 
+### S3 Storage
+
+This storage uploads files directly to S3 without creating temporary files on filesystem.
+This might be a better solution for you if you use S3 as underlying object storage,
+but it has a disadvantage.
+
+!!! warning "Be aware"
+
+    This storage can only upload chunks that are greater than `5MB` each,
+    except for the last one. Therefore, for all your TUS client libraries,
+    you should set the chunk size to at least `5,000,000` bytes
+
+If you want to allow users to upload smaller chunks, consider using [hybrid-s3](#hybrid-s3-storage).
+
+
+Parameters:
+
+* `--s3-url` -  s3 endpoint URL;
+* `--s3-bucket` - name of a bucket to use;
+* `--s3-region` - AWS region to use;
+* `--s3-access-key` - S3 access key;
+* `--s3-access-key-path` - S3 access key path;
+* `--s3-secret-key` - S3 secret key;
+* `--s3-secret-key-path` - S3 secret key path;
+* `--s3-security-token` - s3 secrity token;
+* `--s3-session-token` - S3 session token;
+* `--s3-profile` - Name of the section from `~/.aws/credentials` file;
+* `--s3-headers` - JSON object with additional header to every S3 request (Useful for setting ACLs);
+* `--s3-force-path-style` - use path style URL. It appends bucket name at the end of the URL;
+* `--dir-structure` - pattern of a directory structure on s3;
+
+Required parameter are only `--s3-url` and `--s3-bucket`.
+
+=== "CLI"
+
+    ``` bash
+    rustus --storage "s3" \
+        --s3-url "https://localhost:9000" \
+        --s3-bucket "bucket" \
+        --s3-region "eu-central1" \
+        --s3-access-key "fJljHcXo07rqIOzh" \
+        --s3-access-key-path "/run/agenix/S3_ACCESS_KEY" \
+        --s3-secret-key "6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB" \
+        --s3-secret-key-path "/run/agenix/S3_SECRET_KEY" \
+        --s3-profile "my_profile" \
+        --s3-security-token "token" \
+        --s3-session-token "token" \
+        --s3-force-path-style \
+        --s3-headers '{"x-amz-acl": "public-read"}' \
+        --dir-structure "{year}/{month}/{day}"
+    ```
+
+=== "ENV"
+
+    ``` bash
+    export RUSTUS_STORAGE="s3"
+    export RUSTUS_S3_URL="https://localhost:9000"
+    export RUSTUS_S3_BUCKET="bucket"
+    export RUSTUS_S3_REGION="eu-central1"
+    export RUSTUS_S3_ACCESS_KEY="fJljHcXo07rqIOzh"
+    export RUSTUS_S3_ACCESS_KEY_PATH="/run/agenix/S3_ACCESS_KEY"
+    export RUSTUS_S3_SECRET_KEY="6BJfBUL18nLiGmF5zKW0NKrdxQVxNYWB"
+    export RUSTUS_S3_SECRET_KEY_PATH="/run/agenix/S3_SECCRET_KEY"
+    export RUSTUS_S3_SECURITY_TOKEN="token"
+    export RUSTUS_S3_SESSION_TOKEN="token"
+    export RUSTUS_S3_PROFILE="my_profile"
+    export RUSTUS_S3_HEADERS='{"x-amz-acl": "public-read"}'
+    export RUSTUS_S3_FORCE_PATH_STYLE="true"
+    export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
+
+    rustus
+    ```
+
 ## Configuring info storage
 
 Info storages are used to store information
@@ -238,9 +312,8 @@ about it requested from storage to get actual path of an upload.
 
 Available info storages:
 
-* `file-info-storage` - stores information in files on disk;
-* `redis-info-storage` - information is stored in Redis;
-* `db-info-storage` - information is stored in database;
+* [file-info-storage](#file-info-storage) - stores information in files on disk;
+* [redis-info-storage](#redis-info-storage) - information is stored in Redis;
 
 ### File info storage
 
@@ -279,6 +352,7 @@ Redis db is a good way to store information.
     Since rustus need to have latest information and it writes a lot.
 
 Configuration parameters:
+
 * `--info-db-dsn` - connection string for your Redis database.
     It's required if `redis-info-storage` is chosen.
 * `--redis-info-expiration` - number of seconds when key will expire.
