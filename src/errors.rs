@@ -71,6 +71,8 @@ pub enum RustusError {
     S3UploadIdMissing,
     #[error("Can't parse integer: {0}")]
     ParseIntError(#[from] std::num::ParseIntError),
+    #[error("Can't convert int: {0}")]
+    TryFromIntError(#[from] std::num::TryFromIntError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

@@ -165,9 +165,9 @@ impl DataStorage for S3DataStorage {
             .put_multipart_chunk(
                 bytes.to_vec(),
                 &s3_path,
-                (parts.len() + 1) as u32,
+                u32::try_from(parts.len() + 1)?,
                 upload_id,
-                &content_type.to_string(),
+                content_type.as_ref(),
             )
             .await?;
         parts.push(resp.into());
@@ -192,10 +192,9 @@ impl DataStorage for S3DataStorage {
     async fn create_file(&self, file_info: &mut FileInfo) -> crate::errors::RustusResult<String> {
         let s3_path = self.get_s3_key(&file_info.id, file_info.created_at);
         let mime_type = mime_guess::from_path(file_info.get_filename()).first_or_octet_stream();
-        println!("MIME TYPE: {}", mime_type.to_string());
         let resp = self
             .bucket
-            .initiate_multipart_upload(&s3_path, &mime_type.to_string())
+            .initiate_multipart_upload(&s3_path, mime_type.as_ref())
             .await?;
         log::debug!("Created multipart upload with id: {}", resp.upload_id);
         file_info
