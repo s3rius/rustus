@@ -18,7 +18,6 @@ use crate::{
 };
 
 const UPLOAD_ID_KEY: &str = "_s3_upload_id";
-const PART_NUMBER_KEY: &str = "_s3_chunk_number";
 const PARTS_KEY: &str = "_s3_parts";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -145,11 +144,6 @@ impl DataStorage for S3DataStorage {
         bytes: bytes::Bytes,
     ) -> crate::errors::RustusResult<()> {
         let s3_path = self.get_s3_key(&file_info.id, file_info.created_at);
-        let part_num: u32 = file_info
-            .metadata
-            .entry(PART_NUMBER_KEY.to_string())
-            .or_insert_with(|| String::from("1"))
-            .parse()?;
         let mut parts: Vec<S3MPUPart> = serde_json::from_str(
             file_info
                 .metadata
@@ -162,12 +156,19 @@ impl DataStorage for S3DataStorage {
             .ok_or(RustusError::S3UploadIdMissing)?;
         log::debug!(
             "UPLOADING PART: {part_num} for {file_id}",
-            part_num = part_num,
+            part_num = parts.len() + 1,
             file_id = file_info.id
         );
+        let content_type = mime_guess::from_path(file_info.get_filename()).first_or_octet_stream();
         let resp = self
             .bucket
-            .put_multipart_chunk(bytes.to_vec(), &s3_path, part_num, upload_id, "")
+            .put_multipart_chunk(
+                bytes.to_vec(),
+                &s3_path,
+                u32::try_from(parts.len() + 1)?,
+                upload_id,
+                content_type.as_ref(),
+            )
             .await?;
         parts.push(resp.into());
         if Some(file_info.offset + bytes.len()) == file_info.length {
@@ -179,13 +180,9 @@ impl DataStorage for S3DataStorage {
                 )
                 .await?;
             file_info.metadata.remove(PARTS_KEY);
-            file_info.metadata.remove(PART_NUMBER_KEY);
             file_info.metadata.remove(UPLOAD_ID_KEY);
             return Ok(());
         }
-        file_info
-            .metadata
-            .insert(PART_NUMBER_KEY.to_string(), (part_num + 1).to_string());
         file_info
             .metadata
             .insert(PARTS_KEY.to_string(), serde_json::to_string(&parts)?);
@@ -194,7 +191,11 @@ impl DataStorage for S3DataStorage {
 
     async fn create_file(&self, file_info: &mut FileInfo) -> crate::errors::RustusResult<String> {
         let s3_path = self.get_s3_key(&file_info.id, file_info.created_at);
-        let resp = self.bucket.initiate_multipart_upload(&s3_path, "").await?;
+        let mime_type = mime_guess::from_path(file_info.get_filename()).first_or_octet_stream();
+        let resp = self
+            .bucket
+            .initiate_multipart_upload(&s3_path, mime_type.as_ref())
+            .await?;
         log::debug!("Created multipart upload with id: {}", resp.upload_id);
         file_info
             .metadata
@@ -334,5 +335,32 @@ mod test {
             S3Error::HttpFailWithBody(404, _) => {}
             _ => panic!("Unexpected error: {resp}"),
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_successfull_mime() {
+        let storage = get_s3_storage();
+        let data = "Helloworld of videos!".as_bytes();
+        let mut file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(data.len()),
+            None,
+            storage.get_name().to_string(),
+            None,
+        );
+        file_info
+            .metadata
+            .insert(String::from("filename"), String::from("meme.mp4"));
+        let s3_path = storage.create_file(&mut file_info).await.unwrap();
+        storage
+            .add_bytes(&mut file_info, data.into())
+            .await
+            .unwrap();
+        let object = storage.bucket.get_object(s3_path).await.unwrap();
+        assert_eq!(object.bytes(), data);
+        assert_eq!(
+            object.headers().get("content-type"),
+            Some(&String::from("video/mp4"))
+        )
     }
 }
