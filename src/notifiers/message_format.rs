@@ -4,7 +4,9 @@ use derive_more::{Display, From};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::str::FromStr;
 use strum::EnumIter;
+use strum::IntoEnumIterator;
 
 #[derive(Clone, Debug, Eq, Display, From, PartialEq, EnumIter)]
 pub enum Format {

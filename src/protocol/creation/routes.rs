@@ -151,9 +151,10 @@ pub async fn create_file(
             state.config.notification_opts.behind_proxy,
         );
         let headers = request.headers();
+        let cloned_info = file_info.clone();
         state
             .notification_manager
-            .send_message(message, Hook::PreCreate, headers)
+            .send_message(message, Hook::PreCreate, &cloned_info, headers)
             .await?;
     }
 
@@ -239,10 +240,11 @@ pub async fn create_file(
         let headers = request.headers().clone();
         // Adding send_message task to tokio reactor.
         // Thin function would be executed in background.
+        let cloned_info = file_info.clone();
         tokio::task::spawn_local(async move {
             state
                 .notification_manager
-                .send_message(message, post_hook, &headers)
+                .send_message(message, post_hook, &cloned_info, &headers)
                 .await
         });
     }

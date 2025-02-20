@@ -1,4 +1,4 @@
-use crate::{errors::RustusResult, RustusConf};
+use crate::{errors::RustusResult, file_info::FileInfo, RustusConf};
 use actix_web::http::header::HeaderMap;
 use log::debug;
 
@@ -7,7 +7,7 @@ use super::{
     hooks::Hook,
     impls::{
         amqp_notifier::AMQPNotifier, dir_notifier::DirNotifier, file_notifier::FileNotifier,
-        http_notifier::HttpNotifier,
+        http_notifier::HttpNotifier, kafka_notifier::KafkaNotifier,
     },
 };
 
@@ -22,6 +22,7 @@ pub enum NotifierImpl {
     Dir(DirNotifier),
     Http(HttpNotifier),
     Amqp(AMQPNotifier),
+    Kafka(KafkaNotifier),
 }
 
 impl NotificationManager {
@@ -59,6 +60,27 @@ impl NotificationManager {
                 rustus_config.notification_opts.amqp_hook_opts.clone(),
             )));
         }
+        if !rustus_config
+            .notification_opts
+            .kafka_hook_opts
+            .urls
+            .is_empty()
+        {
+            let opts = rustus_config.notification_opts.kafka_hook_opts.clone();
+            manager
+                .notifiers
+                .push(NotifierImpl::Kafka(KafkaNotifier::new(
+                    opts.urls,
+                    opts.client_id,
+                    opts.topic,
+                    opts.prefix,
+                    opts.required_acks,
+                    opts.compression,
+                    opts.idle_timeout,
+                    opts.send_timeout,
+                    opts.extra_kafka_opts,
+                )?))
+        }
         for notifier in &mut manager.notifiers.iter_mut() {
             notifier.prepare().await?;
         }
@@ -70,12 +92,13 @@ impl NotificationManager {
         &self,
         message: String,
         hook: Hook,
+        file_info: &FileInfo,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
         log::debug!("Sending a `{}` hook with body `{}`", hook, message);
         for notifier in &self.notifiers {
             notifier
-                .send_message(message.clone(), hook, header_map)
+                .send_message(message.clone(), hook, file_info, header_map)
                 .await?;
         }
         Ok(())
@@ -89,6 +112,7 @@ impl Notifier for NotifierImpl {
             Self::Dir(dir_notifier) => dir_notifier.prepare().await,
             Self::Http(http_notifier) => http_notifier.prepare().await,
             Self::Amqp(amqp_notifier) => amqp_notifier.prepare().await,
+            Self::Kafka(kafka_notifier) => kafka_notifier.prepare().await,
         }
     }
 
@@ -96,18 +120,34 @@ impl Notifier for NotifierImpl {
         &self,
         message: String,
         hook: Hook,
+        file_info: &FileInfo,
         headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         match self {
             Self::File(file_notifier) => {
-                file_notifier.send_message(message, hook, headers_map).await
+                file_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
             }
-            Self::Dir(dir_notifier) => dir_notifier.send_message(message, hook, headers_map).await,
+            Self::Dir(dir_notifier) => {
+                dir_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
+            }
             Self::Http(http_notifier) => {
-                http_notifier.send_message(message, hook, headers_map).await
+                http_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
             }
             Self::Amqp(amqp_notifier) => {
-                amqp_notifier.send_message(message, hook, headers_map).await
+                amqp_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
+            }
+            Self::Kafka(kafka_notifier) => {
+                kafka_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
             }
         }
     }

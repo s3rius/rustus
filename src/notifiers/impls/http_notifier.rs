@@ -1,5 +1,6 @@
 use crate::{
     errors::{RustusError, RustusResult},
+    file_info::FileInfo,
     notifiers::{base::Notifier, hooks::Hook},
 };
 
@@ -37,6 +38,7 @@ impl Notifier for HttpNotifier {
         &self,
         message: String,
         hook: Hook,
+        _file_info: &FileInfo,
         header_map: &HeaderMap,
     ) -> RustusResult<()> {
         debug!("Starting HTTP Hook.");
@@ -81,7 +83,10 @@ impl Notifier for HttpNotifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::notifiers::{base::Notifier, hooks::Hook};
+    use crate::{
+        file_info::FileInfo,
+        notifiers::{base::Notifier, hooks::Hook},
+    };
 
     use super::HttpNotifier;
     use actix_web::http::header::{HeaderMap, HeaderName, HeaderValue};
@@ -101,7 +106,12 @@ mod tests {
 
         let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         notifier
-            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "test_message".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await
             .unwrap();
     }
@@ -122,7 +132,12 @@ mod tests {
 
         let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         let result = notifier
-            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "test_message".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(result.is_err());
     }
@@ -140,7 +155,12 @@ mod tests {
 
         let notifier = HttpNotifier::new(vec![hook_url], vec![], None);
         let result = notifier
-            .send_message("test_message".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "test_message".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(result.is_err());
     }
@@ -163,7 +183,12 @@ mod tests {
             HeaderValue::from_str("meme-value").unwrap(),
         );
         notifier
-            .send_message("test_message".into(), Hook::PostCreate, &header_map)
+            .send_message(
+                "test_message".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &header_map,
+            )
             .await
             .unwrap();
     }

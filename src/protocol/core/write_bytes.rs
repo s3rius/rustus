@@ -130,10 +130,11 @@ pub async fn write_bytes(
             state.config.notification_opts.behind_proxy,
         );
         let headers = request.headers().clone();
+        let cloned_info = file_info.clone();
         tokio::task::spawn_local(async move {
             state
                 .notification_manager
-                .send_message(message, hook, &headers)
+                .send_message(message, hook, &cloned_info, &headers)
                 .await
         });
     }

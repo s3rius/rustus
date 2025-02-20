@@ -5,7 +5,7 @@ use clap::Parser;
 use crate::{
     data_storage::AvailableDataStorages,
     info_storage::AvailableInfoStorages,
-    notifiers::{Format, Hook},
+    notifiers::{impls::kafka_notifier::ExtraKafkaOptions, Format, Hook},
     protocol::extensions::Extensions,
 };
 
@@ -285,6 +285,91 @@ pub struct AMQPHooksOptions {
 }
 
 #[derive(Parser, Debug, Clone)]
+pub struct KafkaHookOptions {
+    /// Kafka urls.
+    /// List of brokers to connect to in the format `host:port`.
+    /// If you have multiple brokers, separate them with commas.
+    /// Corresponds to `bootstrap.servers` in Kafka configuration.
+    #[arg(
+        name = "hooks-kafka-urls",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_URLS",
+        use_value_delimiter = true
+    )]
+    pub urls: String,
+    /// Kafka producer client.id.
+    #[arg(
+        name = "hooks-kafka-client-id",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_CLIENT_ID"
+    )]
+    pub client_id: Option<String>,
+    /// Kafka topic. If specified, all events will be sent to this topic.
+    #[arg(name = "hooks-kafka-topic", long, env = "RUSTUS_HOOKS_KAFKA_TOPIC")]
+    pub topic: Option<String>,
+    /// Kafka topic prefix. In case if specifeid, prefix will be added to all topics
+    /// and all events will be sent to different topics.
+    #[arg(name = "hooks-kafka-prefix", long, env = "RUSTUS_HOOKS_KAFKA_PREFIX")]
+    pub prefix: Option<String>,
+    /// Kafka required acks.
+    /// This parameter is used to configure how many replicas
+    /// must acknowledge the message.
+    ///
+    /// Corresponds to `request.required.acks` in Kafka configuration.
+    /// Possible values are:
+    /// * -1 - all replicas must acknowledge the message;
+    /// * 0 - no replicas must acknowledge the message;
+    /// * ...1000 - number of replicas that must acknowledge the message.
+    #[arg(
+        name = "hooks-kafka-required-acks",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_REQUIRED_ACKS"
+    )]
+    pub required_acks: Option<String>,
+
+    /// Compression codec.
+    /// This parameter is used to compress messages before sending them to Kafka.
+    /// Possible values are:
+    /// * none - no compression;
+    /// * gzip - gzip compression;
+    /// * snappy - snappy compression.
+    /// * lz4 - lz4 compression.
+    /// * zstd - zstd compression.
+    /// Corresponds to `compression.codec` in Kafka configuration.
+    #[arg(
+        name = "hooks-kafka-compression",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_COMPRESSION"
+    )]
+    pub compression: Option<String>,
+
+    /// Kafka idle timeout in seconds.
+    /// After this amount of time in seconds, the connection will be dropped.
+    /// Corresponds to `connections.max.idle.ms` in Kafka configuration.
+    #[arg(
+        name = "hooks-kafka-idle-timeout",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_IDLE_TIMEOUT"
+    )]
+    pub idle_timeout: Option<u64>,
+
+    /// Kafka send timeout in seconds.
+    /// After this amount of time in seconds, the message will be dropped.
+    #[arg(
+        name = "hooks-kafka-send-timeout",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_SEND_TIMEOUT"
+    )]
+    pub send_timeout: Option<u64>,
+
+    /// Extra options for Kafka.
+    /// This parameter is used to pass additional options to Kafka.
+    /// All options must be in the format `key=value`, separated by semicolon.
+    /// Example: `key1=value1;key2=value2`.
+    pub extra_kafka_opts: Option<ExtraKafkaOptions>,
+}
+
+#[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct NotificationsOptions {
     /// Notifications format.
@@ -336,6 +421,9 @@ pub struct NotificationsOptions {
 
     #[command(flatten)]
     pub amqp_hook_opts: AMQPHooksOptions,
+
+    #[command(flatten)]
+    pub kafka_hook_opts: KafkaHookOptions,
 }
 
 #[derive(Debug, Parser, Clone)]

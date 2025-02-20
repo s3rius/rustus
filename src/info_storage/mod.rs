@@ -2,6 +2,8 @@ pub mod base;
 pub mod impls;
 
 use derive_more::{Display, From};
+use std::str::FromStr;
+use strum::IntoEnumIterator;
 
 use crate::{errors::RustusResult, from_str, RustusConf};
 

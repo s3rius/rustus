@@ -1,5 +1,6 @@
 use crate::{
     errors::RustusError,
+    file_info::FileInfo,
     notifiers::{base::Notifier, hooks::Hook},
     RustusResult,
 };
@@ -27,6 +28,7 @@ impl Notifier for FileNotifier {
         &self,
         message: String,
         hook: Hook,
+        _file_info: &FileInfo,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         debug!("Running command: {}", self.command.as_str());
@@ -44,7 +46,10 @@ impl Notifier for FileNotifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::notifiers::{base::Notifier, hooks::Hook};
+    use crate::{
+        file_info::FileInfo,
+        notifiers::{base::Notifier, hooks::Hook},
+    };
 
     use super::FileNotifier;
     use actix_web::http::header::HeaderMap;
@@ -76,7 +81,12 @@ mod tests {
         let hook = Hook::PostCreate;
         let test_message = uuid::Uuid::new_v4().to_string();
         notifier
-            .send_message(test_message.clone(), hook, &HeaderMap::new())
+            .send_message(
+                test_message.clone(),
+                hook,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await
             .unwrap();
         let output_path = dir.join("output");
@@ -105,7 +115,12 @@ mod tests {
         }
         let notifier = FileNotifier::new(hook_path.display().to_string());
         let res = notifier
-            .send_message("test".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "test".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(res.is_err());
     }
@@ -114,7 +129,12 @@ mod tests {
     async fn no_such_file() {
         let notifier = FileNotifier::new(format!("/{}.sh", uuid::Uuid::new_v4()));
         let res = notifier
-            .send_message("test".into(), Hook::PreCreate, &HeaderMap::new())
+            .send_message(
+                "test".into(),
+                Hook::PreCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(res.is_err());
     }

@@ -12,6 +12,7 @@ use strum::IntoEnumIterator;
 use crate::{
     config::AMQPHooksOptions,
     errors::RustusResult,
+    file_info::FileInfo,
     notifiers::{base::Notifier, hooks::Hook},
     utils::lapin_pool::{ChannelPool, ConnnectionPool},
 };
@@ -144,6 +145,7 @@ impl Notifier for AMQPNotifier {
         &self,
         message: String,
         hook: Hook,
+        _file_info: &FileInfo,
         _header_map: &HeaderMap,
     ) -> RustusResult<()> {
         log::info!("Sending message to AMQP.");
@@ -184,7 +186,10 @@ impl Notifier for AMQPNotifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::notifiers::{base::Notifier, hooks::Hook};
+    use crate::{
+        file_info::FileInfo,
+        notifiers::{base::Notifier, hooks::Hook},
+    };
 
     use super::AMQPNotifier;
     use actix_web::http::header::HeaderMap;
@@ -221,7 +226,12 @@ mod tests {
         for hook in Hook::iter() {
             let test_msg = uuid::Uuid::new_v4().to_string();
             notifier
-                .send_message(test_msg.clone(), hook.clone(), &HeaderMap::new())
+                .send_message(
+                    test_msg.clone(),
+                    hook.clone(),
+                    &FileInfo::new_test(),
+                    &HeaderMap::new(),
+                )
                 .await
                 .unwrap();
             let chan = notifier.channel_pool.get().await.unwrap();
@@ -265,7 +275,12 @@ mod tests {
             idle_channels_timeout: None,
         });
         let res = notifier
-            .send_message("Test Message".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "Test Message".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(res.is_err());
     }
