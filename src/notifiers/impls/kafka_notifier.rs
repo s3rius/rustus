@@ -59,6 +59,7 @@ pub struct KafkaNotifier {
 }
 
 impl KafkaNotifier {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         hosts: String,
         client_id: Option<String>,
@@ -78,7 +79,7 @@ impl KafkaNotifier {
             config.set("client.id", client_id);
         }
         if let Some(acks) = requred_acks {
-            config.set("request.required.acks", acks.to_string());
+            config.set("request.required.acks", acks);
         }
 
         if let Some(connection_timeout) = idle_timeout {
@@ -86,7 +87,7 @@ impl KafkaNotifier {
         }
 
         if let Some(compression) = compression {
-            config.set("compression.codec", compression.to_string());
+            config.set("compression.codec", compression);
         }
 
         if let Some(extra_options) = extra_opts {
@@ -96,7 +97,7 @@ impl KafkaNotifier {
         let send_timeout = Timeout::from(send_timeout.map(Duration::from_secs));
 
         let producer = FutureProducer::from_config(&config)?;
-        Ok(KafkaNotifier {
+        Ok(Self {
             producer,
             topic,
             prefix,
@@ -118,11 +119,10 @@ impl Notifier for KafkaNotifier {
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         let hook_name = hook.to_string();
-        let topic = self.topic.as_ref().unwrap_or(&hook_name);
-        let topic = match &self.prefix {
-            Some(prefix) => format!("{}-{}", prefix, topic),
-            None => topic.to_string(),
-        };
+        let topic = self.prefix.as_ref().map_or_else(
+            || self.topic.as_ref().unwrap_or(&hook_name).to_owned(),
+            |prefix| format!("{prefix}-{hook_name}"),
+        );
         log::debug!(
             "Sending message to Kafka topic {topic} with a key {key}.",
             key = file_info.id
@@ -158,14 +158,18 @@ mod test {
 
     use super::KafkaNotifier;
     use actix_web::http::header::HeaderMap;
-    use kafka::consumer::Consumer;
+    use futures::StreamExt;
+    use rdkafka::{
+        admin::{AdminClient, AdminOptions, NewTopic},
+        client::DefaultClientContext,
+        config::FromClientConfig,
+        consumer::{Consumer, StreamConsumer},
+        message::ToBytes,
+        ClientConfig, Message,
+    };
 
     fn get_notifier(topic: Option<&str>, prefix: Option<&str>) -> KafkaNotifier {
-        let urls = std::env::var("TEST_KAFKA_URLS")
-            .unwrap_or(String::from("localhost:9092"))
-            .split(',')
-            .map(String::from)
-            .collect::<Vec<_>>();
+        let urls = std::env::var("TEST_KAFKA_URLS").unwrap_or(String::from("localhost:9094"));
         KafkaNotifier::new(
             urls,
             Some("rustus".to_string()),
@@ -175,32 +179,67 @@ mod test {
             None,
             None,
             None,
+            None,
         )
         .unwrap()
     }
 
-    fn get_consumer(topics: Vec<&str>) -> Consumer {
-        let urls = std::env::var("TEST_KAFKA_URLS")
-            .unwrap_or(String::from("localhost:9092"))
-            .split(',')
-            .map(String::from)
+    async fn get_consumer(topics: &[&str]) -> StreamConsumer {
+        let urls = std::env::var("TEST_KAFKA_URLS").unwrap_or(String::from("localhost:9094"));
+        let mut config = ClientConfig::new();
+        config
+            .set("bootstrap.servers", urls)
+            .set("auto.offset.reset", "earliest")
+            .set("group.id", "rustus-test");
+        let admin = config
+            .create::<AdminClient<DefaultClientContext>>()
+            .unwrap();
+        let new_topics = topics
+            .iter()
+            .map(|topic| NewTopic {
+                name: topic,
+                num_partitions: 1,
+                replication: rdkafka::admin::TopicReplication::Fixed(1),
+                config: vec![],
+            })
             .collect::<Vec<_>>();
-        let mut builder = Consumer::from_hosts(urls).with_group(String::from("rustus-test"));
-        for topic in topics {
-            builder = builder.with_topic(String::from(topic));
-        }
-        builder.create().unwrap()
+        admin
+            .create_topics(new_topics.iter(), &AdminOptions::default())
+            .await
+            .unwrap();
+        let consumer = StreamConsumer::from_config(&config).unwrap();
+        consumer.subscribe(topics).unwrap();
+
+        consumer
     }
 
     #[actix_rt::test]
-    async fn simple_success() {
-        let notifier = get_notifier(None, None);
+    async fn simple_success_on_topic() {
+        let topic = uuid::Uuid::new_v4().simple().to_string();
+        let notifier = get_notifier(Some(topic.as_str()), None);
         let finfo = crate::file_info::FileInfo::new_test();
-        let consumer = get_consumer(vec![&Hook::PreCreate.to_string()]);
+        let consumer = get_consumer(&[&topic]).await;
         let data = String::from("data");
         notifier
             .send_message(data.clone(), Hook::PreCreate, &finfo, &HeaderMap::default())
             .await
             .unwrap();
+        let msg = consumer.stream().next().await.unwrap().unwrap();
+        assert_eq!(msg.payload().unwrap(), data.to_bytes());
+    }
+
+    #[actix_rt::test]
+    async fn simple_success_on_prefix() {
+        let prefix = uuid::Uuid::new_v4().simple().to_string();
+        let notifier = get_notifier(None, Some(&prefix));
+        let finfo = crate::file_info::FileInfo::new_test();
+        let consumer = get_consumer(&[&format!("{prefix}-pre-create")]).await;
+        let data = String::from("data");
+        notifier
+            .send_message(data.clone(), Hook::PreCreate, &finfo, &HeaderMap::default())
+            .await
+            .unwrap();
+        let msg = consumer.stream().next().await.unwrap().unwrap();
+        assert_eq!(msg.payload().unwrap(), data.to_bytes());
     }
 }

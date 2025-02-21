@@ -60,17 +60,12 @@ impl NotificationManager {
                 rustus_config.notification_opts.amqp_hook_opts.clone(),
             )));
         }
-        if !rustus_config
-            .notification_opts
-            .kafka_hook_opts
-            .urls
-            .is_empty()
-        {
+        if let Some(urls) = &rustus_config.notification_opts.kafka_hook_opts.urls {
             let opts = rustus_config.notification_opts.kafka_hook_opts.clone();
             manager
                 .notifiers
                 .push(NotifierImpl::Kafka(KafkaNotifier::new(
-                    opts.urls,
+                    urls.to_owned(),
                     opts.client_id,
                     opts.topic,
                     opts.prefix,
@@ -79,7 +74,7 @@ impl NotificationManager {
                     opts.idle_timeout,
                     opts.send_timeout,
                     opts.extra_kafka_opts,
-                )?))
+                )?));
         }
         for notifier in &mut manager.notifiers.iter_mut() {
             notifier.prepare().await?;

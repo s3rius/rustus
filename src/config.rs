@@ -296,7 +296,7 @@ pub struct KafkaHookOptions {
         env = "RUSTUS_HOOKS_KAFKA_URLS",
         use_value_delimiter = true
     )]
-    pub urls: String,
+    pub urls: Option<String>,
     /// Kafka producer client.id.
     #[arg(
         name = "hooks-kafka-client-id",
@@ -335,6 +335,7 @@ pub struct KafkaHookOptions {
     /// * snappy - snappy compression.
     /// * lz4 - lz4 compression.
     /// * zstd - zstd compression.
+    ///
     /// Corresponds to `compression.codec` in Kafka configuration.
     #[arg(
         name = "hooks-kafka-compression",
@@ -366,6 +367,8 @@ pub struct KafkaHookOptions {
     /// This parameter is used to pass additional options to Kafka.
     /// All options must be in the format `key=value`, separated by semicolon.
     /// Example: `key1=value1;key2=value2`.
+    ///
+    /// You can find all available options at <https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md>.
     pub extra_kafka_opts: Option<ExtraKafkaOptions>,
 }
 
