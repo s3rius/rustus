@@ -1082,7 +1082,7 @@ Configuration parameters:
     export RUSTUS_HOOKS_KAFKA_IDLE_TIMEOUT="10"
     export RUSTUS_HOOKS_KAFKA_SEND_TIMEOUT="10"
     export RUSTUS_HOOKS_KAFKA_EXTRA_OPTIONS="allow.auto.create.topics=true;security.protocol=plaintext"
-    
+
 
     rustus
     ```
