@@ -369,6 +369,11 @@ pub struct KafkaHookOptions {
     /// Example: `key1=value1;key2=value2`.
     ///
     /// You can find all available options at <https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md>.
+    #[arg(
+        name = "hooks-kafka-extra-options",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_EXTRA_OPTIONS"
+    )]
     pub extra_kafka_opts: Option<ExtraKafkaOptions>,
 }
 
