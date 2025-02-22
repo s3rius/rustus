@@ -1,5 +1,6 @@
 use crate::{
     errors::RustusError,
+    file_info::FileInfo,
     notifiers::{base::Notifier, hooks::Hook},
     RustusResult,
 };
@@ -28,6 +29,7 @@ impl Notifier for DirNotifier {
         &self,
         message: String,
         hook: Hook,
+        _file_info: &FileInfo,
         _headers_map: &HeaderMap,
     ) -> RustusResult<()> {
         let hook_path = self.dir.join(hook.to_string());
@@ -49,7 +51,10 @@ impl Notifier for DirNotifier {
 
 #[cfg(test)]
 mod tests {
-    use crate::notifiers::{base::Notifier, hooks::Hook};
+    use crate::{
+        file_info::FileInfo,
+        notifiers::{base::Notifier, hooks::Hook},
+    };
 
     use super::DirNotifier;
     use actix_web::http::header::HeaderMap;
@@ -66,7 +71,12 @@ mod tests {
         let hook_dir = TempDir::new("dir_notifier").unwrap().into_path();
         let notifier = DirNotifier::new(hook_dir);
         let res = notifier
-            .send_message("test".into(), Hook::PostCreate, &HeaderMap::new())
+            .send_message(
+                "test".into(),
+                Hook::PostCreate,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await;
         assert!(res.is_err());
     }
@@ -74,6 +84,8 @@ mod tests {
     #[cfg(unix)]
     #[actix_rt::test]
     async fn success() {
+        use crate::file_info::FileInfo;
+
         let hook = Hook::PostCreate;
         let dir = tempdir::TempDir::new("dir_notifier").unwrap().into_path();
         let hook_path = dir.join(hook.to_string());
@@ -90,7 +102,12 @@ mod tests {
         let notifier = DirNotifier::new(dir.clone());
         let test_message = uuid::Uuid::new_v4().to_string();
         notifier
-            .send_message(test_message.clone(), hook, &HeaderMap::new())
+            .send_message(
+                test_message.clone(),
+                hook,
+                &FileInfo::new_test(),
+                &HeaderMap::new(),
+            )
             .await
             .unwrap();
         let output_path = dir.join("output");

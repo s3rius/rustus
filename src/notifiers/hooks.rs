@@ -2,6 +2,9 @@ use crate::from_str;
 use derive_more::{Display, From};
 use strum::EnumIter;
 
+use std::str::FromStr;
+use strum::IntoEnumIterator;
+
 /// Hooks for notifications.
 #[derive(Copy, Clone, Debug, Display, From, EnumIter, Eq, PartialEq)]
 pub enum Hook {

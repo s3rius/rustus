@@ -51,6 +51,7 @@ chrono = { version = "^0.4.38", features = ["serde"] }
 fern = { version = "^0.7.0", features = ["colored"] }
 reqwest = { version = "^0.12.9", features = ["json"] }
 derive_more = { version = "^1.0.0", features = ["display", "from", "from_str"], default-features = false }
+rdkafka = "0.37.0"
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies.tikv-jemallocator]
 version = "0.6"

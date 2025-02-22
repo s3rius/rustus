@@ -33,7 +33,7 @@ pub async fn terminate(
             let headers = request.headers();
             state
                 .notification_manager
-                .send_message(message, Hook::PreTerminate, headers)
+                .send_message(message, Hook::PreTerminate, &file_info, headers)
                 .await?;
         }
         state.info_storage.remove_info(file_id.as_str()).await?;
@@ -46,10 +46,11 @@ pub async fn terminate(
                 state.config.notification_opts.behind_proxy,
             );
             let headers = request.headers().clone();
+            let cloned_info = file_info.clone();
             tokio::task::spawn_local(async move {
                 state
                     .notification_manager
-                    .send_message(message, Hook::PostTerminate, &headers)
+                    .send_message(message, Hook::PostTerminate, &cloned_info, &headers)
                     .await
             });
         }

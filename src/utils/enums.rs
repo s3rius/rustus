@@ -2,9 +2,6 @@
 #[macro_export]
 macro_rules! from_str {
     ($enum_name:ty, $name:literal) => {
-        use std::str::FromStr;
-        use strum::IntoEnumIterator;
-
         impl FromStr for $enum_name {
             type Err = String;
 
@@ -31,8 +28,11 @@ macro_rules! from_str {
 #[cfg(test)]
 mod tests {
     use crate::from_str;
+
     use derive_more::{Display, From};
+    use std::str::FromStr;
     use strum::EnumIter;
+    use strum::IntoEnumIterator;
 
     #[derive(PartialEq, Debug, Display, EnumIter, From, Clone, Eq)]
     pub enum TestEnum {

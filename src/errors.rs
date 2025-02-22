@@ -45,6 +45,8 @@ pub enum RustusError {
     HookError(String),
     #[error("Unable to configure logging: {0}")]
     LogConfigError(#[from] log::SetLoggerError),
+    #[error("Kafka extra options error: {0}")]
+    KafkaExtraOptionsError(String),
     #[error("AMQP error: {0}")]
     AMQPError(#[from] lapin::Error),
     #[error("AMQP pooling error: {0}")]
@@ -73,6 +75,8 @@ pub enum RustusError {
     ParseIntError(#[from] std::num::ParseIntError),
     #[error("Can't convert int: {0}")]
     TryFromIntError(#[from] std::num::TryFromIntError),
+    #[error("Kafka error: {0}")]
+    KafkaError(#[from] rdkafka::error::KafkaError),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

@@ -301,7 +301,7 @@ Available formats:
                 "path": null,
                 "created_at": 1658671969,
                 "deferred_size": false,
-                "is_partial": false,
+               "is_partial": false,
                 "is_final": false,
                 "parts": null,
                 "storage": "file_storage",
@@ -1036,3 +1036,58 @@ adds required by Celery headers to every message.
 
     rustus
     ```
+
+### Kafka hooks
+
+Rustus support sending hooks to kafka cluster. We use [rust-rdkafka](https://github.com/fede1024/rust-rdkafka) as a driver. Since it uses a C++ library, it's configuration. If you have any question about specific parameter, please refer to the C++ library [configuration](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md).
+
+!!! info
+
+    All messages are sent with a key, which is equals to upload_id.
+
+Configuration parameters:
+
+* `--hooks-kafka-urls` - Kafka urls. List of brokers to connect to in the format `host:port`. If you have multiple brokers, separate them with commas. Corresponds to `bootstrap.servers` in kafka config.
+* `--hooks-kafka-client-id` - Kafka producer client.id
+* `--hooks-kafka-topic` - Kafka topic. If specified, all events will be sent to this topic.
+* `--hooks-kafka-prefix` - Kafka prefix. If specified, all hook-names will be prepended with this string and used as a topic.
+* `--hooks-kafka-required-acks` - Kafka required acks. This parameter is used to configure how many replicas must acknowledge the message. Corresponds to `request.required.acks`.
+* `--hooks-kafka-compression` - Compression codec. This parameter is used to compress messages before sending them to Kafka. Corresponds to `compression.codec` in Kafka configuration.
+* `--hooks-kafka-idle-timeout` - Kafka idle timeout in seconds. After this amount of time in seconds, the connection will be dropped. Corresponds to `connections.max.idle.ms` in Kafka configuration, but in seconds.
+* `--hooks-kafka-send-timeout` - Kafka send timeout in seconds. After this amount of time in seconds, the message will be dropped
+* `--hooks-kafka-extra-options` - Extra options for Kafka. This parameter is used to pass additional options to Kafka. All options must be in the format `key=value`, separated by semicolon. Example: `key1=value1;key2=value2`.
+
+=== "CLI"
+
+    ``` bash
+    rustus --hooks-kafka-urls "localhost:9094" \
+        --hooks-kafka-client-id "client-1" \
+        --hooks-kafka-topic "topic" \
+        --hooks-kafka-prefix "my-prefix" \
+        --hooks-kafka-required-acks \
+        --hooks-kafka-compression "none" \
+        --hooks-kafka-idle-timeout "10" \
+        --hooks-kafka-send-timeout "10" \
+        --hooks-kafka-extra-options "allow.auto.create.topics=true;security.protocol=plaintext"
+    ```
+
+=== "ENV"
+
+    ``` bash
+    export RUSTUS_HOOKS_KAFKA_URLS="localhost:9094"
+    export RUSTUS_HOOKS_KAFKA_CLIENT_ID="client-1"
+    export RUSTUS_HOOKS_KAFKA_TOPIC="my-topic";
+    export RUSTUS_HOOKS_KAFKA_PREFIX="pref"
+    export RUSTUS_HOOKS_KAFKA_COMPRESSION="gzip"
+    export RUSTUS_HOOKS_KAFKA_IDLE_TIMEOUT="10"
+    export RUSTUS_HOOKS_KAFKA_SEND_TIMEOUT="10"
+    export RUSTUS_HOOKS_KAFKA_EXTRA_OPTIONS="allow.auto.create.topics=true;security.protocol=plaintext"
+
+
+    rustus
+    ```
+
+!!! warning
+
+    Since we can't really track message delivery and responses
+    Rustus won't stop a current upload in any case.
