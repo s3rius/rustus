@@ -190,6 +190,7 @@ mod test {
         config
             .set("bootstrap.servers", urls)
             .set("auto.offset.reset", "earliest")
+            .set("allow.auto.create.topics", "true")
             .set("group.id", "rustus-test");
         let admin = config
             .create::<AdminClient<DefaultClientContext>>()
