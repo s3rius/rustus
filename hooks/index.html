@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
@@ -444,6 +444,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#kafka-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kafka hooks
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -563,6 +572,15 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#kafka-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Kafka hooks
+    </span>
+  </a>
   
 </li>
         
@@ -876,7 +894,7 @@ Format can be configured with <code>--hooks-format</code> parameter or <code>RUS
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">        </span><span class="nt">&quot;path&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">        </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1658671969</span><span class="p">,</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="w">        </span><span class="nt">&quot;deferred_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">        </span><span class="nt">&quot;is_partial&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">       </span><span class="nt">&quot;is_partial&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">        </span><span class="nt">&quot;is_final&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">        </span><span class="nt">&quot;parts&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">        </span><span class="nt">&quot;storage&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file_storage&quot;</span><span class="p">,</span>
@@ -1571,6 +1589,59 @@ adds required by Celery headers to every message.</p>
 </code></pre></div>
 </div>
 </div>
+</div>
+<h3 id="kafka-hooks">Kafka hooks</h3>
+<p>Rustus support sending hooks to kafka cluster. We use <a href="https://github.com/fede1024/rust-rdkafka">rust-rdkafka</a> as a driver. Since it uses a C++ library, it's configuration. If you have any question about specific parameter, please refer to the C++ library <a href="https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md">configuration</a>.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>All messages are sent with a key, which is equals to upload_id.</p>
+</div>
+<p>Configuration parameters:</p>
+<ul>
+<li><code>--hooks-kafka-urls</code> - Kafka urls. List of brokers to connect to in the format <code>host:port</code>. If you have multiple brokers, separate them with commas. Corresponds to <code>bootstrap.servers</code> in kafka config.</li>
+<li><code>--hooks-kafka-client-id</code> - Kafka producer client.id</li>
+<li><code>--hooks-kafka-topic</code> - Kafka topic. If specified, all events will be sent to this topic.</li>
+<li><code>--hooks-kafka-prefix</code> - Kafka prefix. If specified, all hook-names will be prepended with this string and used as a topic.</li>
+<li><code>--hooks-kafka-required-acks</code> - Kafka required acks. This parameter is used to configure how many replicas must acknowledge the message. Corresponds to <code>request.required.acks</code>.</li>
+<li><code>--hooks-kafka-compression</code> - Compression codec. This parameter is used to compress messages before sending them to Kafka. Corresponds to <code>compression.codec</code> in Kafka configuration.</li>
+<li><code>--hooks-kafka-idle-timeout</code> - Kafka idle timeout in seconds. After this amount of time in seconds, the connection will be dropped. Corresponds to <code>connections.max.idle.ms</code> in Kafka configuration, but in seconds.</li>
+<li><code>--hooks-kafka-send-timeout</code> - Kafka send timeout in seconds. After this amount of time in seconds, the message will be dropped</li>
+<li><code>--hooks-kafka-extra-options</code> - Extra options for Kafka. This parameter is used to pass additional options to Kafka. All options must be in the format <code>key=value</code>, separated by semicolon. Example: <code>key1=value1;key2=value2</code>.</li>
+</ul>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">CLI</label><label for="__tabbed_12_2">ENV</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>rustus<span class="w"> </span>--hooks-kafka-urls<span class="w"> </span><span class="s2">&quot;localhost:9094&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span>--hooks-kafka-client-id<span class="w"> </span><span class="s2">&quot;client-1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span>--hooks-kafka-topic<span class="w"> </span><span class="s2">&quot;topic&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span>--hooks-kafka-prefix<span class="w"> </span><span class="s2">&quot;my-prefix&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="w">    </span>--hooks-kafka-required-acks<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a><span class="w">    </span>--hooks-kafka-compression<span class="w"> </span><span class="s2">&quot;none&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a><span class="w">    </span>--hooks-kafka-idle-timeout<span class="w"> </span><span class="s2">&quot;10&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a><span class="w">    </span>--hooks-kafka-send-timeout<span class="w"> </span><span class="s2">&quot;10&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a><span class="w">    </span>--hooks-kafka-extra-options<span class="w"> </span><span class="s2">&quot;allow.auto.create.topics=true;security.protocol=plaintext&quot;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_URLS</span><span class="o">=</span><span class="s2">&quot;localhost:9094&quot;</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_CLIENT_ID</span><span class="o">=</span><span class="s2">&quot;client-1&quot;</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_TOPIC</span><span class="o">=</span><span class="s2">&quot;my-topic&quot;</span><span class="p">;</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_PREFIX</span><span class="o">=</span><span class="s2">&quot;pref&quot;</span>
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_COMPRESSION</span><span class="o">=</span><span class="s2">&quot;gzip&quot;</span>
+<a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_IDLE_TIMEOUT</span><span class="o">=</span><span class="s2">&quot;10&quot;</span>
+<a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_SEND_TIMEOUT</span><span class="o">=</span><span class="s2">&quot;10&quot;</span>
+<a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a><span class="nb">export</span><span class="w"> </span><span class="nv">RUSTUS_HOOKS_KAFKA_EXTRA_OPTIONS</span><span class="o">=</span><span class="s2">&quot;allow.auto.create.topics=true;security.protocol=plaintext&quot;</span>
+<a id="__codelineno-32-9" name="__codelineno-32-9" href="#__codelineno-32-9"></a>
+<a id="__codelineno-32-10" name="__codelineno-32-10" href="#__codelineno-32-10"></a>
+<a id="__codelineno-32-11" name="__codelineno-32-11" href="#__codelineno-32-11"></a>rustus
+</code></pre></div>
+</div>
+</div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Since we can't really track message delivery and responses
+Rustus won't stop a current upload in any case.</p>
 </div>
 
 
