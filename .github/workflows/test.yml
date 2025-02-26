@@ -1,84 +1,52 @@
+name: TMP test
+
 on:
-  - pull_request
+  pull_request:
 
-name: Lint check
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  pre_job:
-    # continue-on-error: true # Uncomment once integration is finished
-    runs-on: ubuntu-latest
-    # Map a step output to a job output
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+  publish:
+    name: Building ${{ matrix.platform.target }}
+    runs-on: ${{ matrix.platform.runs-on }}
+    strategy:
+      matrix:
+        platform:
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-20.04
+            target: x86_64-unknown-linux-musl
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-20.04
+            target: aarch64-unknown-linux-musl
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os-name: macOS-x86_64
+            runs-on: macOS-latest
+            target: x86_64-apple-darwin
     steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install cargo-bump
+        uses: taiki-e/install-action@v2
         with:
-          # All of these options are optional, so you can remove them if you are happy with the defaults
-          concurrent_skipping: 'same_content'
-          skip_after_successful_duplicate: 'true'
-          paths_ignore: '["**/*.md"]'
-
-  fmt_check:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
+          tool: cargo-bump
+      - name: Update version
+        run: cargo-bump bump "${{  github.ref_name }}"
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v0
         with:
-          toolchain: stable
-          override: true
-      - name: Adding component
-        run: rustup component add rustfmt
-      - name: Checking code format
-        run: cargo fmt -- --check
-
-  code_check:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: -p rustus
-
-  tests:
-    needs: pre_job
-    if: ${{ needs.pre_job.outputs.should_skip != 'true' }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-      - uses: KengoTODA/actions-setup-docker-compose@v1
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: start docker services
-        run: docker compose up -d --wait
-      - name: Run tests
-        run: cargo test
+          command: build
+          target: ${{ matrix.platform.target }}
+          strip: true
         env:
-          TEST_REDIS_URL: redis://localhost:6379/0
-          TEST_AMQP_URL: amqp://guest:guest@localhost:5672
-          TEST_S3_ENDPOINT: "http://localhost:9000"
-          TEST_S3_ACCESS_KEY: "rustus-test"
-          TEST_S3_SECRET_KEY: "rustus-test"
-      - name: stop docker compose
-        if: always()
-        run: docker compose down -v
+          JEMALLOC_SYS_WITH_MALLOC_CONF: "background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
+      - name: Zip artifcats (based os)
+        if: ${{ 'windows-latest' != matrix.platform.runs-on }}
+        run: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
+      - name: Zip artifacts (mental illness)
+        if: ${{ 'windows-latest' == matrix.platform.runs-on }}
+        run: Compress-Archive -LiteralPath "target\${{ matrix.platform.target }}\release\rustus.exe" -DestinationPath "rustus-${{ matrix.platform.os-name }}.zip"
+
