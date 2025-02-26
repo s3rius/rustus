@@ -34,7 +34,9 @@ jobs:
         with:
           tool: cargo-bump
       - name: Update version
-        run: cargo-bump bump "${{  github.ref_name }}"
+        run: cargo-bump bump "1.0.0"
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
