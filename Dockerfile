@@ -2,6 +2,7 @@ FROM rust:1.82-bookworm AS builder
 
 RUN apt-get update -y && apt-get install -y libjemalloc-dev \
     ca-certificates \
+    cmake \
     && apt-get clean -y
 
 WORKDIR /app
@@ -11,7 +12,7 @@ COPY imgs ./imgs
 
 ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
 
-RUN cargo build --release --bin rustus
+RUN cargo build --bin rustus
 
 FROM debian:bookworm-20241111-slim AS base
 
