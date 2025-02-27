@@ -40,9 +40,9 @@ jobs:
       - name: Install musl build tools
         if: ${{ contains(matrix.platform.os-name, 'Linux') }}
         run: sudo apt-get update -y && sudo apt-get install -y build-essential musl musl-tools musl-dev g++
-      - name: Add musl-g++
+      - name: Show g++ version
         if: ${{ contains(matrix.platform.os-name, 'Linux') }}
-        run: ln -s /usr/bin/g++ /usr/bin/musl-g++
+        run: x86_64-linux-musl-g++ --version
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
