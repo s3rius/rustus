@@ -39,7 +39,7 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
       - name: Install build-essentials
         if: ${{ contains(matrix.platform.os-name, 'Linux') }}
-        run: sudo apt-get update -y && sudo apt-get install -y build-essential
+        run: sudo apt-get update -y && sudo apt-get install -y build-essential musl
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
