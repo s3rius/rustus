@@ -13,7 +13,7 @@ COPY imgs ./imgs
 
 ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
 
-RUN cargo build --bin rustus
+RUN cargo build --release --bin rustus
 
 FROM debian:bookworm-20241111-slim AS base
 
