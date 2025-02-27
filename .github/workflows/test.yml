@@ -48,10 +48,4 @@ jobs:
           strip: true
         env:
           JEMALLOC_SYS_WITH_MALLOC_CONF: "background_thread:true,metadata_thp:auto,tcache:false,dirty_decay_ms:30000,muzzy_decay_ms:30000,abort_conf:true"
-      - name: Zip artifcats (based os)
-        if: ${{ 'windows-latest' != matrix.platform.runs-on }}
-        run: zip -j "rustus-${{ matrix.platform.os-name }}.zip" "target/${{ matrix.platform.target }}/release/rustus"
-      - name: Zip artifacts (mental illness)
-        if: ${{ 'windows-latest' == matrix.platform.runs-on }}
-        run: Compress-Archive -LiteralPath "target\${{ matrix.platform.target }}\release\rustus.exe" -DestinationPath "rustus-${{ matrix.platform.os-name }}.zip"
 

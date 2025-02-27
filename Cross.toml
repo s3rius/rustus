@@ -1,11 +1,11 @@
-[target.aarch64-unknown-linux-musl]
+[target.aarch64-unknown-linux-gnu]
 pre-build = [
   "dpkg --add-architecture $CROSS_DEB_ARCH",
-  "apt-get update -y && apt-get install -y musl musl-tools musl-dev cmake g++",
+  "apt-get update -y && apt-get install -y cmake build-essential",
 ]
 
-[target.x86_64-unknown-linux-musl]
+[target.x86_64-unknown-linux-gnu]
 pre-build = [
   "dpkg --add-architecture $CROSS_DEB_ARCH",
-  "apt-get update -y && apt-get install -y musl musl-tools musl-dev cmake g++",
+  "apt-get update -y && apt-get install -y cmake build-essential",
 ]
