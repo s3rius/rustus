@@ -17,10 +17,10 @@ jobs:
         platform:
           - os-name: Linux-x86_64
             runs-on: ubuntu-20.04
-            target: x86_64-unknown-linux-musl
+            target: x86_64-unknown-linux-gnu
           - os-name: Linux-aarch64
             runs-on: ubuntu-20.04
-            target: aarch64-unknown-linux-musl
+            target: aarch64-unknown-linux-gnu
           - os-name: Windows-x86_64
             runs-on: windows-latest
             target: x86_64-pc-windows-msvc
@@ -36,6 +36,11 @@ jobs:
           tool: cargo-bump
       - name: Update version
         run: cargo-bump bump "${{  github.ref_name }}"
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+      - name: Install build tools
+        if: ${{ contains(matrix.platform.os-name, 'Linux') }}
+        run: sudo apt-get update -y && sudo apt-get install -y build-essential 
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
