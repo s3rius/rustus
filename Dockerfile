@@ -1,6 +1,7 @@
 FROM rust:1.82-bookworm AS builder
 
 RUN apt-get update -y && apt-get install -y libjemalloc-dev \
+    build-essential \
     ca-certificates \
     cmake \
     && apt-get clean -y

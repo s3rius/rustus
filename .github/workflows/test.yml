@@ -37,6 +37,9 @@ jobs:
         run: cargo-bump bump "1.0.0"
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
+      - name: Install build-essentials
+        if: ${{ contains(matrix.platform.os-name, 'Linux') }}
+        run: apt update -y && apt install -y build-essential
       - name: Build binary
         uses: houseabsolute/actions-rust-cross@v0
         with:
