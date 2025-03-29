@@ -128,6 +128,7 @@ impl Notifier for KafkaNotifier {
             key = file_info.id
         );
         {
+            log::debug!("Sending a `{}` hook with body `{}`", hook, message);
             let send_res = self
                 .producer
                 .send(
@@ -141,12 +142,6 @@ impl Notifier for KafkaNotifier {
                 log::debug!("Failed to send message to Kafka: {:#?}", msg);
                 return Err(RustusError::KafkaError(kafka_err));
             }
-            log::debug!("Sending a `{}` hook with body `{}`", hook, message);
-            // self.producer.write().await.send(&Record::from_key_value(
-            //     topic.as_str(),
-            //     file_info.id.as_str(),
-            //     message,
-            // ))?;
         }
         Ok(())
     }

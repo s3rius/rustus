@@ -77,6 +77,16 @@ pub enum RustusError {
     TryFromIntError(#[from] std::num::TryFromIntError),
     #[error("Kafka error: {0}")]
     KafkaError(#[from] rdkafka::error::KafkaError),
+    #[error("Nats connection error: {0}")]
+    NatsConnectError(#[from] async_nats::ConnectError),
+    #[error("Nats publish error: {0}")]
+    NatsPublishError(#[from] async_nats::PublishError),
+    #[error("Nats request error: {0}")]
+    NatsRequestError(#[from] async_nats::RequestError),
+    #[error("Received error response from NATS: {0}")]
+    NatsErrorResponse(String),
+    #[error("Nkeys error: {0}")]
+    NkeysError(#[from] nkeys::error::Error),
 }
 
 /// This conversion allows us to use `RustusError` in the `main` function.

@@ -67,3 +67,19 @@ services:
       KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+  nats:
+    image: nats:2.10-alpine
+    ports:
+      - 4222:4222
+    command: [-m, "8222", "--jetstream"]
+    healthcheck:
+      test:
+        - "CMD"
+        - sh
+        - -c
+        - "wget http://localhost:8222/healthz -q -O - | xargs | grep ok || exit 1"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+
