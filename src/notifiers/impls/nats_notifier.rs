@@ -27,7 +27,12 @@ impl NatsNotifier {
 
         match (username, password) {
             (Some(user), Some(pass)) => options = options.user_and_password(user, pass),
-            _ => (),
+            (None, None) => (),
+            (_, _) => {
+                return Err(RustusError::Unimplemented(String::from(
+                    "Both username and password must be provided.",
+                )))
+            }
         }
         if let Some(token) = token {
             options = options.token(token);
@@ -62,7 +67,7 @@ impl Notifier for NatsNotifier {
             |prefix| format!("{prefix}.{hook_name}"),
         );
         let mut headers = async_nats::HeaderMap::new();
-        for (key, value) in headers_map.iter() {
+        for (key, value) in headers_map {
             headers.insert(key.as_str(), value.to_str().unwrap());
         }
         log::debug!("Sending message to NATS subject {subject}.");

@@ -73,7 +73,7 @@ services:
       - 4222:4222
     command: [-m, "8222", "--jetstream"]
     healthcheck:
-      test:  
+      test:
         - "CMD"
         - sh
         - -c
@@ -81,5 +81,5 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-     
+
 
