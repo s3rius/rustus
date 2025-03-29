@@ -72,7 +72,7 @@ jobs:
       - name: start docker services
         run: docker compose up -d --wait
       - name: Run tests
-        run: cargo test
+        run: cargo test --jobs 1
         env:
           TEST_REDIS_URL: redis://localhost:6379/0
           TEST_AMQP_URL: amqp://guest:guest@localhost:5672
