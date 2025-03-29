@@ -305,11 +305,21 @@ pub struct KafkaHookOptions {
     )]
     pub client_id: Option<String>,
     /// Kafka topic. If specified, all events will be sent to this topic.
-    #[arg(name = "hooks-kafka-topic", long, env = "RUSTUS_HOOKS_KAFKA_TOPIC")]
+    #[arg(
+        name = "hooks-kafka-topic",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_TOPIC",
+        conflicts_with = "hooks-kafka-prefix"
+    )]
     pub topic: Option<String>,
     /// Kafka topic prefix. In case if specifeid, prefix will be added to all topics
     /// and all events will be sent to different topics.
-    #[arg(name = "hooks-kafka-prefix", long, env = "RUSTUS_HOOKS_KAFKA_PREFIX")]
+    #[arg(
+        name = "hooks-kafka-prefix",
+        long,
+        env = "RUSTUS_HOOKS_KAFKA_PREFIX",
+        conflicts_with = "hooks-kafka-topic"
+    )]
     pub prefix: Option<String>,
     /// Kafka required acks.
     /// This parameter is used to configure how many replicas
@@ -378,6 +388,68 @@ pub struct KafkaHookOptions {
 }
 
 #[derive(Parser, Debug, Clone)]
+pub struct NatsHookOptions {
+    /// List of URLs to connect to NATS. Commas are used as delimiters.
+    #[arg(
+        name = "hooks-nats-urls",
+        long,
+        env = "RUSTUS_HOOKS_NATS_URLS",
+        use_value_delimiter = true
+    )]
+    pub urls: Vec<String>,
+    /// NATS subject to send messages to.
+    /// If not specified, hook name will be used.
+    #[arg(
+        name = "hooks-nats-subject",
+        long,
+        env = "RUSTUS_HOOKS_NATS_SUBJECT",
+        conflicts_with = "hooks-nats-prefix"
+    )]
+    pub subject: Option<String>,
+    /// NATS prefix for all subjects. Will be added to all subjects separated by a dot.
+    #[arg(
+        name = "hooks-nats-prefix",
+        long,
+        env = "RUSTUS_HOOKS_NATS_PREFIX",
+        conflicts_with = "hooks-nats-subject"
+    )]
+    /// Wait for replies from NATS.
+    /// If enabled, Rustus will use request-reply pattern and
+    /// wait for replies from NATS.
+    ///
+    /// In that case any reply should respond with "OK" or empty body, otherwise
+    /// Rustus will treat it as an error.
+    pub prefix: Option<String>,
+    #[arg(
+        name = "hooks-nats-wait-for-replies",
+        long,
+        env = "RUSTUS_HOOKS_NATS_WAIT_FOR_REPLIES"
+    )]
+    pub wait_for_replies: bool,
+
+    /// NATS user to connect to the server.
+    #[arg(
+        name = "hooks-nats-user",
+        long,
+        env = "RUSTUS_HOOKS_NATS_USER",
+        requires = "hooks-nats-password"
+    )]
+    pub username: Option<String>,
+    /// NATS password to connect to the server.
+    #[arg(
+        name = "hooks-nats-password",
+        long,
+        env = "RUSTUS_HOOKS_NATS_PASSWORD",
+        requires = "hooks-nats-user"
+    )]
+    pub password: Option<String>,
+
+    /// NATS token to connect to the server.
+    #[arg(name = "hooks-nats-token", long, env = "RUSTUS_HOOKS_NATS_TOKEN")]
+    pub token: Option<String>,
+}
+
+#[derive(Parser, Debug, Clone)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct NotificationsOptions {
     /// Notifications format.
@@ -432,6 +504,9 @@ pub struct NotificationsOptions {
 
     #[command(flatten)]
     pub kafka_hook_opts: KafkaHookOptions,
+
+    #[command(flatten)]
+    pub nats_hook_opts: NatsHookOptions,
 }
 
 #[derive(Debug, Parser, Clone)]

@@ -7,7 +7,7 @@ use super::{
     hooks::Hook,
     impls::{
         amqp_notifier::AMQPNotifier, dir_notifier::DirNotifier, file_notifier::FileNotifier,
-        http_notifier::HttpNotifier, kafka_notifier::KafkaNotifier,
+        http_notifier::HttpNotifier, kafka_notifier::KafkaNotifier, nats_notifier::NatsNotifier,
     },
 };
 
@@ -23,6 +23,7 @@ pub enum NotifierImpl {
     Http(HttpNotifier),
     Amqp(AMQPNotifier),
     Kafka(KafkaNotifier),
+    Nats(NatsNotifier),
 }
 
 impl NotificationManager {
@@ -53,6 +54,45 @@ impl NotificationManager {
                     .clone(),
                 rustus_config.notification_opts.http_hook_timeout,
             )));
+        }
+        if !rustus_config
+            .notification_opts
+            .nats_hook_opts
+            .urls
+            .is_empty()
+        {
+            debug!("Found NATS notifier.");
+            manager.notifiers.push(NotifierImpl::Nats(
+                NatsNotifier::new(
+                    rustus_config.notification_opts.nats_hook_opts.urls.clone(),
+                    rustus_config
+                        .notification_opts
+                        .nats_hook_opts
+                        .subject
+                        .clone(),
+                    rustus_config
+                        .notification_opts
+                        .nats_hook_opts
+                        .prefix
+                        .clone(),
+                    rustus_config
+                        .notification_opts
+                        .nats_hook_opts
+                        .wait_for_replies,
+                    rustus_config
+                        .notification_opts
+                        .nats_hook_opts
+                        .username
+                        .clone(),
+                    rustus_config
+                        .notification_opts
+                        .nats_hook_opts
+                        .password
+                        .clone(),
+                    rustus_config.notification_opts.nats_hook_opts.token.clone(),
+                )
+                .await?,
+            ));
         }
         if rustus_config.notification_opts.amqp_hook_opts.url.is_some() {
             debug!("Found AMQP notifier.");
@@ -108,6 +148,7 @@ impl Notifier for NotifierImpl {
             Self::Http(http_notifier) => http_notifier.prepare().await,
             Self::Amqp(amqp_notifier) => amqp_notifier.prepare().await,
             Self::Kafka(kafka_notifier) => kafka_notifier.prepare().await,
+            Self::Nats(nats_notifier) => nats_notifier.prepare().await,
         }
     }
 
@@ -141,6 +182,11 @@ impl Notifier for NotifierImpl {
             }
             Self::Kafka(kafka_notifier) => {
                 kafka_notifier
+                    .send_message(message, hook, file_info, headers_map)
+                    .await
+            }
+            Self::Nats(nats_notifier) => {
+                nats_notifier
                     .send_message(message, hook, file_info, headers_map)
                     .await
             }
