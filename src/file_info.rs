@@ -88,6 +88,10 @@ impl FileInfo {
         self.metadata.get("filename").unwrap_or(&self.id)
     }
 
+    pub fn get_mime_type(&self) -> mime::Mime {
+        mime_guess::from_path(self.get_filename()).first_or_octet_stream()
+    }
+
     pub async fn json(&self) -> RustusResult<String> {
         let info_clone = self.clone();
         tokio::task::spawn_blocking(move || {

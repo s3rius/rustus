@@ -118,7 +118,9 @@ impl S3HybridDataStorage {
         );
         let file = tokio::fs::File::open(local_path).await?;
         let mut reader = tokio::io::BufReader::new(file);
-        self.bucket.put_object_stream(&mut reader, s3_path).await?;
+        self.bucket
+            .put_object_stream_with_content_type(&mut reader, s3_path, file_info.get_mime_type())
+            .await?;
         Ok(())
     }
 
@@ -245,7 +247,9 @@ impl DataStorage for S3HybridDataStorage {
         let output_file = tokio::fs::File::open(&output_path).await?;
         let mut reader = tokio::io::BufReader::new(output_file);
         let key = self.get_s3_key(&file_info.id, file_info.created_at);
-        self.bucket.put_object_stream(&mut reader, key).await?;
+        self.bucket
+            .put_object_stream_with_content_type(&mut reader, key, file_info.get_mime_type())
+            .await?;
 
         tokio::fs::remove_file(output_path).await?;
 

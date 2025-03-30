@@ -164,7 +164,6 @@ impl DataStorage for S3DataStorage {
             part_num = parts.len() + 1,
             file_id = file_info.id
         );
-        let content_type = mime_guess::from_path(file_info.get_filename()).first_or_octet_stream();
         let resp = self
             .bucket
             .put_multipart_chunk(
@@ -172,7 +171,7 @@ impl DataStorage for S3DataStorage {
                 &s3_path,
                 u32::try_from(parts.len() + 1)?,
                 upload_id,
-                content_type.as_ref(),
+                file_info.get_mime_type().as_ref(),
             )
             .await?;
         parts.push(resp.into());
@@ -196,10 +195,9 @@ impl DataStorage for S3DataStorage {
 
     async fn create_file(&self, file_info: &mut FileInfo) -> crate::errors::RustusResult<String> {
         let s3_path = self.get_s3_key(&file_info.id, file_info.created_at);
-        let mime_type = mime_guess::from_path(file_info.get_filename()).first_or_octet_stream();
         let resp = self
             .bucket
-            .initiate_multipart_upload(&s3_path, mime_type.as_ref())
+            .initiate_multipart_upload(&s3_path, file_info.get_mime_type().as_ref())
             .await?;
         log::debug!("Created multipart upload with id: {}", resp.upload_id);
         file_info
@@ -280,7 +278,9 @@ impl DataStorage for S3DataStorage {
         let output_file = tokio::fs::File::open(&output_path).await?;
         let mut reader = tokio::io::BufReader::new(output_file);
         let key = self.get_s3_key(&file_info.id, file_info.created_at);
-        self.bucket.put_object_stream(&mut reader, key).await?;
+        self.bucket
+            .put_object_stream_with_content_type(&mut reader, key, file_info.get_mime_type())
+            .await?;
 
         tokio::fs::remove_file(output_path).await?;
 
@@ -485,12 +485,18 @@ mod test {
             None,
         );
         final_file_info.is_final = true;
+        final_file_info
+            .metadata
+            .insert("filename".into(), "test.mp4".into());
         storage
             .concat_files(&final_file_info, vec![fst_file_info, snd_file_info])
             .await
             .unwrap();
         let final_s3_path = storage.get_s3_key(&final_file_info.id, final_file_info.created_at);
         let object = storage.bucket.get_object(&final_s3_path).await.unwrap();
+        let resp_headers = object.headers();
+        let content_type = resp_headers.get("content-type").unwrap();
+        assert_eq!(content_type, "video/mp4");
         assert_eq!(object.bytes(), b"HelloWorld".as_slice());
     }
 }
