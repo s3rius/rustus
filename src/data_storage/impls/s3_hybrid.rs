@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, io::Write, path::PathBuf};
 
 use crate::{
     data_storage::base::DataStorage,
@@ -12,11 +12,13 @@ use crate::utils::dir_struct::substr_time;
 use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
+use futures::{StreamExt, TryStreamExt};
 use s3::{
     command::Command,
     request::{tokio_backend::HyperRequest, Request as S3Request},
     Bucket,
 };
+use tokio::io::AsyncWriteExt;
 
 use super::file_storage::FileDataStorage;
 
@@ -32,6 +34,7 @@ pub struct S3HybridDataStorage {
     bucket: Bucket,
     local_storage: FileDataStorage,
     dir_struct: String,
+    concurrent_concat_downloads: usize,
 }
 
 impl S3HybridDataStorage {
@@ -50,6 +53,7 @@ impl S3HybridDataStorage {
         data_dir: PathBuf,
         dir_struct: String,
         force_fsync: bool,
+        concurrent_concat_downloads: usize,
     ) -> Self {
         let local_storage = FileDataStorage::new(data_dir, dir_struct.clone(), force_fsync);
         let creds = s3::creds::Credentials::new(
@@ -91,6 +95,7 @@ impl S3HybridDataStorage {
             bucket: *bucket,
             local_storage,
             dir_struct,
+            concurrent_concat_downloads,
         }
     }
 
@@ -170,12 +175,81 @@ impl DataStorage for S3HybridDataStorage {
 
     async fn concat_files(
         &self,
-        _file_info: &FileInfo,
-        _parts_info: Vec<FileInfo>,
+        file_info: &FileInfo,
+        parts_info: Vec<FileInfo>,
     ) -> RustusResult<()> {
-        Err(RustusError::Unimplemented(
-            "Hybrid s3 cannot concat files.".into(),
-        ))
+        let dir = tempdir::TempDir::new(&file_info.id)?;
+        let mut download_futures = vec![];
+
+        // At first we need to download all parts.
+        for part_info in &parts_info {
+            let part_key = self.get_s3_key(&part_info.id, part_info.created_at);
+            let part_out = dir.path().join(&part_info.id);
+            // Here we create a future which downloads the part
+            // into a temporary file.
+            download_futures.push(async move {
+                let part_file = tokio::fs::File::create(&part_out).await?;
+                let mut writer = tokio::io::BufWriter::new(part_file);
+                let mut reader = self.bucket.get_object_stream(&part_key).await?;
+                while let Some(chunk) = reader.bytes().next().await {
+                    let mut chunk = chunk?;
+                    writer.write_all_buf(&mut chunk).await.map_err(|err| {
+                        log::error!("{:?}", err);
+                        RustusError::UnableToWrite(err.to_string())
+                    })?;
+                }
+                writer.flush().await?;
+                writer.get_ref().sync_data().await?;
+                Ok::<_, RustusError>(())
+            });
+        }
+        // Here we await all download futures.
+        // We use buffer_unordered to limit the number of concurrent downloads.
+        futures::stream::iter(download_futures)
+            // Number of concurrent downloads.
+            .buffer_unordered(self.concurrent_concat_downloads)
+            // We use try_collect to collect all results
+            // and return an error if any of the futures returned an error.
+            .try_collect::<Vec<_>>()
+            .await?;
+
+        let output_path = dir.path().join(&file_info.id);
+        let output_path_cloned = output_path.clone();
+        let parts_files = parts_info
+            .iter()
+            .map(|info| dir.path().join(&info.id))
+            .collect::<Vec<_>>();
+        tokio::task::spawn_blocking(move || {
+            let file = std::fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(output_path_cloned)
+                .map_err(|err| {
+                    log::error!("{:?}", err);
+                    RustusError::UnableToWrite(err.to_string())
+                })?;
+            let mut writer = std::io::BufWriter::new(file);
+            for part in &parts_files {
+                let part_file = std::fs::OpenOptions::new().read(true).open(part)?;
+                let mut reader = std::io::BufReader::new(part_file);
+                std::io::copy(&mut reader, &mut writer)?;
+            }
+            writer.flush()?;
+            writer.get_ref().sync_data()?;
+            Ok::<_, RustusError>(())
+        })
+        .await??;
+
+        // We reopen the file to upload it to S3.
+        // This is needed because we need to open the file in read mode.
+        let output_file = tokio::fs::File::open(&output_path).await?;
+        let mut reader = tokio::io::BufReader::new(output_file);
+        let key = self.get_s3_key(&file_info.id, file_info.created_at);
+        self.bucket.put_object_stream(&mut reader, key).await?;
+
+        tokio::fs::remove_file(output_path).await?;
+
+        Ok(())
     }
 
     async fn remove_file(&self, file_info: &FileInfo) -> RustusResult<()> {

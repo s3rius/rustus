@@ -182,6 +182,7 @@ Parameters:
 * `--s3-profile` - Name of the section from `~/.aws/credentials` file;
 * `--s3-headers` - JSON object with additional header to every S3 request (Useful for setting ACLs);
 * `--s3-force-path-style` - use path style URL. It appends bucket name at the end of the URL;
+* `--s3-concat-concurrent-downloads` - Number of concurrent downloads of partial files from S3. When performing concatenation, Rustus downloads all partial files from S3 and concatenates them into a single file. This parameter controls the number of concurrent downloads. Default value is 10.
 
 Required parameter are only `--s3-url` and `--s3-bucket`.
 
@@ -203,7 +204,8 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
         --s3-headers '{"x-amz-acl": "public-read"}' \
         --force-fsync \
         --data-dir "./data/" \
-        --dir-structure "{year}/{month}/{day}"
+        --dir-structure "{year}/{month}/{day}" \
+        --s3-concat-concurrent-downloads 10
     ```
 
 === "ENV"
@@ -225,6 +227,7 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
     export RUSTUS_FORCE_FSYNC="true"
     export RUSTUS_S3_FORCE_PATH_STYLE="true"
+    export RUSTUS_S3_CONCAT_CONCURRENT_DOWNLOADS="true"
 
     rustus
     ```
@@ -259,6 +262,8 @@ Parameters:
 * `--s3-headers` - JSON object with additional header to every S3 request (Useful for setting ACLs);
 * `--s3-force-path-style` - use path style URL. It appends bucket name at the end of the URL;
 * `--dir-structure` - pattern of a directory structure on s3;
+* `--s3-concat-concurrent-downloads` - Number of concurrent downloads of partial files from S3. When performing concatenation, Rustus downloads all partial files from S3 and concatenates them into a single file. This parameter controls the number of concurrent downloads. Default value is 10.
+
 
 Required parameter are only `--s3-url` and `--s3-bucket`.
 
@@ -278,7 +283,9 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
         --s3-session-token "token" \
         --s3-force-path-style \
         --s3-headers '{"x-amz-acl": "public-read"}' \
-        --dir-structure "{year}/{month}/{day}"
+        --dir-structure "{year}/{month}/{day}" \
+        --s3-concat-concurrent-downloads 10
+
     ```
 
 === "ENV"
@@ -298,6 +305,7 @@ Required parameter are only `--s3-url` and `--s3-bucket`.
     export RUSTUS_S3_HEADERS='{"x-amz-acl": "public-read"}'
     export RUSTUS_S3_FORCE_PATH_STYLE="true"
     export RUSTUS_DIR_STRUCTURE="{year}/{month}/{day}"
+    export RUSTUS_S3_CONCAT_CONCURRENT_DOWNLOADS="10"
 
     rustus
     ```
