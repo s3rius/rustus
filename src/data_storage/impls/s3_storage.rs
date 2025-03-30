@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, io::Write};
 
 use actix_web::{HttpRequest, HttpResponse, HttpResponseBuilder};
 use chrono::{DateTime, Utc};
+use futures::{StreamExt, TryStreamExt};
 use s3::{
     command::Command,
     request::{tokio_backend::HyperRequest, Request},
@@ -9,6 +10,7 @@ use s3::{
     Bucket,
 };
 use serde::{Deserialize, Serialize};
+use tokio::io::AsyncWriteExt;
 
 use crate::{
     data_storage::base::DataStorage,
@@ -30,6 +32,7 @@ pub struct S3MPUPart {
 pub struct S3DataStorage {
     bucket: Bucket,
     dir_struct: String,
+    concurrent_concat_downloads: usize,
 }
 
 impl From<S3MPUPart> for Part {
@@ -64,6 +67,7 @@ impl S3DataStorage {
         bucket_name: &str,
         force_path_style: bool,
         dir_struct: String,
+        concat_concurrent_downloads: usize,
     ) -> Self {
         let creds = s3::creds::Credentials::new(
             access_key.map(String::as_str),
@@ -103,6 +107,7 @@ impl S3DataStorage {
         Self {
             bucket: *bucket,
             dir_struct,
+            concurrent_concat_downloads: concat_concurrent_downloads,
         }
     }
 
@@ -205,12 +210,81 @@ impl DataStorage for S3DataStorage {
 
     async fn concat_files(
         &self,
-        _file_info: &crate::file_info::FileInfo,
-        _parts_info: Vec<crate::file_info::FileInfo>,
+        file_info: &crate::file_info::FileInfo,
+        parts_info: Vec<crate::file_info::FileInfo>,
     ) -> crate::errors::RustusResult<()> {
-        Err(RustusError::Unimplemented(
-            "Concatenation is not supported for S3 storage.".into(),
-        ))
+        let dir = tempdir::TempDir::new(&file_info.id)?;
+        let mut download_futures = vec![];
+
+        // At first we need to download all parts.
+        for part_info in &parts_info {
+            let part_key = self.get_s3_key(&part_info.id, part_info.created_at);
+            let part_out = dir.path().join(&part_info.id);
+            // Here we create a future which downloads the part
+            // into a temporary file.
+            download_futures.push(async move {
+                let part_file = tokio::fs::File::create(&part_out).await?;
+                let mut writer = tokio::io::BufWriter::new(part_file);
+                let mut reader = self.bucket.get_object_stream(&part_key).await?;
+                while let Some(chunk) = reader.bytes().next().await {
+                    let mut chunk = chunk?;
+                    writer.write_all_buf(&mut chunk).await.map_err(|err| {
+                        log::error!("{:?}", err);
+                        RustusError::UnableToWrite(err.to_string())
+                    })?;
+                }
+                writer.flush().await?;
+                writer.get_ref().sync_data().await?;
+                Ok::<_, RustusError>(())
+            });
+        }
+        // Here we await all download futures.
+        // We use buffer_unordered to limit the number of concurrent downloads.
+        futures::stream::iter(download_futures)
+            // Number of concurrent downloads.
+            .buffer_unordered(self.concurrent_concat_downloads)
+            // We use try_collect to collect all results
+            // and return an error if any of the futures returned an error.
+            .try_collect::<Vec<_>>()
+            .await?;
+
+        let output_path = dir.path().join(&file_info.id);
+        let output_path_cloned = output_path.clone();
+        let parts_files = parts_info
+            .iter()
+            .map(|info| dir.path().join(&info.id))
+            .collect::<Vec<_>>();
+        tokio::task::spawn_blocking(move || {
+            let file = std::fs::OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(output_path_cloned)
+                .map_err(|err| {
+                    log::error!("{:?}", err);
+                    RustusError::UnableToWrite(err.to_string())
+                })?;
+            let mut writer = std::io::BufWriter::new(file);
+            for part in &parts_files {
+                let part_file = std::fs::OpenOptions::new().read(true).open(part)?;
+                let mut reader = std::io::BufReader::new(part_file);
+                std::io::copy(&mut reader, &mut writer)?;
+            }
+            writer.flush()?;
+            writer.get_ref().sync_data()?;
+            Ok::<_, RustusError>(())
+        })
+        .await??;
+
+        // We reopen the file to upload it to S3.
+        // This is needed because we need to open the file in read mode.
+        let output_file = tokio::fs::File::open(&output_path).await?;
+        let mut reader = tokio::io::BufReader::new(output_file);
+        let key = self.get_s3_key(&file_info.id, file_info.created_at);
+        self.bucket.put_object_stream(&mut reader, key).await?;
+
+        tokio::fs::remove_file(output_path).await?;
+
+        Ok(())
     }
 
     async fn remove_file(
@@ -259,6 +333,7 @@ mod test {
             &bucket,
             path_style,
             "".to_string(),
+            4,
         )
     }
 
@@ -362,5 +437,60 @@ mod test {
             object.headers().get("content-type"),
             Some(&String::from("video/mp4"))
         )
+    }
+
+    #[actix_rt::test]
+    async fn test_successfull_concat() {
+        let storage = get_s3_storage();
+
+        let fst_data = "Hello".as_bytes();
+        let mut fst_file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(fst_data.len()),
+            None,
+            storage.get_name().to_string(),
+            None,
+        );
+        fst_file_info.is_partial = true;
+        let snd_data = "World".as_bytes();
+        let mut snd_file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(snd_data.len()),
+            None,
+            storage.get_name().to_string(),
+            None,
+        );
+        snd_file_info.is_partial = true;
+        let fst_s3_path = storage.create_file(&mut fst_file_info).await.unwrap();
+        let snd_s3_path = storage.create_file(&mut snd_file_info).await.unwrap();
+        storage
+            .add_bytes(&mut fst_file_info, fst_data.into())
+            .await
+            .unwrap();
+        storage
+            .add_bytes(&mut snd_file_info, snd_data.into())
+            .await
+            .unwrap();
+
+        let fst_object = storage.bucket.get_object(&fst_s3_path).await.unwrap();
+        assert_eq!(fst_object.bytes(), fst_data);
+        let snd_object = storage.bucket.get_object(&snd_s3_path).await.unwrap();
+        assert_eq!(snd_object.bytes(), snd_data);
+
+        let mut final_file_info = crate::file_info::FileInfo::new(
+            &uuid::Uuid::new_v4().to_string(),
+            Some(fst_data.len() + snd_data.len()),
+            None,
+            storage.get_name().to_string(),
+            None,
+        );
+        final_file_info.is_final = true;
+        storage
+            .concat_files(&final_file_info, vec![fst_file_info, snd_file_info])
+            .await
+            .unwrap();
+        let final_s3_path = storage.get_s3_key(&final_file_info.id, final_file_info.created_at);
+        let object = storage.bucket.get_object(&final_s3_path).await.unwrap();
+        assert_eq!(object.bytes(), b"HelloWorld".as_slice());
     }
 }

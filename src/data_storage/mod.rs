@@ -68,6 +68,7 @@ impl AvailableDataStorages {
                     config.storage_opts.data_dir.clone(),
                     config.storage_opts.dir_structure.clone(),
                     config.storage_opts.force_fsync,
+                    config.storage_opts.s3_concat_concurrent_downloads,
                 ))
             }
             Self::S3 => {
@@ -91,6 +92,7 @@ impl AvailableDataStorages {
                     config.storage_opts.s3_bucket.clone().unwrap().as_str(),
                     config.storage_opts.s3_force_path_style,
                     config.storage_opts.dir_structure.clone(),
+                    config.storage_opts.s3_concat_concurrent_downloads,
                 ))
             }
         }

@@ -118,6 +118,21 @@ pub struct DataStorageOptions {
     /// This parameter is required fo s3-based storages.
     #[arg(long, env = "RUSTUS_S3_HEADERS")]
     pub s3_headers: Option<String>,
+
+    /// Number of concurrent downloads of partial files
+    /// from S3.
+    /// When performing concatenation, Rustus downloads
+    /// all partial files from S3 and concatenates them
+    /// into a single file.
+    ///
+    /// This parameter controls the number of concurrent
+    /// downloads.
+    #[arg(
+        long,
+        env = "RUSTUS_S3_CONCAT_CONCURRENT_DOWNLOADS",
+        default_value = "10"
+    )]
+    pub s3_concat_concurrent_downloads: usize,
 }
 
 #[derive(Parser, Debug, Clone)]

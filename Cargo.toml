@@ -25,6 +25,7 @@ url = "^2.5.4"
 prometheus = "^0.13.4"
 actix-web-prom = "^0.9.0"
 dyn-clone = "^1.0.17"
+tempdir = "0.3.7"
 actix-cors = "0.7.0"
 wildmatch = "2.4.0"
 md-5 = "^0.10.6"
@@ -69,7 +70,6 @@ test_rmq = []
 integration_tests = ["test_redis", "test_rmq"]
 
 [dev-dependencies]
-tempdir = "0.3.7"
 actix-rt = "2.10.0"
 httptest = "0.16.1"
 actix-http = "3.9.0"
